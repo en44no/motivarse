@@ -40,16 +40,11 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/firestore\.googleapis\.com/,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'firestore-cache',
-              expiration: { maxEntries: 50, maxAgeSeconds: 86400 },
-            },
-          },
-        ],
+        // Force new SW to activate immediately
+        skipWaiting: true,
+        clientsClaim: true,
+        // NO runtime caching for Firestore — it uses its own protocol
+        // Caching Firestore responses was serving stale/empty data
       },
     }),
   ],
