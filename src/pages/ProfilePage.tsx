@@ -15,12 +15,15 @@ export function ProfilePage() {
   const { user } = useAuthContext();
   const { streaks } = useStreaks();
   const { progress } = useRunning();
-  const { couple, partnerName, loading: coupleLoading } = useCoupleContext();
+  const { partnerName } = useCoupleContext();
   const { canInstall, install, isInstalled } = usePWA();
   const [partnerEmail, setPartnerEmail] = useState('');
 
   const totalStreaks = streaks.reduce((sum, s) => sum + s.currentStreak, 0);
   const bestStreak = streaks.reduce((best, s) => Math.max(best, s.longestStreak), 0);
+
+  // Use profile.coupleId directly — no need to wait for CoupleContext
+  const hasPartner = !!profile?.coupleId;
 
   return (
     <div className="space-y-4 py-4">
@@ -32,7 +35,7 @@ export function ProfilePage() {
           </div>
           <div>
             <h2 className="text-lg font-bold text-text-primary">{profile?.displayName || user?.displayName || 'Usuario'}</h2>
-            <p className="text-sm text-text-muted">{profile?.email}</p>
+            <p className="text-sm text-text-muted">{profile?.email || user?.email}</p>
           </div>
         </div>
       </Card>
@@ -57,7 +60,7 @@ export function ProfilePage() {
       </div>
 
       {/* Partner linking */}
-      {!coupleLoading && !couple && (
+      {!hasPartner && (
         <Card>
           <div className="flex items-center gap-3 mb-3">
             <Link size={20} className="text-accent" />
@@ -84,15 +87,15 @@ export function ProfilePage() {
         </Card>
       )}
 
-      {couple && (
+      {hasPartner && (
         <Card>
           <div className="flex items-center gap-3">
             <Link size={20} className="text-primary" />
             <div>
               <h3 className="text-sm font-bold text-text-primary">Pareja vinculada</h3>
-              <p className="text-xs text-text-muted">Con {partnerName}</p>
+              <p className="text-xs text-text-muted">Con {partnerName || 'tu pareja'}</p>
             </div>
-            <span className="ml-auto text-primary text-xs font-semibold">Conectados ✓</span>
+            <span className="ml-auto text-primary text-xs font-semibold">Conectados</span>
           </div>
         </Card>
       )}
