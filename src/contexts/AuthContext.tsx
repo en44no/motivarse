@@ -3,7 +3,6 @@ import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import type { UserProfile } from '../types/user';
 import { subscribeToUser } from '../services/user.service';
-import { toast } from 'sonner';
 
 const PROFILE_CACHE_KEY = 'motivarse_profile';
 
@@ -38,10 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    toast.info(`[DEBUG] Firebase config: projectId=${import.meta.env.VITE_FIREBASE_PROJECT_ID || 'UNDEFINED'}, authDomain=${import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'UNDEFINED'}`);
-    toast.info('[DEBUG] Auth: escuchando estado...');
     const unsub = onAuthStateChanged(auth, (u) => {
-      toast.info(`[DEBUG] Auth: user=${u ? u.uid.slice(0, 6) : 'null'}`);
       setUser(u);
       if (!u) {
         setProfile(null);
@@ -56,20 +52,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     const cached = getCachedProfile();
-    toast.info(`[DEBUG] Profile: cache=${cached ? `uid=${cached.uid.slice(0,6)}, coupleId=${cached.coupleId || 'NULL'}` : 'NONE'}`);
-
     if (cached && cached.uid === user.uid) {
       setLoading(false);
     }
 
     const timeout = setTimeout(() => {
-      toast.error('[DEBUG] Profile: TIMEOUT 5s — Firestore no respondió');
       setLoading(false);
     }, 5000);
 
     const unsub = subscribeToUser(user.uid, (p) => {
       clearTimeout(timeout);
-      toast.success(`[DEBUG] Profile: Firestore respondió — coupleId=${p?.coupleId || 'NULL'}, name=${p?.displayName || 'none'}`);
       setProfile(p);
       cacheProfile(p);
       setLoading(false);

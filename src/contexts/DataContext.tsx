@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
 import { useAuthContext } from './AuthContext';
 import { useCoupleContext } from './CoupleContext';
-import { toast } from 'sonner';
 import { subscribeToHabits, subscribeToHabitLogs, subscribeToStreaks } from '../services/habits.service';
 import { subscribeToRunLogs, subscribeToRunProgress } from '../services/running.service';
 import { subscribeToTodos } from '../services/shared.service';
@@ -73,31 +72,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // No user = logged out → clear everything
     if (!user) {
-      toast.info('[DEBUG] Data: no user → limpiando');
       clearAllData(setHabits, setHabitLogs, setStreaks, setRunLogs, setRunProgress, setTodos);
       setLoading(false);
       return;
     }
 
-    toast.info(`[DEBUG] Data: coupleId=${coupleId || 'NULL'}, userId=${userId?.slice(0,6) || 'NULL'}, profile=${profile ? 'YES' : 'NULL'}, couple=${couple ? 'YES' : 'NULL'}`);
-
     if (!coupleId) {
       if (profile && !profile.coupleId) {
-        toast.warning('[DEBUG] Data: profile sin coupleId → sin datos');
         clearAllData(setHabits, setHabitLogs, setStreaks, setRunLogs, setRunProgress, setTodos);
         setLoading(false);
         return;
       }
-      toast.warning('[DEBUG] Data: esperando coupleId (timeout 5s)...');
       const timeout = setTimeout(() => {
-        toast.error('[DEBUG] Data: TIMEOUT — coupleId nunca llegó');
         setLoading(false);
       }, 5000);
       return () => clearTimeout(timeout);
     }
 
     // We have a coupleId → subscribe to all data
-    toast.success(`[DEBUG] Data: suscribiendo con coupleId=${coupleId.slice(0,8)}...`);
     let cancelled = false;
     respondedRef.current = 0;
     expectedRef.current = userId ? 6 : 4;
