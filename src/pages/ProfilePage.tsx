@@ -15,17 +15,17 @@ export function ProfilePage() {
   const { user } = useAuthContext();
   const { streaks } = useStreaks();
   const { progress } = useRunning();
-  const { partnerName } = useCoupleContext();
+  const { couple, partnerName } = useCoupleContext();
   const { canInstall, install, isInstalled } = usePWA();
   const [partnerEmail, setPartnerEmail] = useState('');
 
   const totalStreaks = streaks.reduce((sum, s) => sum + s.currentStreak, 0);
   const bestStreak = streaks.reduce((best, s) => Math.max(best, s.longestStreak), 0);
 
-  // Use profile.coupleId directly — no need to wait for CoupleContext
-  // profile=null means still loading, don't assume "no partner"
-  const hasPartner = !!profile?.coupleId;
-  const profileLoaded = !!profile;
+  // Use profile.coupleId OR couple from CoupleContext (cached in localStorage)
+  // This way even if profile is slow to load, cached couple still shows
+  const hasPartner = !!profile?.coupleId || !!couple;
+  const profileLoaded = !!profile || !!user;
 
   return (
     <div className="space-y-4 py-4">

@@ -58,8 +58,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // Auth still loading → wait
     if (authLoading) return;
 
-    // Profile loaded but no coupleId → no data to load
-    if (!profile || !coupleId) {
+    // Profile not loaded yet → keep current state, just stop loading spinner
+    if (!profile) {
+      setLoading(false);
+      return;
+    }
+
+    // Profile loaded but no coupleId → genuinely no couple data
+    if (!coupleId) {
       setHabits([]);
       setHabitLogs([]);
       setRunLogs([]);

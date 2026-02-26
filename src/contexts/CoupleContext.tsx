@@ -45,8 +45,14 @@ export function CoupleProvider({ children }: { children: ReactNode }) {
     // Wait for auth to finish before making any decisions
     if (authLoading) return;
 
+    // Profile not loaded yet → keep current state (cached couple survives)
+    if (!profile) {
+      setLoading(false);
+      return;
+    }
+
     // Profile loaded but no coupleId → user genuinely has no couple
-    if (!profile?.coupleId) {
+    if (!profile.coupleId) {
       setCouple(null);
       setCachedCouple(null);
       setLoading(false);
