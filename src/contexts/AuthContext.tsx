@@ -31,17 +31,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
 
-    // Timeout: si Firestore no responde en 5s, usar datos de Firebase Auth
+    // Timeout: si Firestore no responde en 5s, solo dejar de bloquear loading
+    // NO crear perfil falso con coupleId:null — eso rompe la vinculación de pareja
     const timeout = setTimeout(() => {
-      setProfile((prev) => prev ?? {
-        uid: user.uid,
-        email: user.email || '',
-        displayName: user.displayName || 'Usuario',
-        partnerId: null,
-        coupleId: null,
-        createdAt: Date.now(),
-        settings: { notifications: true },
-      });
       setLoading(false);
     }, 5000);
 
