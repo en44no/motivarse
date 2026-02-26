@@ -46,7 +46,7 @@ export function RunProgressChart({ logs }: RunProgressChartProps) {
                 fontSize: '12px',
                 color: '#f1f5f9',
               }}
-              formatter={(value: number) => [`${value} min`, 'Duración']}
+              formatter={(value) => [`${value} min`, 'Duración']}
             />
             <Area
               type="monotone"
