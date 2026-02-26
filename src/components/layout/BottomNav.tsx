@@ -19,7 +19,8 @@ export function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
       <div
-        className="mx-auto max-w-lg rounded-2xl border border-white/[0.06] bg-surface/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+        className="relative mx-auto max-w-lg rounded-2xl border border-white/[0.06] bg-surface/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]
+          before:absolute before:inset-x-4 before:-top-px before:h-px before:bg-gradient-to-r before:from-transparent before:via-primary/20 before:to-transparent"
       >
         <div className="flex items-center justify-around h-16">
           {NAV_ITEMS.map((item) => {

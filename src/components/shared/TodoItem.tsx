@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Check, Trash2, Clock, AlertCircle } from 'lucide-react';
+import { Check, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { SharedTodo } from '../../types/shared';
 
@@ -28,7 +28,7 @@ export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames 
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 10 }}
       className={cn(
-        'flex items-center gap-3 bg-surface rounded-xl border border-border p-3 border-l-4',
+        'flex items-center gap-3 bg-surface rounded-xl border border-border p-3 border-l-[3px] shadow-sm',
         priorityColors[todo.priority],
         todo.completed && 'opacity-60'
       )}
@@ -39,7 +39,7 @@ export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames 
           'w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all',
           todo.completed
             ? 'bg-primary text-white'
-            : 'border-2 border-border hover:border-primary'
+            : 'border-2 border-border hover:border-primary/50'
         )}
       >
         {todo.completed && <Check size={14} strokeWidth={3} />}

@@ -9,9 +9,9 @@ interface ProgressBarProps {
 }
 
 const colorStyles = {
-  primary: 'bg-primary',
-  secondary: 'bg-secondary',
-  accent: 'bg-accent',
+  primary: 'bg-gradient-to-r from-primary to-emerald-400 shadow-[0_0_8px_rgba(34,197,94,0.4)]',
+  secondary: 'bg-gradient-to-r from-secondary to-orange-400 shadow-[0_0_8px_rgba(249,115,22,0.4)]',
+  accent: 'bg-gradient-to-r from-accent to-violet-400 shadow-[0_0_8px_rgba(139,92,246,0.4)]',
 };
 
 export function ProgressBar({ value, color = 'primary', size = 'md', showLabel, className }: ProgressBarProps) {

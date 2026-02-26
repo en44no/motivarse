@@ -25,7 +25,7 @@ export function CacoWeekDetail({ currentWeek, currentSession, onTimerComplete }:
 
   return (
     <>
-      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent shadow-md">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-text-primary">Semana {currentWeek}</h3>
@@ -37,17 +37,17 @@ export function CacoWeekDetail({ currentWeek, currentSession, onTimerComplete }:
         </div>
 
         <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="bg-surface rounded-xl p-3 text-center">
+          <div className="bg-surface rounded-xl p-3 text-center border border-border/50 shadow-sm">
             <Clock size={16} className="mx-auto text-primary mb-1" />
             <p className="text-lg font-bold font-mono text-text-primary">{plan.totalMinutes}</p>
             <p className="text-[10px] text-text-muted">minutos</p>
           </div>
-          <div className="bg-surface rounded-xl p-3 text-center">
+          <div className="bg-surface rounded-xl p-3 text-center border border-border/50 shadow-sm">
             <Play size={16} className="mx-auto text-secondary mb-1" />
             <p className="text-lg font-bold font-mono text-text-primary">{plan.runMinutes}</p>
             <p className="text-[10px] text-text-muted">min correr</p>
           </div>
-          <div className="bg-surface rounded-xl p-3 text-center">
+          <div className="bg-surface rounded-xl p-3 text-center border border-border/50 shadow-sm">
             <Repeat size={16} className="mx-auto text-accent mb-1" />
             <p className="text-lg font-bold font-mono text-text-primary">{plan.repetitions}x</p>
             <p className="text-[10px] text-text-muted">repeticiones</p>

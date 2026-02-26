@@ -13,7 +13,11 @@ export function TodaySummary({ progress, completedCount, totalCount }: TodaySumm
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className="flex items-center gap-5 bg-surface rounded-2xl border border-border p-5">
+    <div className={cn(
+      'flex items-center gap-5 rounded-2xl border border-border p-5 shadow-md',
+      'bg-gradient-to-br from-surface via-surface to-surface-light',
+      progress >= 100 ? 'border-t-2 border-t-primary' : progress > 50 ? 'border-t-2 border-t-secondary' : 'border-t-2 border-t-border'
+    )}>
       <div className="relative w-28 h-28 shrink-0">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
           <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--color-surface-light)" strokeWidth="8" />
@@ -27,6 +31,7 @@ export function TodaySummary({ progress, completedCount, totalCount }: TodaySumm
             initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset }}
             transition={{ duration: 1, ease: 'easeOut' }}
+            style={progress >= 100 ? { filter: 'drop-shadow(0 0 6px rgba(34, 197, 94, 0.5))' } : {}}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">

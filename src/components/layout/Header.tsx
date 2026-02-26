@@ -33,13 +33,15 @@ export function Header() {
             </div>
           )}
           {partnerName && (
-            <div className="flex items-center gap-2 bg-surface rounded-full px-3 py-1.5">
+            <div className="flex items-center gap-2 bg-surface rounded-full px-3 py-1.5 border border-primary/15 shadow-sm">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs text-text-secondary">{partnerName}</span>
+              <span className="text-xs text-text-secondary font-medium">{partnerName}</span>
             </div>
           )}
         </div>
       </div>
+      {/* Gradient border bottom */}
+      <div className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent mt-2" />
     </header>
   );
 }

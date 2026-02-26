@@ -1,4 +1,4 @@
-import { Users, Check, Minus } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { Card } from '../ui/Card';
 
 interface PartnerStatusProps {
@@ -11,7 +11,7 @@ export function PartnerStatus({ partnerName, completedCount, totalCount }: Partn
   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
-    <Card>
+    <Card className="bg-gradient-to-r from-accent/5 to-transparent">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-accent-soft flex items-center justify-center">
           <Users size={20} className="text-accent" />
@@ -31,7 +31,7 @@ export function PartnerStatus({ partnerName, completedCount, totalCount }: Partn
         {Array.from({ length: totalCount }).map((_, i) => (
           <div
             key={i}
-            className={`h-1.5 flex-1 rounded-full transition-all ${
+            className={`h-2 flex-1 rounded-full transition-all ${
               i < completedCount ? 'bg-accent' : 'bg-surface-light'
             }`}
           />

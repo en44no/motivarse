@@ -88,7 +88,7 @@ export function SharedPage() {
             Desbloqueen logros completando hábitos juntos.
           </p>
           {ACHIEVEMENT_DEFINITIONS.map((achievement) => (
-            <Card key={achievement.id} className="opacity-60">
+            <Card key={achievement.id} className="opacity-50 grayscale">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{achievement.icon}</span>
                 <div className="flex-1">

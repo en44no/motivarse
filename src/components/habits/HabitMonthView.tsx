@@ -1,6 +1,6 @@
 import { startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns';
 import { cn } from '../../lib/utils';
-import { formatDate, getToday, formatDisplayDate } from '../../lib/date-utils';
+import { formatDate, getToday } from '../../lib/date-utils';
 import type { HabitLog } from '../../types/habit';
 
 interface HabitMonthViewProps {
@@ -47,10 +47,10 @@ export function HabitMonthView({ logs, color, habitName }: HabitMonthViewProps) 
               key={date}
               className={cn(
                 'aspect-square rounded-lg flex items-center justify-center text-[11px] font-medium transition-all',
-                completed && 'text-white',
+                completed && 'text-white shadow-sm ring-1 ring-white/10',
                 !completed && !isFuture && 'bg-surface-light/50 text-text-muted',
                 isFuture && 'text-text-muted/30',
-                isToday && !completed && 'ring-1 ring-primary/40'
+                isToday && !completed && 'ring-2 ring-primary/50'
               )}
               style={completed ? { backgroundColor: color } : {}}
             >

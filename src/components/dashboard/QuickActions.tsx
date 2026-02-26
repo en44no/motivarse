@@ -17,9 +17,9 @@ export function QuickActions() {
         <button
           key={action.label}
           onClick={() => navigate(action.route)}
-          className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-surface border border-border hover:bg-surface-hover transition-all active:scale-95"
+          className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-surface border border-border shadow-sm hover:bg-gradient-to-b hover:from-surface-hover hover:to-surface transition-all active:scale-95"
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${action.color}`}>
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center border border-current/10 ${action.color}`}>
             <action.icon size={20} />
           </div>
           <span className="text-[11px] font-medium text-text-secondary text-center leading-tight">

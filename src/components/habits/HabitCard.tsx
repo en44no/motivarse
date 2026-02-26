@@ -45,12 +45,16 @@ export function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerNam
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ layout: { duration: 0.2 } }}
     >
       <Card className={cn(
         'transition-all duration-300',
-        completed && 'border-primary/20 bg-primary-soft/30',
+        completed && 'bg-gradient-to-r from-primary/8 to-transparent border-primary/20 border-l-2',
+        completed && `border-l-[${habit.color}]`,
         partiallyCompleted && 'border-primary/10 bg-primary-soft/15'
-      )}>
+      )}
+      style={completed ? { borderLeftColor: habit.color } : {}}
+      >
         <div className="flex items-start gap-3">
           {/* Check / Icon */}
           {habit.type === 'boolean' && (

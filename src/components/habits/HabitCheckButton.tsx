@@ -22,9 +22,9 @@ export function HabitCheckButton({ completed, color, onToggle, size = 'md' }: Ha
         sizes,
         completed
           ? 'shadow-lg'
-          : 'border-2 border-border hover:border-text-muted'
+          : 'border-2 border-border hover:border-text-muted hover:ring-2 hover:ring-primary/20'
       )}
-      style={completed ? { backgroundColor: color, boxShadow: `0 0 20px ${color}40` } : {}}
+      style={completed ? { backgroundColor: color, boxShadow: `0 0 24px ${color}50` } : {}}
     >
       {completed && (
         <motion.div

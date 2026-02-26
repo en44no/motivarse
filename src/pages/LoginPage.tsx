@@ -40,8 +40,8 @@ export function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-10"
       >
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-emerald-400 mb-4 shadow-lg shadow-primary/25">
-          <Flame size={40} className="text-white" />
+        <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-emerald-400 mb-4 shadow-lg shadow-primary/25 shadow-[0_0_40px_rgba(34,197,94,0.2)]">
+          <Flame size={44} className="text-white" />
         </div>
         <h1 className="text-3xl font-extrabold text-text-primary tracking-tight">
           Motivarse
@@ -56,7 +56,7 @@ export function LoginPage() {
         transition={{ delay: 0.1 }}
         className="w-full max-w-sm"
       >
-        <div className="bg-surface rounded-3xl border border-border p-6">
+        <div className="bg-surface rounded-3xl border border-border p-6 shadow-lg border-t-white/[0.06]">
           <h2 className="text-lg font-bold text-text-primary mb-6">
             {isRegister ? 'Crear cuenta' : 'Iniciar sesión'}
           </h2>
@@ -125,8 +125,9 @@ export function LoginPage() {
         </button>
       </motion.div>
 
-      {/* Decorative gradient */}
+      {/* Decorative gradients */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+      <div className="fixed bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-accent/5 blur-3xl pointer-events-none" />
     </div>
   );
 }

@@ -32,8 +32,8 @@ export function ProfilePage() {
       {/* Profile header */}
       <Card>
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-primary-soft flex items-center justify-center">
-            <User size={28} className="text-primary" />
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-md">
+            <User size={30} className="text-primary" />
           </div>
           <div>
             <h2 className="text-lg font-bold text-text-primary">{profile?.displayName || user?.displayName || 'Usuario'}</h2>
@@ -44,17 +44,17 @@ export function ProfilePage() {
 
       {/* Stats grid */}
       <div className="grid grid-cols-3 gap-2">
-        <Card className="text-center">
+        <Card className="text-center bg-gradient-to-b from-secondary/5 to-transparent">
           <Flame size={20} className="mx-auto text-secondary mb-1" />
           <p className="text-lg font-bold font-mono text-text-primary">{bestStreak}</p>
           <p className="text-[10px] text-text-muted">Mejor racha</p>
         </Card>
-        <Card className="text-center">
+        <Card className="text-center bg-gradient-to-b from-primary/5 to-transparent">
           <Footprints size={20} className="mx-auto text-primary mb-1" />
           <p className="text-lg font-bold font-mono text-text-primary">{progress?.totalRuns || 0}</p>
           <p className="text-[10px] text-text-muted">Carreras</p>
         </Card>
-        <Card className="text-center">
+        <Card className="text-center bg-gradient-to-b from-accent/5 to-transparent">
           <Trophy size={20} className="mx-auto text-accent mb-1" />
           <p className="text-lg font-bold font-mono text-text-primary">{totalStreaks}</p>
           <p className="text-[10px] text-text-muted">Racha total</p>
@@ -90,7 +90,7 @@ export function ProfilePage() {
       )}
 
       {hasPartner && (
-        <Card>
+        <Card className="bg-gradient-to-r from-primary/5 to-transparent">
           <div className="flex items-center gap-3">
             <Link size={20} className="text-primary" />
             <div>

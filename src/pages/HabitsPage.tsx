@@ -104,7 +104,7 @@ export function HabitsPage() {
             {myHabits.map((habit) => {
               const habitLogs = getLogsForHabit(habit.id, userId);
               return (
-                <div key={habit.id} className="bg-surface rounded-2xl border border-border p-4 space-y-3">
+                <div key={habit.id} className="bg-surface rounded-2xl border border-border p-4 space-y-3 shadow-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: habit.color }} />
                     <h3 className="text-sm font-semibold text-text-primary">{habit.name}</h3>
@@ -127,7 +127,7 @@ export function HabitsPage() {
             {myHabits.map((habit) => {
               const habitLogs = getLogsForHabit(habit.id, userId);
               return (
-                <div key={habit.id} className="bg-surface rounded-2xl border border-border p-4">
+                <div key={habit.id} className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
                   <HabitMonthView logs={habitLogs} color={habit.color} habitName={habit.name} />
                 </div>
               );
@@ -140,7 +140,7 @@ export function HabitsPage() {
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={() => setShowForm(true)}
-        className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center z-30 hover:bg-primary-hover transition-colors"
+        className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-emerald-600 text-white shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:from-primary-hover hover:to-emerald-700 transition-colors"
       >
         <Plus size={24} />
       </motion.button>

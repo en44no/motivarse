@@ -27,8 +27,17 @@
   --color-text-secondary: #94a3b8;
   --color-text-muted: #64748b;
 
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --color-surface-elevated: #1e293b;
+
+  --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.35), 0 4px 6px rgba(0, 0, 0, 0.2);
+  --shadow-glow-primary: 0 0 20px rgba(34, 197, 94, 0.15);
+  --shadow-glow-secondary: 0 0 20px rgba(249, 115, 22, 0.15);
+  --shadow-glow-accent: 0 0 20px rgba(139, 92, 246, 0.15);
 }
 
 html, body, #root {
@@ -44,6 +53,11 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  letter-spacing: -0.01em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.025em;
 }
 
 ::-webkit-scrollbar {

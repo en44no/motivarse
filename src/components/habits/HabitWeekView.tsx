@@ -32,10 +32,10 @@ export function HabitWeekView({ logs, color, className }: HabitWeekViewProps) {
             <div
               className={cn(
                 'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all',
-                completed && 'text-white shadow-sm',
+                completed && 'text-white shadow-sm ring-1 ring-white/10',
                 !completed && !isFuture && 'bg-surface-light text-text-muted',
                 isFuture && 'bg-transparent border border-border text-text-muted/50',
-                isToday && !completed && 'ring-2 ring-primary/30'
+                isToday && !completed && 'ring-2 ring-primary/40'
               )}
               style={completed ? { backgroundColor: color } : {}}
             >

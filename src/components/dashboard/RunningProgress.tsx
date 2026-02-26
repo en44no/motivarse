@@ -19,7 +19,7 @@ export function RunningProgress({ progress }: RunningProgressProps) {
   return (
     <Card variant="interactive" onClick={() => navigate(ROUTES.RUNNING)}>
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-full bg-primary-soft flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
           <Footprints size={20} className="text-primary" />
         </div>
         <div className="flex-1">
