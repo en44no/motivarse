@@ -30,7 +30,7 @@ const DataContext = createContext<DataContextType>({
 });
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const { user, profile } = useAuthContext();
+  const { user, profile, loading: authLoading } = useAuthContext();
 
   const [habits, setHabits] = useState<Habit[]>([]);
   const [habitLogs, setHabitLogs] = useState<HabitLog[]>([]);
@@ -47,12 +47,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const respondedRef = useRef(0);
   const expectedRef = useRef(0);
 
+  // Safety: if auth is done loading but there's no profile, stop our loading too
   useEffect(() => {
-    // Profile not loaded yet → stay in loading
-    if (!profile) return;
+    if (!authLoading && !profile) {
+      setLoading(false);
+    }
+  }, [authLoading, profile]);
+
+  useEffect(() => {
+    // Auth still loading → wait
+    if (authLoading) return;
 
     // Profile loaded but no coupleId → no data to load
-    if (!coupleId) {
+    if (!profile || !coupleId) {
       setHabits([]);
       setHabitLogs([]);
       setRunLogs([]);
