@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    toast.info(`[DEBUG] Firebase config: projectId=${import.meta.env.VITE_FIREBASE_PROJECT_ID || 'UNDEFINED'}, authDomain=${import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'UNDEFINED'}`);
     toast.info('[DEBUG] Auth: escuchando estado...');
     const unsub = onAuthStateChanged(auth, (u) => {
       toast.info(`[DEBUG] Auth: user=${u ? u.uid.slice(0, 6) : 'null'}`);
