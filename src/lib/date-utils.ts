@@ -1,0 +1,50 @@
+import { format, isToday, isYesterday, startOfWeek, endOfWeek, eachDayOfInterval, subDays, differenceInDays, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+export function formatDate(date: Date | string): string {
+  const d = typeof date === 'string' ? parseISO(date) : date;
+  return format(d, 'yyyy-MM-dd');
+}
+
+export function formatDisplayDate(date: Date | string): string {
+  const d = typeof date === 'string' ? parseISO(date) : date;
+  if (isToday(d)) return 'Hoy';
+  if (isYesterday(d)) return 'Ayer';
+  return format(d, "d 'de' MMMM", { locale: es });
+}
+
+export function formatShortDate(date: Date | string): string {
+  const d = typeof date === 'string' ? parseISO(date) : date;
+  return format(d, 'dd/MM', { locale: es });
+}
+
+export function formatDayName(date: Date): string {
+  return format(date, 'EEE', { locale: es });
+}
+
+export function formatTime(time: string): string {
+  return time;
+}
+
+export function getToday(): string {
+  return formatDate(new Date());
+}
+
+export function getWeekDays(date?: Date): Date[] {
+  const ref = date || new Date();
+  const start = startOfWeek(ref, { weekStartsOn: 1 });
+  const end = endOfWeek(ref, { weekStartsOn: 1 });
+  return eachDayOfInterval({ start, end });
+}
+
+export function getLast7Days(): Date[] {
+  return Array.from({ length: 7 }, (_, i) => subDays(new Date(), 6 - i));
+}
+
+export function daysBetween(date1: string, date2: string): number {
+  return differenceInDays(parseISO(date1), parseISO(date2));
+}
+
+export function isDateInRange(date: string, start: string, end: string): boolean {
+  return date >= start && date <= end;
+}
