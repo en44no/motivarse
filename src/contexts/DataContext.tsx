@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
 import { useAuthContext } from './AuthContext';
+import { useCoupleContext } from './CoupleContext';
 import { subscribeToHabits, subscribeToHabitLogs, subscribeToStreaks } from '../services/habits.service';
 import { subscribeToRunLogs, subscribeToRunProgress } from '../services/running.service';
 import { subscribeToTodos } from '../services/shared.service';
@@ -31,6 +32,7 @@ const DataContext = createContext<DataContextType>({
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const { user, profile, loading: authLoading } = useAuthContext();
+  const { couple } = useCoupleContext();
 
   const [habits, setHabits] = useState<Habit[]>([]);
   const [habitLogs, setHabitLogs] = useState<HabitLog[]>([]);
@@ -40,31 +42,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [todos, setTodos] = useState<SharedTodo[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const coupleId = profile?.coupleId || null;
+  // Use couple.coupleId as fallback (couple is cached in localStorage)
+  const coupleId = profile?.coupleId || couple?.coupleId || null;
   const userId = user?.uid || null;
 
   // Track how many subscriptions have responded at least once
   const respondedRef = useRef(0);
   const expectedRef = useRef(0);
 
-  // Safety: if auth is done loading but there's no profile, stop our loading too
+  // Safety: if auth is done and there's truly no data source, stop loading
   useEffect(() => {
-    if (!authLoading && !profile) {
+    if (!authLoading && !profile && !couple) {
       setLoading(false);
     }
-  }, [authLoading, profile]);
+  }, [authLoading, profile, couple]);
 
   useEffect(() => {
     // Auth still loading → wait
     if (authLoading) return;
 
-    // Profile not loaded yet → keep current state, just stop loading spinner
-    if (!profile) {
-      setLoading(false);
-      return;
-    }
-
-    // Profile loaded but no coupleId → genuinely no couple data
+    // No coupleId from either profile or cached couple → no data to load
     if (!coupleId) {
       setHabits([]);
       setHabitLogs([]);
@@ -137,7 +134,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       clearTimeout(timeout);
       unsubs.forEach((u) => u());
     };
-  }, [coupleId, userId, profile]);
+  }, [coupleId, userId]);
 
   return (
     <DataContext.Provider value={{ habits, habitLogs, streaks, runLogs, runProgress, todos, loading }}>

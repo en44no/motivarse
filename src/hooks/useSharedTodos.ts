@@ -1,13 +1,15 @@
 import { useAuthContext } from '../contexts/AuthContext';
+import { useCoupleContext } from '../contexts/CoupleContext';
 import { useDataContext } from '../contexts/DataContext';
 import { addTodo, updateTodo, deleteTodo } from '../services/shared.service';
 import type { TodoPriority } from '../types/shared';
 
 export function useSharedTodos() {
   const { user, profile } = useAuthContext();
+  const { couple } = useCoupleContext();
   const { todos, loading } = useDataContext();
 
-  const coupleId = profile?.coupleId || null;
+  const coupleId = profile?.coupleId || couple?.coupleId || null;
 
   const pending = todos.filter((t) => !t.completed);
   const completed = todos.filter((t) => t.completed);

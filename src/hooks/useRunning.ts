@@ -1,4 +1,5 @@
 import { useAuthContext } from '../contexts/AuthContext';
+import { useCoupleContext } from '../contexts/CoupleContext';
 import { useDataContext } from '../contexts/DataContext';
 import { addRunLog, updateRunProgress } from '../services/running.service';
 import { CACO_PLAN, SESSIONS_PER_WEEK } from '../lib/caco-plan';
@@ -6,9 +7,10 @@ import { getToday } from '../lib/date-utils';
 
 export function useRunning() {
   const { user, profile } = useAuthContext();
+  const { couple } = useCoupleContext();
   const { runLogs, runProgress: progress, loading } = useDataContext();
 
-  const coupleId = profile?.coupleId || null;
+  const coupleId = profile?.coupleId || couple?.coupleId || null;
   const userId = user?.uid;
 
   const myLogs = runLogs.filter((l) => l.userId === userId);

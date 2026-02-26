@@ -19,7 +19,8 @@ export function useHabits() {
   const { couple } = useCoupleContext();
   const { habits, habitLogs: logs, loading } = useDataContext();
 
-  const coupleId = profile?.coupleId || null;
+  // Use couple.coupleId as fallback when profile is slow to load (couple is cached in localStorage)
+  const coupleId = profile?.coupleId || couple?.coupleId || null;
   const userId = user?.uid;
 
   // My habits: habits I created + shared habits (regardless of creator)
