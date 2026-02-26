@@ -38,12 +38,15 @@ export function CoupleProvider({ children }: { children: ReactNode }) {
   const [couple, setCouple] = useState<Couple | null>(getCachedCouple);
   const [loading, setLoading] = useState(() => !getCachedCouple());
 
+  const userId = user?.uid || null;
+  const coupleId = profile?.coupleId || null;
+
   useEffect(() => {
     // Wait for auth to finish before making any decisions
     if (authLoading) return;
 
     // No user = logged out → clear everything including cache
-    if (!user) {
+    if (!userId) {
       setCouple(null);
       setCachedCouple(null);
       setLoading(false);
@@ -57,7 +60,7 @@ export function CoupleProvider({ children }: { children: ReactNode }) {
     }
 
     // Profile loaded but no coupleId → user genuinely has no couple
-    if (!profile.coupleId) {
+    if (!coupleId) {
       setCouple(null);
       setCachedCouple(null);
       setLoading(false);
@@ -69,7 +72,7 @@ export function CoupleProvider({ children }: { children: ReactNode }) {
     const timeout = setTimeout(() => {
       if (!didRespond) setLoading(false);
     }, 4000);
-    const unsub = subscribeToCouple(profile.coupleId, (c) => {
+    const unsub = subscribeToCouple(coupleId, (c) => {
       didRespond = true;
       clearTimeout(timeout);
       setCouple(c);
@@ -77,7 +80,7 @@ export function CoupleProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
     return () => { clearTimeout(timeout); unsub(); };
-  }, [user, profile?.coupleId, authLoading]);
+  }, [userId, coupleId, authLoading]);
 
   const partnerId = profile?.partnerId || null;
   const partnerName = couple && profile

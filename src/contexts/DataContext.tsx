@@ -65,6 +65,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Track how many subscriptions have responded at least once
   const respondedRef = useRef(0);
   const expectedRef = useRef(0);
+  // Once data has loaded, don't regress to loading state on re-subscriptions
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     // Auth still loading → wait
@@ -73,6 +75,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // No user = logged out → clear everything
     if (!user) {
       clearAllData(setHabits, setHabitLogs, setStreaks, setRunLogs, setRunProgress, setTodos);
+      hasLoadedRef.current = false;
       setLoading(false);
       return;
     }
@@ -80,6 +83,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!coupleId) {
       if (profile && !profile.coupleId) {
         clearAllData(setHabits, setHabitLogs, setStreaks, setRunLogs, setRunProgress, setTodos);
+        hasLoadedRef.current = false;
         setLoading(false);
         return;
       }
@@ -93,13 +97,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     respondedRef.current = 0;
     expectedRef.current = userId ? 6 : 4;
-    setLoading(true);
+    // Only show loading on first load; on re-subscriptions keep showing existing data
+    if (!hasLoadedRef.current) setLoading(true);
 
     const unsubs: (() => void)[] = [];
 
     function onResponse() {
       respondedRef.current += 1;
       if (respondedRef.current >= expectedRef.current) {
+        hasLoadedRef.current = true;
         setLoading(false);
       }
     }

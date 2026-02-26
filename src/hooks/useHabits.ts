@@ -11,7 +11,6 @@ import {
 } from '../services/habits.service';
 import { calculateStreak } from '../lib/streak-utils';
 import { getToday } from '../lib/date-utils';
-import { PRESET_HABITS } from '../config/constants';
 import type { Habit } from '../types/habit';
 
 export function useHabits() {
@@ -66,38 +65,6 @@ export function useHabits() {
     });
   }
 
-  async function addPresetHabits() {
-    if (!userId || !coupleId) {
-      console.error('addPresetHabits: missing userId or coupleId', { userId, coupleId });
-      return;
-    }
-    try {
-      for (let i = 0; i < PRESET_HABITS.length; i++) {
-        const preset = PRESET_HABITS[i];
-        await createHabit({
-          userId,
-          coupleId,
-          name: preset.name,
-          type: preset.type,
-          category: preset.category,
-          icon: preset.icon,
-          color: preset.color,
-          isPreset: true,
-          frequency: preset.frequency,
-          customDays: 'customDays' in preset ? [...preset.customDays] : undefined,
-          goal: 'goal' in preset ? { ...preset.goal } : undefined,
-          scope: preset.scope,
-          completionMode: preset.completionMode,
-          isActive: true,
-          order: i,
-          createdAt: Date.now(),
-        });
-      }
-    } catch (err) {
-      console.error('Error creating preset habits:', err);
-    }
-  }
-
   async function addCustomHabit(data: {
     name: string;
     type: Habit['type'];
@@ -147,7 +114,6 @@ export function useHabits() {
     isCompletedToday,
     getLogsForHabit,
     getPartnerLog,
-    addPresetHabits,
     addCustomHabit,
     removeHabit,
     editHabit,

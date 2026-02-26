@@ -1,8 +1,20 @@
-import { Outlet, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { useLocation, useOutlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from './Header';
 import { BottomNav } from './BottomNav';
 import { InstallBanner } from './InstallBanner';
+
+/**
+ * Freezes the outlet content per animation instance so the exiting page
+ * keeps showing its own content while the entering page mounts fresh.
+ * Fixes blank-page bug caused by AnimatePresence mode="wait" + <Outlet />.
+ */
+function FrozenOutlet() {
+  const outlet = useOutlet();
+  const [frozen] = useState(outlet);
+  return frozen;
+}
 
 export function AppLayout() {
   const location = useLocation();
@@ -20,7 +32,7 @@ export function AppLayout() {
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
           >
-            <Outlet />
+            <FrozenOutlet />
           </motion.div>
         </AnimatePresence>
       </main>

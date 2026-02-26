@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHabits } from '../hooks/useHabits';
 import { useStreaks } from '../hooks/useStreaks';
@@ -30,7 +30,6 @@ export function HabitsPage() {
     partnerTodayLogs,
     loading,
     toggle,
-    addPresetHabits,
     addCustomHabit,
     getLogsForHabit,
   } = useHabits();
@@ -53,15 +52,20 @@ export function HabitsPage() {
     return (
       <div className="py-8">
         <EmptyState
-          icon={<Sparkles size={48} />}
+          icon={<Plus size={48} />}
           title="¡Empezá con tus hábitos!"
-          description="Cargá los hábitos predefinidos para comenzar a trackear."
+          description="Creá tu primer hábito para comenzar a trackear tu progreso."
           action={
-            <Button onClick={addPresetHabits} size="lg">
-              <Sparkles size={18} />
-              Cargar hábitos iniciales
+            <Button onClick={() => setShowForm(true)} size="lg">
+              <Plus size={18} />
+              Crear hábito
             </Button>
           }
+        />
+        <HabitForm
+          open={showForm}
+          onClose={() => setShowForm(false)}
+          onSubmit={addCustomHabit}
         />
       </div>
     );

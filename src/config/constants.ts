@@ -1,54 +1,5 @@
 import type { AchievementDef } from '../types/shared';
 
-export const PRESET_HABITS = [
-  {
-    name: 'No siesta',
-    type: 'boolean' as const,
-    category: 'sleep' as const,
-    icon: 'Sun',
-    color: '#f97316',
-    frequency: 'daily' as const,
-    description: 'No dormir siesta para estar cansados a la noche',
-    scope: 'shared' as const,
-    completionMode: 'both' as const,
-  },
-  {
-    name: 'No usar tanto el celular en la cama',
-    type: 'boolean' as const,
-    category: 'sleep' as const,
-    icon: 'PhoneOff',
-    color: '#8b5cf6',
-    frequency: 'daily' as const,
-    description: 'Reducir el uso del celular cuando estamos en la cama',
-    scope: 'shared' as const,
-    completionMode: 'both' as const,
-  },
-  {
-    name: 'Despertar temprano',
-    type: 'time' as const,
-    category: 'sleep' as const,
-    icon: 'AlarmClock',
-    color: '#22c55e',
-    frequency: 'daily' as const,
-    goal: { targetTime: '08:00', comparison: 'before' as const },
-    description: 'Levantarse antes de las 8:00',
-    scope: 'shared' as const,
-    completionMode: 'both' as const,
-  },
-  {
-    name: 'Salir a correr (CaCo)',
-    type: 'boolean' as const,
-    category: 'fitness' as const,
-    icon: 'Footprints',
-    color: '#06b6d4',
-    frequency: 'custom' as const,
-    customDays: [1, 3, 5], // Lun, Mié, Vie
-    scope: 'shared' as const,
-    completionMode: 'both' as const,
-    description: '3 veces por semana según el plan CaCo',
-  },
-] as const;
-
 export const ACHIEVEMENT_DEFINITIONS: AchievementDef[] = [
   { id: 'first_habit', name: 'Primer paso', description: 'Completaste tu primer hábito', icon: '🌱', type: 'individual', condition: 'complete_1_habit' },
   { id: 'streak_3', name: 'En racha', description: '3 días seguidos con un hábito', icon: '⚡', type: 'individual', condition: 'streak_3' },

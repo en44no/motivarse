@@ -3,7 +3,6 @@ import { useStreaks } from '../hooks/useStreaks';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useRunning } from '../hooks/useRunning';
 import { TodaySummary } from '../components/dashboard/TodaySummary';
-import { MotivationalQuote } from '../components/dashboard/MotivationalQuote';
 import { PartnerStatus } from '../components/dashboard/PartnerStatus';
 import { StreakHighlight } from '../components/dashboard/StreakHighlight';
 import { RunningProgress } from '../components/dashboard/RunningProgress';
@@ -36,8 +35,6 @@ export function DashboardPage() {
         completedCount={completedCount}
         totalCount={myHabits.length}
       />
-
-      <MotivationalQuote />
 
       {partnerName && (
         <PartnerStatus
