@@ -15,7 +15,7 @@ export function ProfilePage() {
   const { user } = useAuthContext();
   const { streaks } = useStreaks();
   const { progress } = useRunning();
-  const { couple, partnerName } = useCoupleContext();
+  const { couple, partnerName, loading: coupleLoading } = useCoupleContext();
   const { canInstall, install, isInstalled } = usePWA();
   const [partnerEmail, setPartnerEmail] = useState('');
 
@@ -57,7 +57,7 @@ export function ProfilePage() {
       </div>
 
       {/* Partner linking */}
-      {!couple && (
+      {!coupleLoading && !couple && (
         <Card>
           <div className="flex items-center gap-3 mb-3">
             <Link size={20} className="text-accent" />
