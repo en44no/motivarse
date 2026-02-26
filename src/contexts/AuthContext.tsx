@@ -4,6 +4,25 @@ import { auth } from '../config/firebase';
 import type { UserProfile } from '../types/user';
 import { subscribeToUser } from '../services/user.service';
 
+const PROFILE_CACHE_KEY = 'motivarse_profile';
+
+function getCachedProfile(): UserProfile | null {
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function cacheProfile(profile: UserProfile | null) {
+  try {
+    if (profile) {
+      localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile));
+    } else {
+      localStorage.removeItem(PROFILE_CACHE_KEY);
+    }
+  } catch { /* ignore */ }
+}
+
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
@@ -14,7 +33,7 @@ const AuthContext = createContext<AuthContextType>({ user: null, profile: null, 
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(getCachedProfile);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(u);
       if (!u) {
         setProfile(null);
+        cacheProfile(null);
         setLoading(false);
       }
     });
@@ -31,8 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
 
-    // Timeout: si Firestore no responde en 5s, solo dejar de bloquear loading
-    // NO crear perfil falso con coupleId:null — eso rompe la vinculación de pareja
+    // If we have a cached profile, stop blocking immediately
+    const cached = getCachedProfile();
+    if (cached && cached.uid === user.uid) {
+      setLoading(false);
+    }
+
+    // Timeout: if Firestore doesn't respond in 5s, stop blocking
     const timeout = setTimeout(() => {
       setLoading(false);
     }, 5000);
@@ -40,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsub = subscribeToUser(user.uid, (p) => {
       clearTimeout(timeout);
       setProfile(p);
+      cacheProfile(p);
       setLoading(false);
     });
 

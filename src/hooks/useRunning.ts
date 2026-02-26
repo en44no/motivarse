@@ -21,7 +21,7 @@ export function useRunning() {
   const [progress, setProgress] = useState<RunProgress | null>(_progressCache);
   const [loading, setLoading] = useState(!_runHasLoaded);
 
-  const coupleId = profile?.coupleId || user?.uid || null;
+  const coupleId = profile?.coupleId || null;
   const userId = user?.uid;
 
   useEffect(() => {

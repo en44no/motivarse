@@ -18,16 +18,22 @@ const CoupleContext = createContext<CoupleContextType>({
 });
 
 export function CoupleProvider({ children }: { children: ReactNode }) {
-  const { profile } = useAuthContext();
+  const { profile, loading: authLoading } = useAuthContext();
   const [couple, setCouple] = useState<Couple | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for auth to finish before making any decisions
+    if (authLoading) return;
+
+    // Profile loaded but no coupleId → user genuinely has no couple
     if (!profile?.coupleId) {
       setCouple(null);
       setLoading(false);
       return;
     }
+
+    // Have coupleId → subscribe
     let didRespond = false;
     const timeout = setTimeout(() => {
       if (!didRespond) setLoading(false);
@@ -39,7 +45,7 @@ export function CoupleProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
     return () => { clearTimeout(timeout); unsub(); };
-  }, [profile?.coupleId]);
+  }, [profile?.coupleId, authLoading]);
 
   const partnerId = profile?.partnerId || null;
   const partnerName = couple && profile

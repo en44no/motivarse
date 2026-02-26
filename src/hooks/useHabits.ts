@@ -28,8 +28,8 @@ export function useHabits() {
   const [logs, setLogs] = useState<HabitLog[]>(_logsCache);
   const [loading, setLoading] = useState(!_hasLoaded);
 
-  // Use coupleId if linked, otherwise use own uid so app works solo
-  const coupleId = profile?.coupleId || user?.uid || null;
+  // Use coupleId from profile — don't fallback to user.uid to avoid wrong subscriptions
+  const coupleId = profile?.coupleId || null;
   const userId = user?.uid;
 
   // Subscribe to habits (with 5s timeout to avoid infinite loading)

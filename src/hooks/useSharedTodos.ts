@@ -13,7 +13,7 @@ export function useSharedTodos() {
   const [todos, setTodos] = useState<SharedTodo[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const coupleId = profile?.coupleId || user?.uid || null;
+  const coupleId = profile?.coupleId || null;
 
   useEffect(() => {
     if (!coupleId) {

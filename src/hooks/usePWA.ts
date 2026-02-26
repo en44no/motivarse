@@ -5,6 +5,13 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+// Capture the event at module level so it's never missed
+let _deferredPrompt: BeforeInstallPromptEvent | null = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _deferredPrompt = e as BeforeInstallPromptEvent;
+});
+
 function getIsIOS(): boolean {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
 }
@@ -15,17 +22,24 @@ function getIsStandalone(): boolean {
 }
 
 export function usePWA() {
-  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(_deferredPrompt);
   const [isInstalled, setIsInstalled] = useState(getIsStandalone);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const isIOS = getIsIOS();
 
   useEffect(() => {
+    // Listen for future events (in case it fires after mount)
     const handler = (e: Event) => {
       e.preventDefault();
+      _deferredPrompt = e as BeforeInstallPromptEvent;
       setInstallPrompt(e as BeforeInstallPromptEvent);
     };
     window.addEventListener('beforeinstallprompt', handler);
+
+    // If we captured one before mount, use it
+    if (_deferredPrompt) {
+      setInstallPrompt(_deferredPrompt);
+    }
 
     const onOnline = () => setIsOnline(true);
     const onOffline = () => setIsOnline(false);
@@ -46,10 +60,11 @@ export function usePWA() {
     if (outcome === 'accepted') {
       setIsInstalled(true);
     }
+    _deferredPrompt = null;
     setInstallPrompt(null);
   }
 
-  // canInstall: native prompt available OR iOS Safari (show manual instructions)
+  // Show install option: native prompt available OR iOS Safari (manual instructions)
   const canInstall = !!installPrompt || (isIOS && !isInstalled);
 
   return { canInstall, isInstalled, isOnline, isIOS, install };
