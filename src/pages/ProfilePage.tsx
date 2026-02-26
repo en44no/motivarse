@@ -23,7 +23,9 @@ export function ProfilePage() {
   const bestStreak = streaks.reduce((best, s) => Math.max(best, s.longestStreak), 0);
 
   // Use profile.coupleId directly — no need to wait for CoupleContext
+  // profile=null means still loading, don't assume "no partner"
   const hasPartner = !!profile?.coupleId;
+  const profileLoaded = !!profile;
 
   return (
     <div className="space-y-4 py-4">
@@ -59,8 +61,8 @@ export function ProfilePage() {
         </Card>
       </div>
 
-      {/* Partner linking */}
-      {!hasPartner && (
+      {/* Partner linking — only show "vincular" when profile loaded and no couple */}
+      {profileLoaded && !hasPartner && (
         <Card>
           <div className="flex items-center gap-3 mb-3">
             <Link size={20} className="text-accent" />

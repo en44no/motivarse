@@ -16,6 +16,7 @@ export function useSharedTodos() {
   const coupleId = profile?.coupleId || null;
 
   useEffect(() => {
+    if (!profile) return;
     if (!coupleId) {
       setLoading(false);
       return;
@@ -25,7 +26,7 @@ export function useSharedTodos() {
       setLoading(false);
     });
     return unsub;
-  }, [coupleId]);
+  }, [coupleId, profile]);
 
   const pending = todos.filter((t) => !t.completed);
   const completed = todos.filter((t) => t.completed);

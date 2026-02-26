@@ -25,6 +25,7 @@ export function useRunning() {
   const userId = user?.uid;
 
   useEffect(() => {
+    if (!profile) return;
     if (!coupleId) {
       setLoading(false);
       return;
@@ -42,7 +43,7 @@ export function useRunning() {
       setLoading(false);
     });
     return () => { clearTimeout(timeout); unsub(); };
-  }, [coupleId]);
+  }, [coupleId, profile]);
 
   useEffect(() => {
     if (!userId) return;

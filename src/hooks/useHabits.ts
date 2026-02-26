@@ -34,6 +34,9 @@ export function useHabits() {
 
   // Subscribe to habits (with 5s timeout to avoid infinite loading)
   useEffect(() => {
+    // profile not loaded yet → stay loading, don't show empty
+    if (!profile) return;
+    // profile loaded but no coupleId → genuinely no couple
     if (!coupleId) {
       setLoading(false);
       return;
@@ -56,7 +59,7 @@ export function useHabits() {
       clearTimeout(timeout);
       unsub();
     };
-  }, [coupleId]);
+  }, [coupleId, profile]);
 
   // Subscribe to logs for last 35 days (for month view + streaks)
   useEffect(() => {
