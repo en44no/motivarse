@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHabits } from '../hooks/useHabits';
@@ -13,8 +13,6 @@ import { HabitList } from '../components/habits/HabitList';
 import { HabitWeekView } from '../components/habits/HabitWeekView';
 import { HabitMonthView } from '../components/habits/HabitMonthView';
 import { HabitForm } from '../components/habits/HabitForm';
-import { getToday } from '../lib/date-utils';
-
 const TABS = [
   { id: 'today', label: 'Hoy' },
   { id: 'week', label: 'Semana' },
@@ -28,7 +26,6 @@ export function HabitsPage() {
   const { partnerName } = useCoupleContext();
   const {
     myHabits,
-    logs,
     todayLogs,
     partnerTodayLogs,
     loading,
@@ -37,9 +34,8 @@ export function HabitsPage() {
     addCustomHabit,
     getLogsForHabit,
   } = useHabits();
-  const { streaks, getStreak } = useStreaks();
+  const { streaks } = useStreaks();
 
-  const today = getToday();
   const userId = user?.uid;
 
   if (loading) {

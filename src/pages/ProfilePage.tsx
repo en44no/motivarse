@@ -23,9 +23,9 @@ export function ProfilePage() {
   const bestStreak = streaks.reduce((best, s) => Math.max(best, s.longestStreak), 0);
 
   // Use profile.coupleId OR couple from CoupleContext (cached in localStorage)
-  // This way even if profile is slow to load, cached couple still shows
   const hasPartner = !!profile?.coupleId || !!couple;
-  const profileLoaded = !!profile || !!user;
+  // Only show "vincular pareja" when profile explicitly loaded without coupleId
+  const profileLoaded = !!profile;
 
   return (
     <div className="space-y-4 py-4">

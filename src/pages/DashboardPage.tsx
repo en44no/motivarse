@@ -14,7 +14,7 @@ export function DashboardPage() {
   const { myHabits, todayProgress, partnerTodayLogs, loading: habitsLoading } = useHabits();
   const { bestStreak } = useStreaks();
   const { partnerName } = useCoupleContext();
-  const { progress, loading: runLoading } = useRunning();
+  const { progress } = useRunning();
   const partnerCompletedToday = partnerTodayLogs.filter((l) => l.completed).length;
 
   const completedCount = Math.round((todayProgress / 100) * myHabits.length);

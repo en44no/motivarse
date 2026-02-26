@@ -34,18 +34,23 @@ function setCachedCouple(couple: Couple | null) {
 }
 
 export function CoupleProvider({ children }: { children: ReactNode }) {
-  const { profile, loading: authLoading } = useAuthContext();
+  const { user, profile, loading: authLoading } = useAuthContext();
   const [couple, setCouple] = useState<Couple | null>(getCachedCouple);
-  const [loading, setLoading] = useState(() => {
-    // If we have a cached couple, we're not "loading" from the user's perspective
-    return !getCachedCouple();
-  });
+  const [loading, setLoading] = useState(() => !getCachedCouple());
 
   useEffect(() => {
     // Wait for auth to finish before making any decisions
     if (authLoading) return;
 
-    // Profile not loaded yet → keep current state (cached couple survives)
+    // No user = logged out → clear everything including cache
+    if (!user) {
+      setCouple(null);
+      setCachedCouple(null);
+      setLoading(false);
+      return;
+    }
+
+    // User exists but profile not loaded yet → keep cached couple, stay patient
     if (!profile) {
       setLoading(false);
       return;
@@ -72,7 +77,7 @@ export function CoupleProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
     return () => { clearTimeout(timeout); unsub(); };
-  }, [profile?.coupleId, authLoading]);
+  }, [user, profile?.coupleId, authLoading]);
 
   const partnerId = profile?.partnerId || null;
   const partnerName = couple && profile
