@@ -12,11 +12,11 @@ function getGreeting(): string {
 }
 
 export function Header() {
-  const { profile } = useAuthContext();
+  const { profile, user } = useAuthContext();
   const { partnerName } = useCoupleContext();
   const { isOnline } = usePWA();
 
-  const firstName = profile?.displayName?.split(' ')[0] || 'Usuario';
+  const firstName = profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Usuario';
 
   return (
     <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-lg px-4 py-3">

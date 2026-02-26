@@ -30,11 +30,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user) return;
+
+    // Timeout: si Firestore no responde en 5s, usar datos de Firebase Auth
+    const timeout = setTimeout(() => {
+      setProfile((prev) => prev ?? {
+        uid: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || 'Usuario',
+        partnerId: null,
+        coupleId: null,
+        createdAt: Date.now(),
+        settings: { notifications: true },
+      });
+      setLoading(false);
+    }, 5000);
+
     const unsub = subscribeToUser(user.uid, (p) => {
+      clearTimeout(timeout);
       setProfile(p);
       setLoading(false);
     });
-    return unsub;
+
+    return () => { clearTimeout(timeout); unsub(); };
   }, [user]);
 
   return (
