@@ -5,10 +5,20 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+function getIsIOS(): boolean {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+}
+
+function getIsStandalone(): boolean {
+  return window.matchMedia('(display-mode: standalone)').matches
+    || (navigator as any).standalone === true;
+}
+
 export function usePWA() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(getIsStandalone);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const isIOS = getIsIOS();
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -16,11 +26,6 @@ export function usePWA() {
       setInstallPrompt(e as BeforeInstallPromptEvent);
     };
     window.addEventListener('beforeinstallprompt', handler);
-
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-    }
 
     const onOnline = () => setIsOnline(true);
     const onOffline = () => setIsOnline(false);
@@ -44,5 +49,8 @@ export function usePWA() {
     setInstallPrompt(null);
   }
 
-  return { canInstall: !!installPrompt, isInstalled, isOnline, install };
+  // canInstall: native prompt available OR iOS Safari (show manual instructions)
+  const canInstall = !!installPrompt || (isIOS && !isInstalled);
+
+  return { canInstall, isInstalled, isOnline, isIOS, install };
 }

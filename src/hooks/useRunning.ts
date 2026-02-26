@@ -10,11 +10,16 @@ import { CACO_PLAN, SESSIONS_PER_WEEK } from '../lib/caco-plan';
 import { getToday } from '../lib/date-utils';
 import type { RunLog, RunProgress } from '../types/running';
 
+// Module-level cache so data persists across page navigations
+let _runLogsCache: RunLog[] = [];
+let _progressCache: RunProgress | null = null;
+let _runHasLoaded = false;
+
 export function useRunning() {
   const { user, profile } = useAuthContext();
-  const [runLogs, setRunLogs] = useState<RunLog[]>([]);
-  const [progress, setProgress] = useState<RunProgress | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [runLogs, setRunLogs] = useState<RunLog[]>(_runLogsCache);
+  const [progress, setProgress] = useState<RunProgress | null>(_progressCache);
+  const [loading, setLoading] = useState(!_runHasLoaded);
 
   const coupleId = profile?.coupleId || user?.uid || null;
   const userId = user?.uid;
@@ -31,6 +36,8 @@ export function useRunning() {
     const unsub = subscribeToRunLogs(coupleId, (logs) => {
       didRespond = true;
       clearTimeout(timeout);
+      _runLogsCache = logs;
+      _runHasLoaded = true;
       setRunLogs(logs);
       setLoading(false);
     });
@@ -39,7 +46,10 @@ export function useRunning() {
 
   useEffect(() => {
     if (!userId) return;
-    const unsub = subscribeToRunProgress(userId, setProgress);
+    const unsub = subscribeToRunProgress(userId, (p) => {
+      _progressCache = p;
+      setProgress(p);
+    });
     return unsub;
   }, [userId]);
 

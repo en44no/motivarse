@@ -16,12 +16,17 @@ import { PRESET_HABITS } from '../config/constants';
 import type { Habit, HabitLog } from '../types/habit';
 import { subDays } from 'date-fns';
 
+// Module-level cache so data persists across page navigations
+let _habitsCache: Habit[] = [];
+let _logsCache: HabitLog[] = [];
+let _hasLoaded = false;
+
 export function useHabits() {
   const { user, profile } = useAuthContext();
   const { couple } = useCoupleContext();
-  const [habits, setHabits] = useState<Habit[]>([]);
-  const [logs, setLogs] = useState<HabitLog[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [habits, setHabits] = useState<Habit[]>(_habitsCache);
+  const [logs, setLogs] = useState<HabitLog[]>(_logsCache);
+  const [loading, setLoading] = useState(!_hasLoaded);
 
   // Use coupleId if linked, otherwise use own uid so app works solo
   const coupleId = profile?.coupleId || user?.uid || null;
@@ -42,6 +47,8 @@ export function useHabits() {
     const unsub = subscribeToHabits(coupleId, (h) => {
       didRespond = true;
       clearTimeout(timeout);
+      _habitsCache = h;
+      _hasLoaded = true;
       setHabits(h);
       setLoading(false);
     });
@@ -56,7 +63,10 @@ export function useHabits() {
     if (!coupleId) return;
     const endDate = getToday();
     const startDate = formatDate(subDays(new Date(), 35));
-    const unsub = subscribeToHabitLogs(coupleId, startDate, endDate, setLogs);
+    const unsub = subscribeToHabitLogs(coupleId, startDate, endDate, (l) => {
+      _logsCache = l;
+      setLogs(l);
+    });
     return unsub;
   }, [coupleId]);
 

@@ -3,13 +3,18 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { subscribeToStreaks } from '../services/habits.service';
 import type { HabitStreak } from '../types/habit';
 
+let _streaksCache: HabitStreak[] = [];
+
 export function useStreaks() {
   const { user } = useAuthContext();
-  const [streaks, setStreaks] = useState<HabitStreak[]>([]);
+  const [streaks, setStreaks] = useState<HabitStreak[]>(_streaksCache);
 
   useEffect(() => {
     if (!user) return;
-    const unsub = subscribeToStreaks(user.uid, setStreaks);
+    const unsub = subscribeToStreaks(user.uid, (s) => {
+      _streaksCache = s;
+      setStreaks(s);
+    });
     return unsub;
   }, [user]);
 
