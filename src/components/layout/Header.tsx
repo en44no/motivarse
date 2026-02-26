@@ -19,7 +19,7 @@ export function Header() {
   const firstName = profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Usuario';
 
   return (
-    <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-lg px-4 py-3">
+    <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-lg px-4 py-3 safe-top">
       <div className="flex items-center justify-between max-w-lg mx-auto">
         <div>
           <p className="text-xs text-text-muted">{getGreeting()}</p>

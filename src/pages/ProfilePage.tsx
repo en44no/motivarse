@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { LogOut, Link, Download, User, Flame, Footprints, Trophy, Smartphone } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useAuthContext } from '../contexts/AuthContext';
 import { useStreaks } from '../hooks/useStreaks';
 import { useRunning } from '../hooks/useRunning';
 import { useCoupleContext } from '../contexts/CoupleContext';
@@ -11,6 +12,7 @@ import { Input } from '../components/ui/Input';
 
 export function ProfilePage() {
   const { profile, logout, linkPartner, error, isSubmitting } = useAuth();
+  const { user } = useAuthContext();
   const { streaks } = useStreaks();
   const { progress } = useRunning();
   const { couple, partnerName } = useCoupleContext();
@@ -29,7 +31,7 @@ export function ProfilePage() {
             <User size={28} className="text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-text-primary">{profile?.displayName}</h2>
+            <h2 className="text-lg font-bold text-text-primary">{profile?.displayName || user?.displayName || 'Usuario'}</h2>
             <p className="text-sm text-text-muted">{profile?.email}</p>
           </div>
         </div>

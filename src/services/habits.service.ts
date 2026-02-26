@@ -41,12 +41,11 @@ export function subscribeToHabitLogs(
   const q = query(
     logsCol,
     where('coupleId', '==', coupleId),
+    where('date', '>=', startDate),
+    where('date', '<=', endDate),
   );
   return onSnapshot(q, (snap) => {
-    const logs = snap.docs
-      .map((d) => ({ id: d.id, ...d.data() } as HabitLog))
-      .filter((l) => l.date >= startDate && l.date <= endDate);
-    callback(logs);
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as HabitLog)));
   }, (error) => {
     console.error('Error subscribing to habit logs:', error);
     callback([]);

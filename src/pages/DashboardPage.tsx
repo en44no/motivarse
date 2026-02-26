@@ -1,6 +1,6 @@
 import { useHabits } from '../hooks/useHabits';
 import { useStreaks } from '../hooks/useStreaks';
-import { usePartner } from '../hooks/usePartner';
+import { useCoupleContext } from '../contexts/CoupleContext';
 import { useRunning } from '../hooks/useRunning';
 import { TodaySummary } from '../components/dashboard/TodaySummary';
 import { MotivationalQuote } from '../components/dashboard/MotivationalQuote';
@@ -11,10 +11,11 @@ import { QuickActions } from '../components/dashboard/QuickActions';
 import { CardSkeleton } from '../components/ui/Skeleton';
 
 export function DashboardPage() {
-  const { myHabits, todayProgress, loading: habitsLoading } = useHabits();
+  const { myHabits, todayProgress, partnerTodayLogs, loading: habitsLoading } = useHabits();
   const { bestStreak } = useStreaks();
-  const { partnerName, partnerCompletedToday } = usePartner();
+  const { partnerName } = useCoupleContext();
   const { progress, loading: runLoading } = useRunning();
+  const partnerCompletedToday = partnerTodayLogs.filter((l) => l.completed).length;
 
   const completedCount = Math.round((todayProgress / 100) * myHabits.length);
 

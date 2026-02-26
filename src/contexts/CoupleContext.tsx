@@ -28,11 +28,17 @@ export function CoupleProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
+    let didRespond = false;
+    const timeout = setTimeout(() => {
+      if (!didRespond) setLoading(false);
+    }, 4000);
     const unsub = subscribeToCouple(profile.coupleId, (c) => {
+      didRespond = true;
+      clearTimeout(timeout);
       setCouple(c);
       setLoading(false);
     });
-    return unsub;
+    return () => { clearTimeout(timeout); unsub(); };
   }, [profile?.coupleId]);
 
   const partnerId = profile?.partnerId || null;

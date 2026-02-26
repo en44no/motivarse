@@ -27,17 +27,28 @@ export function useHabits() {
   const coupleId = profile?.coupleId || user?.uid || null;
   const userId = user?.uid;
 
-  // Subscribe to habits
+  // Subscribe to habits (with 5s timeout to avoid infinite loading)
   useEffect(() => {
     if (!coupleId) {
       setLoading(false);
       return;
     }
+    let didRespond = false;
+    const timeout = setTimeout(() => {
+      if (!didRespond) {
+        setLoading(false);
+      }
+    }, 5000);
     const unsub = subscribeToHabits(coupleId, (h) => {
+      didRespond = true;
+      clearTimeout(timeout);
       setHabits(h);
       setLoading(false);
     });
-    return unsub;
+    return () => {
+      clearTimeout(timeout);
+      unsub();
+    };
   }, [coupleId]);
 
   // Subscribe to logs for last 35 days (for month view + streaks)

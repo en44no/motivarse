@@ -62,6 +62,10 @@ input:-webkit-autofill {
   -webkit-text-fill-color: var(--color-text-primary) !important;
 }
 
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
 .safe-bottom {
   padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
 }

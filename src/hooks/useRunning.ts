@@ -24,11 +24,17 @@ export function useRunning() {
       setLoading(false);
       return;
     }
+    let didRespond = false;
+    const timeout = setTimeout(() => {
+      if (!didRespond) setLoading(false);
+    }, 5000);
     const unsub = subscribeToRunLogs(coupleId, (logs) => {
+      didRespond = true;
+      clearTimeout(timeout);
       setRunLogs(logs);
       setLoading(false);
     });
-    return unsub;
+    return () => { clearTimeout(timeout); unsub(); };
   }, [coupleId]);
 
   useEffect(() => {
