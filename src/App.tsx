@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { CoupleProvider } from './contexts/CoupleContext';
+import { DataProvider } from './contexts/DataContext';
 import { AuthGuard } from './components/layout/AuthGuard';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
@@ -17,6 +18,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <CoupleProvider>
+        <DataProvider>
           <Routes>
             <Route path={ROUTES.LOGIN} element={<LoginPage />} />
             <Route
@@ -45,6 +47,7 @@ export default function App() {
               },
             }}
           />
+        </DataProvider>
         </CoupleProvider>
       </AuthProvider>
     </BrowserRouter>

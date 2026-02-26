@@ -1,9 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
+import { useDataContext } from '../contexts/DataContext';
 import {
-  subscribeToHabits,
-  subscribeToHabitLogs,
   createHabit,
   toggleHabitLog,
   updateStreak,
@@ -11,67 +10,17 @@ import {
   updateHabit,
 } from '../services/habits.service';
 import { calculateStreak } from '../lib/streak-utils';
-import { getToday, formatDate } from '../lib/date-utils';
+import { getToday } from '../lib/date-utils';
 import { PRESET_HABITS } from '../config/constants';
-import type { Habit, HabitLog } from '../types/habit';
-import { subDays } from 'date-fns';
-
-// Module-level cache so data persists across page navigations
-let _habitsCache: Habit[] = [];
-let _logsCache: HabitLog[] = [];
-let _hasLoaded = false;
+import type { Habit } from '../types/habit';
 
 export function useHabits() {
   const { user, profile } = useAuthContext();
   const { couple } = useCoupleContext();
-  const [habits, setHabits] = useState<Habit[]>(_habitsCache);
-  const [logs, setLogs] = useState<HabitLog[]>(_logsCache);
-  const [loading, setLoading] = useState(!_hasLoaded);
+  const { habits, habitLogs: logs, loading } = useDataContext();
 
-  // Use coupleId from profile — don't fallback to user.uid to avoid wrong subscriptions
   const coupleId = profile?.coupleId || null;
   const userId = user?.uid;
-
-  // Subscribe to habits (with 5s timeout to avoid infinite loading)
-  useEffect(() => {
-    // profile not loaded yet → stay loading, don't show empty
-    if (!profile) return;
-    // profile loaded but no coupleId → genuinely no couple
-    if (!coupleId) {
-      setLoading(false);
-      return;
-    }
-    let didRespond = false;
-    const timeout = setTimeout(() => {
-      if (!didRespond) {
-        setLoading(false);
-      }
-    }, 5000);
-    const unsub = subscribeToHabits(coupleId, (h) => {
-      didRespond = true;
-      clearTimeout(timeout);
-      _habitsCache = h;
-      _hasLoaded = true;
-      setHabits(h);
-      setLoading(false);
-    });
-    return () => {
-      clearTimeout(timeout);
-      unsub();
-    };
-  }, [coupleId, profile]);
-
-  // Subscribe to logs for last 35 days (for month view + streaks)
-  useEffect(() => {
-    if (!coupleId) return;
-    const endDate = getToday();
-    const startDate = formatDate(subDays(new Date(), 35));
-    const unsub = subscribeToHabitLogs(coupleId, startDate, endDate, (l) => {
-      _logsCache = l;
-      setLogs(l);
-    });
-    return unsub;
-  }, [coupleId]);
 
   // My habits: habits I created + shared habits (regardless of creator)
   const myHabits = habits.filter((h) => h.userId === userId || h.scope === 'shared');
@@ -81,7 +30,7 @@ export function useHabits() {
   const partnerTodayLogs = todayLogs.filter((l) => l.userId !== userId);
 
   const getPartnerLog = useCallback(
-    (habitId: string): HabitLog | undefined =>
+    (habitId: string) =>
       todayLogs.find((l) => l.habitId === habitId && l.userId !== userId && l.completed),
     [todayLogs, userId]
   );

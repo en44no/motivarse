@@ -1,58 +1,15 @@
-import { useEffect, useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
-import {
-  subscribeToRunLogs,
-  subscribeToRunProgress,
-  addRunLog,
-  updateRunProgress,
-} from '../services/running.service';
+import { useDataContext } from '../contexts/DataContext';
+import { addRunLog, updateRunProgress } from '../services/running.service';
 import { CACO_PLAN, SESSIONS_PER_WEEK } from '../lib/caco-plan';
 import { getToday } from '../lib/date-utils';
-import type { RunLog, RunProgress } from '../types/running';
-
-// Module-level cache so data persists across page navigations
-let _runLogsCache: RunLog[] = [];
-let _progressCache: RunProgress | null = null;
-let _runHasLoaded = false;
 
 export function useRunning() {
   const { user, profile } = useAuthContext();
-  const [runLogs, setRunLogs] = useState<RunLog[]>(_runLogsCache);
-  const [progress, setProgress] = useState<RunProgress | null>(_progressCache);
-  const [loading, setLoading] = useState(!_runHasLoaded);
+  const { runLogs, runProgress: progress, loading } = useDataContext();
 
   const coupleId = profile?.coupleId || null;
   const userId = user?.uid;
-
-  useEffect(() => {
-    if (!profile) return;
-    if (!coupleId) {
-      setLoading(false);
-      return;
-    }
-    let didRespond = false;
-    const timeout = setTimeout(() => {
-      if (!didRespond) setLoading(false);
-    }, 5000);
-    const unsub = subscribeToRunLogs(coupleId, (logs) => {
-      didRespond = true;
-      clearTimeout(timeout);
-      _runLogsCache = logs;
-      _runHasLoaded = true;
-      setRunLogs(logs);
-      setLoading(false);
-    });
-    return () => { clearTimeout(timeout); unsub(); };
-  }, [coupleId, profile]);
-
-  useEffect(() => {
-    if (!userId) return;
-    const unsub = subscribeToRunProgress(userId, (p) => {
-      _progressCache = p;
-      setProgress(p);
-    });
-    return unsub;
-  }, [userId]);
 
   const myLogs = runLogs.filter((l) => l.userId === userId);
   const partnerLogs = runLogs.filter((l) => l.userId !== userId);

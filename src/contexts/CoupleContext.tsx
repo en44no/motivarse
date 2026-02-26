@@ -17,10 +17,29 @@ const CoupleContext = createContext<CoupleContextType>({
   loading: true,
 });
 
+const COUPLE_CACHE_KEY = 'motivarse_couple_cache';
+
+function getCachedCouple(): Couple | null {
+  try {
+    const raw = localStorage.getItem(COUPLE_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function setCachedCouple(couple: Couple | null) {
+  try {
+    if (couple) localStorage.setItem(COUPLE_CACHE_KEY, JSON.stringify(couple));
+    else localStorage.removeItem(COUPLE_CACHE_KEY);
+  } catch { /* ignore */ }
+}
+
 export function CoupleProvider({ children }: { children: ReactNode }) {
   const { profile, loading: authLoading } = useAuthContext();
-  const [couple, setCouple] = useState<Couple | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [couple, setCouple] = useState<Couple | null>(getCachedCouple);
+  const [loading, setLoading] = useState(() => {
+    // If we have a cached couple, we're not "loading" from the user's perspective
+    return !getCachedCouple();
+  });
 
   useEffect(() => {
     // Wait for auth to finish before making any decisions
@@ -29,6 +48,7 @@ export function CoupleProvider({ children }: { children: ReactNode }) {
     // Profile loaded but no coupleId → user genuinely has no couple
     if (!profile?.coupleId) {
       setCouple(null);
+      setCachedCouple(null);
       setLoading(false);
       return;
     }
@@ -42,6 +62,7 @@ export function CoupleProvider({ children }: { children: ReactNode }) {
       didRespond = true;
       clearTimeout(timeout);
       setCouple(c);
+      setCachedCouple(c);
       setLoading(false);
     });
     return () => { clearTimeout(timeout); unsub(); };

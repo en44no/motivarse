@@ -1,32 +1,13 @@
-import { useEffect, useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
-import {
-  subscribeToTodos,
-  addTodo,
-  updateTodo,
-  deleteTodo,
-} from '../services/shared.service';
-import type { SharedTodo, TodoPriority } from '../types/shared';
+import { useDataContext } from '../contexts/DataContext';
+import { addTodo, updateTodo, deleteTodo } from '../services/shared.service';
+import type { TodoPriority } from '../types/shared';
 
 export function useSharedTodos() {
   const { user, profile } = useAuthContext();
-  const [todos, setTodos] = useState<SharedTodo[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { todos, loading } = useDataContext();
 
   const coupleId = profile?.coupleId || null;
-
-  useEffect(() => {
-    if (!profile) return;
-    if (!coupleId) {
-      setLoading(false);
-      return;
-    }
-    const unsub = subscribeToTodos(coupleId, (t) => {
-      setTodos(t);
-      setLoading(false);
-    });
-    return unsub;
-  }, [coupleId, profile]);
 
   const pending = todos.filter((t) => !t.completed);
   const completed = todos.filter((t) => t.completed);
