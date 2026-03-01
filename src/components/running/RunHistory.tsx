@@ -1,15 +1,44 @@
-import { Clock, MapPin, Gauge } from 'lucide-react';
+import { useRef } from 'react';
+import { Clock, MapPin, Gauge, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card } from '../ui/Card';
 import { formatDisplayDate } from '../../lib/date-utils';
 import { MOOD_OPTIONS } from '../../config/constants';
+import { deleteRunLog } from '../../services/running.service';
 import type { RunLog } from '../../types/running';
 
 interface RunHistoryProps {
   logs: RunLog[];
   title?: string;
+  allowDelete?: boolean;
 }
 
-export function RunHistory({ logs, title = 'Historial' }: RunHistoryProps) {
+export function RunHistory({ logs, title = 'Historial', allowDelete = false }: RunHistoryProps) {
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleDelete(logId: string) {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+
+    let cancelled = false;
+    toast('Carrera eliminada', {
+      action: {
+        label: 'Deshacer',
+        onClick: () => { cancelled = true; },
+      },
+      duration: 3000,
+    });
+
+    undoTimerRef.current = setTimeout(async () => {
+      if (cancelled) return;
+      try {
+        await deleteRunLog(logId);
+      } catch (error) {
+        console.error('Error deleting run log:', error);
+        toast.error('No se pudo eliminar la carrera.');
+      }
+    }, 3200);
+  }
+
   if (logs.length === 0) return null;
 
   return (
@@ -62,6 +91,16 @@ export function RunHistory({ logs, title = 'Historial' }: RunHistoryProps) {
             </div>
             {log.note && (
               <p className="text-xs text-text-muted mt-2 italic">"{log.note}"</p>
+            )}
+            {allowDelete && (
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={() => handleDelete(log.id)}
+                  className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-danger-soft transition-colors"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             )}
           </Card>
         );

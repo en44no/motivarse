@@ -3,6 +3,7 @@ import {
   doc,
   addDoc,
   setDoc,
+  deleteDoc,
   query,
   where,
   onSnapshot,
@@ -49,4 +50,8 @@ export async function updateRunProgress(userId: string, progress: Partial<RunPro
 export async function getRunProgress(userId: string): Promise<RunProgress | null> {
   const snap = await getDoc(doc(db, 'runProgress', userId));
   return snap.exists() ? (snap.data() as RunProgress) : null;
+}
+
+export async function deleteRunLog(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'runLogs', id));
 }

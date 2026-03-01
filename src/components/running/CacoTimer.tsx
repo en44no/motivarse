@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Square, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { Confetti } from '../ui/Confetti';
 
 interface CacoTimerProps {
   runMinutes: number;
@@ -20,37 +21,7 @@ function formatTime(totalSeconds: number): string {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Simple confetti particle component
-function ConfettiParticle({ delay, x }: { delay: number; x: number }) {
-  const colors = ['#22c55e', '#3b82f6', '#f97316', '#8b5cf6', '#ef4444', '#eab308'];
-  const color = colors[Math.floor(Math.random() * colors.length)];
-  const size = 6 + Math.random() * 6;
-
-  return (
-    <motion.div
-      className="absolute rounded-sm"
-      style={{
-        width: size,
-        height: size,
-        backgroundColor: color,
-        left: `${x}%`,
-        top: '-5%',
-      }}
-      initial={{ y: 0, opacity: 1, rotate: 0 }}
-      animate={{
-        y: '120vh',
-        opacity: [1, 1, 0.8, 0],
-        rotate: Math.random() * 720 - 360,
-        x: (Math.random() - 0.5) * 200,
-      }}
-      transition={{
-        duration: 2.5 + Math.random() * 1.5,
-        delay,
-        ease: 'easeIn',
-      }}
-    />
-  );
-}
+// Confetti particle component extracted to ../ui/Confetti.tsx
 
 export function CacoTimer({
   runMinutes,
@@ -185,12 +156,6 @@ export function CacoTimer({
   const phaseColor = isRunPhase ? '#22c55e' : '#3b82f6';
   const phaseBgClass = isRunPhase ? 'from-primary/20' : 'from-blue-500/20';
 
-  const confettiParticles = Array.from({ length: 40 }, (_, i) => ({
-    delay: Math.random() * 0.8,
-    x: Math.random() * 100,
-    key: i,
-  }));
-
   return (
     <motion.div
       className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-between overflow-hidden"
@@ -247,11 +212,7 @@ export function CacoTimer({
             animate={{ opacity: 1 }}
           >
             {/* Confetti */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              {confettiParticles.map((p) => (
-                <ConfettiParticle key={p.key} delay={p.delay} x={p.x} />
-              ))}
-            </div>
+            <Confetti count={40} />
 
             <motion.div
               className="text-center z-10"

@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import { Plus } from 'lucide-react';
+import { useState, useEffect, type FormEvent } from 'react';
+import { Plus, Save } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -32,15 +32,37 @@ interface HabitFormProps {
     scope: Habit['scope'];
     completionMode?: Habit['completionMode'];
   }) => void;
+  editingHabit?: Habit;
 }
 
-export function HabitForm({ open, onClose, onSubmit }: HabitFormProps) {
+export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormProps) {
   const [name, setName] = useState('');
   const [color, setColor] = useState(COLORS[0]);
   const [scope, setScope] = useState<Habit['scope']>('individual');
   const [completionMode, setCompletionMode] = useState<Habit['completionMode']>('both');
   const [frequency, setFrequency] = useState<Habit['frequency']>('daily');
   const [customDays, setCustomDays] = useState<number[]>([]);
+
+  const isEditing = !!editingHabit;
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (open && editingHabit) {
+      setName(editingHabit.name);
+      setColor(editingHabit.color);
+      setScope(editingHabit.scope);
+      setCompletionMode(editingHabit.completionMode || 'both');
+      setFrequency(editingHabit.frequency);
+      setCustomDays(editingHabit.customDays || []);
+    } else if (open && !editingHabit) {
+      setName('');
+      setColor(COLORS[0]);
+      setScope('individual');
+      setCompletionMode('both');
+      setFrequency('daily');
+      setCustomDays([]);
+    }
+  }, [open, editingHabit]);
 
   function toggleDay(day: number) {
     setCustomDays((prev) =>
@@ -73,7 +95,7 @@ export function HabitForm({ open, onClose, onSubmit }: HabitFormProps) {
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title="Nuevo hábito">
+    <Dialog open={open} onClose={onClose} title={isEditing ? 'Editar habito' : 'Nuevo habito'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Nombre del hábito"
@@ -222,8 +244,8 @@ export function HabitForm({ open, onClose, onSubmit }: HabitFormProps) {
         )}
 
         <Button type="submit" className="w-full" size="lg">
-          <Plus size={18} />
-          Crear hábito
+          {isEditing ? <Save size={18} /> : <Plus size={18} />}
+          {isEditing ? 'Guardar cambios' : 'Crear habito'}
         </Button>
       </form>
     </Dialog>

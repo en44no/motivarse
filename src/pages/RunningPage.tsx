@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, Footprints, ListChecks } from 'lucide-react';
+import { Plus, Footprints } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useRunning } from '../hooks/useRunning';
@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { CacoWeekDetail } from '../components/running/CacoWeekDetail';
 import { CacoPlanOverview } from '../components/running/CacoPlanOverview';
+import { CompletedPlanCard } from '../components/running/CompletedPlanCard';
 import { RunLogForm } from '../components/running/RunLogForm';
 import { RunStatsCards } from '../components/running/RunStatsCards';
 import { RunHistory } from '../components/running/RunHistory';
@@ -23,7 +24,7 @@ export function RunningPage() {
   const [activeTab, setActiveTab] = useState('plan');
   const [showLogForm, setShowLogForm] = useState(false);
   const [defaultFreeRun, setDefaultFreeRun] = useState(false);
-  const { myLogs, progress, currentWeek, currentSession, currentPlan, loading, logRun } = useRunning();
+  const { myLogs, progress, currentWeek, currentSession, currentPlan, isCompleted, loading, logRun } = useRunning();
 
   const freeRunLogs = useMemo(() => myLogs.filter((l) => l.isFreeRun), [myLogs]);
   const cacoLogs = useMemo(() => myLogs.filter((l) => !l.isFreeRun), [myLogs]);
@@ -58,20 +59,29 @@ export function RunningPage() {
 
       {activeTab === 'plan' && (
         <div className="space-y-4">
-          <CacoWeekDetail
-            currentWeek={currentWeek}
-            currentSession={currentSession}
-            onTimerComplete={handleTimerComplete}
-          />
+          {isCompleted ? (
+            <CompletedPlanCard
+              totalRuns={progress?.totalRuns || 0}
+              totalDistanceKm={progress?.totalDistanceKm || 0}
+            />
+          ) : (
+            <>
+              <CacoWeekDetail
+                currentWeek={currentWeek}
+                currentSession={currentSession}
+                onTimerComplete={handleTimerComplete}
+              />
 
-          <Button
-            onClick={openCacoForm}
-            className="w-full"
-            size="lg"
-          >
-            <Plus size={18} />
-            Registrar sesión CaCo
-          </Button>
+              <Button
+                onClick={openCacoForm}
+                className="w-full"
+                size="lg"
+              >
+                <Plus size={18} />
+                Registrar sesion CaCo
+              </Button>
+            </>
+          )}
 
           <CacoPlanOverview currentWeek={currentWeek} />
 
@@ -117,7 +127,7 @@ export function RunningPage() {
         <div className="space-y-4">
           <RunStatsCards progress={progress} totalLogs={myLogs.length} />
           <RunProgressChart logs={myLogs} />
-          <RunHistory logs={myLogs} title="Todo el historial" />
+          <RunHistory logs={myLogs} title="Todo el historial" allowDelete />
         </div>
       )}
 

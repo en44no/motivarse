@@ -7,6 +7,7 @@ export interface UserProfile {
   createdAt: number;
   settings: {
     notifications: boolean;
+    soundEnabled?: boolean;
   };
 }
 

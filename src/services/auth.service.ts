@@ -5,7 +5,7 @@ import {
   updateProfile,
   type User,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, writeBatch } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import type { UserProfile, Couple } from '../types/user';
 
@@ -67,7 +67,10 @@ export async function linkPartner(currentUid: string, partnerEmail: string): Pro
     createdAt: Date.now(),
   };
 
-  await setDoc(doc(db, 'couples', coupleId), couple);
-  await updateDoc(doc(db, 'users', currentUid), { partnerId, coupleId });
-  await updateDoc(doc(db, 'users', partnerId), { partnerId: currentUid, coupleId });
+  // Atomic batch write to prevent race conditions
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'couples', coupleId), couple);
+  batch.update(doc(db, 'users', currentUid), { partnerId, coupleId });
+  batch.update(doc(db, 'users', partnerId), { partnerId: currentUid, coupleId });
+  await batch.commit();
 }

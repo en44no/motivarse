@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useDataContext } from '../contexts/DataContext';
@@ -16,9 +17,35 @@ export function useRunning() {
   const myLogs = runLogs.filter((l) => l.userId === userId);
   const partnerLogs = runLogs.filter((l) => l.userId !== userId);
 
-  const currentWeek = progress?.currentWeek || 1;
+  // Clamp currentWeek to valid range
+  const rawWeek = progress?.currentWeek || 1;
+  const currentWeek = Math.min(Math.max(rawWeek, 1), CACO_PLAN.length);
   const currentSession = progress?.currentSession || 1;
-  const currentPlan = CACO_PLAN[currentWeek - 1];
+  const currentPlan = CACO_PLAN[currentWeek - 1] || CACO_PLAN[CACO_PLAN.length - 1];
+
+  // Plan is completed when week exceeds plan length, or week === length and all sessions done
+  const isCompleted = rawWeek > CACO_PLAN.length ||
+    (rawWeek === CACO_PLAN.length && currentSession > SESSIONS_PER_WEEK);
+
+  // Calculate run streak from logs
+  const runStreak = (() => {
+    if (myLogs.length === 0) return 0;
+    const dates = [...new Set(myLogs.map((l) => l.date))].sort().reverse();
+    const today = getToday();
+    if (dates[0] !== today) return 0;
+    let streak = 1;
+    for (let i = 1; i < dates.length; i++) {
+      const prev = new Date(dates[i - 1]);
+      const curr = new Date(dates[i]);
+      const diffDays = Math.round((prev.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 7) { // Weekly streak: ran within the last 7 days counts
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  })();
 
   async function logRun(data: {
     durationMinutes: number;
@@ -31,54 +58,61 @@ export function useRunning() {
   }) {
     if (!userId || !coupleId) return;
 
-    const isFree = !!data.isFreeRun;
+    try {
+      const isFree = !!data.isFreeRun;
 
-    await addRunLog({
-      userId,
-      coupleId,
-      date: getToday(),
-      cacoPlanWeek: isFree ? undefined : currentWeek,
-      cacoPlanSession: isFree ? undefined : currentSession,
-      durationMinutes: data.durationMinutes,
-      distanceKm: data.distanceKm,
-      paceMinKm: data.paceMinKm,
-      isFreeRun: isFree || undefined,
-      isSharedRun: isFree ? (data.isSharedRun ?? true) : true,
-      mood: data.mood,
-      note: data.note,
-      intervals: isFree ? undefined : (currentPlan ? {
-        runMinutes: currentPlan.runMinutes,
-        walkMinutes: currentPlan.walkMinutes,
-        repetitions: currentPlan.repetitions,
-      } : undefined),
-      createdAt: Date.now(),
-    });
+      await addRunLog({
+        userId,
+        coupleId,
+        date: getToday(),
+        cacoPlanWeek: isFree ? undefined : currentWeek,
+        cacoPlanSession: isFree ? undefined : currentSession,
+        durationMinutes: data.durationMinutes,
+        distanceKm: data.distanceKm,
+        paceMinKm: data.paceMinKm,
+        isFreeRun: isFree || undefined,
+        isSharedRun: isFree ? (data.isSharedRun ?? true) : true,
+        mood: data.mood,
+        note: data.note,
+        intervals: isFree ? undefined : (currentPlan ? {
+          runMinutes: currentPlan.runMinutes,
+          walkMinutes: currentPlan.walkMinutes,
+          repetitions: currentPlan.repetitions,
+        } : undefined),
+        createdAt: Date.now(),
+      });
 
-    // Only advance CaCo plan progress for non-free runs
-    if (!isFree) {
-      let nextWeek = currentWeek;
-      let nextSession = currentSession + 1;
-      if (nextSession > SESSIONS_PER_WEEK) {
-        nextSession = 1;
-        nextWeek = Math.min(currentWeek + 1, CACO_PLAN.length);
+      // Only advance CaCo plan progress for non-free runs
+      if (!isFree) {
+        let nextWeek = currentWeek;
+        let nextSession = currentSession + 1;
+        if (nextSession > SESSIONS_PER_WEEK) {
+          nextSession = 1;
+          nextWeek = Math.min(currentWeek + 1, CACO_PLAN.length + 1);
+        }
+
+        await updateRunProgress(userId, {
+          currentWeek: nextWeek,
+          currentSession: nextSession,
+          totalRuns: (progress?.totalRuns || 0) + 1,
+          totalDistanceKm: (progress?.totalDistanceKm || 0) + (data.distanceKm || 0),
+          lastRunDate: getToday(),
+        });
+      } else {
+        // Free runs still count toward total stats but don't advance the plan
+        await updateRunProgress(userId, {
+          currentWeek: rawWeek,
+          currentSession,
+          totalRuns: (progress?.totalRuns || 0) + 1,
+          totalDistanceKm: (progress?.totalDistanceKm || 0) + (data.distanceKm || 0),
+          lastRunDate: getToday(),
+        });
       }
 
-      await updateRunProgress(userId, {
-        currentWeek: nextWeek,
-        currentSession: nextSession,
-        totalRuns: (progress?.totalRuns || 0) + 1,
-        totalDistanceKm: (progress?.totalDistanceKm || 0) + (data.distanceKm || 0),
-        lastRunDate: getToday(),
-      });
-    } else {
-      // Free runs still count toward total stats but don't advance the plan
-      await updateRunProgress(userId, {
-        currentWeek,
-        currentSession,
-        totalRuns: (progress?.totalRuns || 0) + 1,
-        totalDistanceKm: (progress?.totalDistanceKm || 0) + (data.distanceKm || 0),
-        lastRunDate: getToday(),
-      });
+      toast.success('Carrera registrada!');
+    } catch (error) {
+      console.error('Error logging run:', error);
+      toast.error('No se pudo registrar la carrera. Intenta de nuevo.');
     }
   }
 
@@ -90,6 +124,8 @@ export function useRunning() {
     currentWeek,
     currentSession,
     currentPlan,
+    isCompleted,
+    runStreak,
     loading,
     logRun,
   };

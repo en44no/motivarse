@@ -21,5 +21,10 @@ export function subscribeToCouple(coupleId: string, callback: (couple: Couple | 
 }
 
 export async function updateUserSettings(uid: string, settings: Partial<UserProfile['settings']>): Promise<void> {
-  await updateDoc(doc(db, 'users', uid), { settings });
+  // Use dot notation for partial merge — avoids overwriting the entire settings object
+  const updates: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(settings)) {
+    updates[`settings.${key}`] = value;
+  }
+  await updateDoc(doc(db, 'users', uid), updates);
 }

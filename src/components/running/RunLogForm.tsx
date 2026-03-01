@@ -133,22 +133,26 @@ export function RunLogForm({ open, onClose, onSubmit, suggestedDuration, default
           placeholder="30"
         />
 
-        <Input
-          label="Distancia (km, opcional)"
-          type="number"
-          step="0.1"
-          value={distance}
-          onChange={(e) => setDistance(e.target.value)}
-          placeholder="3.5"
-        />
+        {isFreeRun && (
+          <>
+            <Input
+              label="Distancia (km, opcional)"
+              type="number"
+              step="0.1"
+              value={distance}
+              onChange={(e) => setDistance(e.target.value)}
+              placeholder="3.5"
+            />
 
-        <Input
-          label="Ritmo (min/km, opcional)"
-          type="text"
-          value={pace}
-          onChange={(e) => setPace(e.target.value)}
-          placeholder="6:30"
-        />
+            <Input
+              label="Ritmo (min/km, opcional)"
+              type="text"
+              value={pace}
+              onChange={(e) => setPace(e.target.value)}
+              placeholder="6:30"
+            />
+          </>
+        )}
 
         <MoodSelector value={mood} onChange={setMood} />
 

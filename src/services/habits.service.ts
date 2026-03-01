@@ -82,16 +82,17 @@ export async function toggleHabitLog(
   const logRef = doc(db, 'habitLogs', logId);
 
   if (completed) {
-    const log: Omit<HabitLog, 'id'> = {
+    const log: Record<string, unknown> = {
       habitId,
       userId,
       coupleId,
       date,
       completed: true,
-      value,
-      metGoal,
       completedAt: Date.now(),
     };
+    // Only include optional fields if defined — Firestore rejects undefined values
+    if (value !== undefined) log.value = value;
+    if (metGoal !== undefined) log.metGoal = metGoal;
     await setDoc(logRef, log);
   } else {
     await deleteDoc(logRef);

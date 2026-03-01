@@ -40,9 +40,9 @@ export default function App() {
             position="top-center"
             toastOptions={{
               style: {
-                background: '#1a2332',
-                border: '1px solid #2a3a50',
-                color: '#f1f5f9',
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text-primary)',
                 fontSize: '14px',
               },
             }}

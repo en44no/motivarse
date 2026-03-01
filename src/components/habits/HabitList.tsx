@@ -10,9 +10,12 @@ interface HabitListProps {
   partnerName?: string;
   title?: string;
   currentUserId?: string;
+  onEdit?: (habitId: string) => void;
+  onDelete?: (habitId: string) => void;
+  soundEnabled?: boolean;
 }
 
-export function HabitList({ habits, logs, streaks, onToggle, partnerLogs, partnerName, title, currentUserId }: HabitListProps) {
+export function HabitList({ habits, logs, streaks, onToggle, partnerLogs, partnerName, title, currentUserId, onEdit, onDelete, soundEnabled }: HabitListProps) {
   if (habits.length === 0) return null;
 
   return (
@@ -45,6 +48,9 @@ export function HabitList({ habits, logs, streaks, onToggle, partnerLogs, partne
             }
             partnerLog={partnerLog}
             partnerName={habit.scope === 'shared' ? partnerName : undefined}
+            onEdit={onEdit ? () => onEdit(habit.id) : undefined}
+            onDelete={onDelete ? () => onDelete(habit.id) : undefined}
+            soundEnabled={soundEnabled}
           />
         );
       })}

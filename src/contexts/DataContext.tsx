@@ -18,6 +18,7 @@ interface DataContextType {
   runProgress: RunProgress | null;
   todos: SharedTodo[];
   loading: boolean;
+  error: string | null;
 }
 
 const DataContext = createContext<DataContextType>({
@@ -28,6 +29,7 @@ const DataContext = createContext<DataContextType>({
   runProgress: null,
   todos: [],
   loading: true,
+  error: null,
 });
 
 function clearAllData(
@@ -57,6 +59,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [runProgress, setRunProgress] = useState<RunProgress | null>(null);
   const [todos, setTodos] = useState<SharedTodo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Use couple.coupleId as fallback (couple is cached in localStorage)
   const coupleId = profile?.coupleId || couple?.coupleId || null;
@@ -97,6 +100,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     respondedRef.current = 0;
     expectedRef.current = userId ? 6 : 4;
+    setError(null);
     // Only show loading on first load; on re-subscriptions keep showing existing data
     if (!hasLoadedRef.current) setLoading(true);
 
@@ -169,7 +173,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [coupleId, userId, authLoading]);
 
   return (
-    <DataContext.Provider value={{ habits, habitLogs, streaks, runLogs, runProgress, todos, loading }}>
+    <DataContext.Provider value={{ habits, habitLogs, streaks, runLogs, runProgress, todos, loading, error }}>
       {children}
     </DataContext.Provider>
   );

@@ -1,5 +1,6 @@
 import { useHabits } from '../hooks/useHabits';
 import { useStreaks } from '../hooks/useStreaks';
+import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useRunning } from '../hooks/useRunning';
 import { TodaySummary } from '../components/dashboard/TodaySummary';
@@ -10,13 +11,19 @@ import { QuickActions } from '../components/dashboard/QuickActions';
 import { CardSkeleton } from '../components/ui/Skeleton';
 
 export function DashboardPage() {
-  const { myHabits, todayProgress, partnerTodayLogs, loading: habitsLoading } = useHabits();
+  const { todayHabits, todayProgress, partnerTodayLogs, loading: habitsLoading } = useHabits();
   const { bestStreak } = useStreaks();
+  const { profile } = useAuthContext();
   const { partnerName } = useCoupleContext();
   const { progress } = useRunning();
-  const partnerCompletedToday = partnerTodayLogs.filter((l) => l.completed).length;
+  const soundEnabled = profile?.settings?.soundEnabled ?? true;
 
-  const completedCount = Math.round((todayProgress / 100) * myHabits.length);
+  // Count unique habits completed by partner today
+  const partnerCompletedToday = new Set(
+    partnerTodayLogs.filter((l) => l.completed).map((l) => l.habitId)
+  ).size;
+
+  const completedCount = Math.round((todayProgress / 100) * todayHabits.length);
 
   if (habitsLoading) {
     return (
@@ -33,18 +40,19 @@ export function DashboardPage() {
       <TodaySummary
         progress={todayProgress}
         completedCount={completedCount}
-        totalCount={myHabits.length}
+        totalCount={todayHabits.length}
+        soundEnabled={soundEnabled}
       />
 
       {partnerName && (
         <PartnerStatus
           partnerName={partnerName}
           completedCount={partnerCompletedToday}
-          totalCount={myHabits.length}
+          totalCount={todayHabits.length}
         />
       )}
 
-      <StreakHighlight bestStreak={bestStreak} habits={myHabits} />
+      <StreakHighlight bestStreak={bestStreak} habits={todayHabits} />
 
       <RunningProgress progress={progress} />
 

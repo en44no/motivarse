@@ -1,10 +1,13 @@
 import { motion } from 'framer-motion';
-import { Sun, PhoneOff, AlarmClock, Footprints, Target } from 'lucide-react';
+import { Sun, PhoneOff, AlarmClock, Footprints, Target, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import { cn } from '../../lib/utils';
 import { Card } from '../ui/Card';
 import { HabitCheckButton } from './HabitCheckButton';
 import { HabitStreakBadge } from './HabitStreakBadge';
 import { HabitTimeInput } from './HabitTimeInput';
+import { vibrateSuccess, vibrateMilestone, isStreakMilestone, getMilestoneMessage } from '../../lib/celebration-utils';
+import { playSuccess } from '../../lib/sound-utils';
 import type { Habit, HabitLog, HabitStreak } from '../../types/habit';
 
 const ICON_MAP: Record<string, React.ComponentType<any>> = {
@@ -18,9 +21,39 @@ interface HabitCardProps {
   onToggle: (completed: boolean, value?: string, metGoal?: boolean) => void;
   partnerLog?: HabitLog;
   partnerName?: string;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  soundEnabled?: boolean;
 }
 
-export function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerName }: HabitCardProps) {
+export function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerName, onEdit, onDelete, soundEnabled = true }: HabitCardProps) {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!showMenu) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showMenu]);
+
+  function handleToggle(completed: boolean, value?: string, metGoal?: boolean) {
+    if (completed) {
+      vibrateSuccess();
+      if (soundEnabled) playSuccess();
+      // Check for streak milestone
+      const nextStreak = (streak?.currentStreak || 0) + 1;
+      if (isStreakMilestone(nextStreak)) {
+        vibrateMilestone();
+      }
+    }
+    onToggle(completed, value, metGoal);
+  }
   const IconComponent = ICON_MAP[habit.icon] || Target;
   const myCompleted = !!log?.completed;
   const partnerCompleted = !!partnerLog?.completed;
@@ -61,7 +94,7 @@ export function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerNam
             <HabitCheckButton
               completed={myCompleted}
               color={habit.color}
-              onToggle={() => onToggle(!myCompleted)}
+              onToggle={() => handleToggle(!myCompleted)}
             />
           )}
 
@@ -98,7 +131,7 @@ export function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerNam
                 value={log?.value || ''}
                 goalTime={habit.goal?.targetTime}
                 comparison={habit.goal?.comparison}
-                onSubmit={(time, metGoal) => onToggle(true, time, metGoal)}
+                onSubmit={(time, metGoal) => handleToggle(true, time, metGoal)}
                 completed={myCompleted}
                 color={habit.color}
               />
@@ -115,6 +148,44 @@ export function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerNam
               </div>
             )}
           </div>
+
+          {/* 3-dot menu */}
+          {(onEdit || onDelete) && (
+            <div className="relative shrink-0" ref={menuRef}>
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+              >
+                <MoreVertical size={16} />
+              </button>
+              {showMenu && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="absolute right-0 top-8 z-20 bg-surface border border-border rounded-xl shadow-lg py-1 min-w-[140px]"
+                >
+                  {onEdit && (
+                    <button
+                      onClick={() => { setShowMenu(false); onEdit(); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
+                    >
+                      <Pencil size={14} />
+                      Editar
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      onClick={() => { setShowMenu(false); onDelete(); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger hover:bg-danger-soft transition-colors"
+                    >
+                      <Trash2 size={14} />
+                      Eliminar
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </div>
+          )}
         </div>
       </Card>
     </motion.div>

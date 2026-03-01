@@ -13,6 +13,7 @@ import { HabitList } from '../components/habits/HabitList';
 import { HabitWeekView } from '../components/habits/HabitWeekView';
 import { HabitMonthView } from '../components/habits/HabitMonthView';
 import { HabitForm } from '../components/habits/HabitForm';
+import type { Habit } from '../types/habit';
 const TABS = [
   { id: 'today', label: 'Hoy' },
   { id: 'week', label: 'Semana' },
@@ -22,20 +23,46 @@ const TABS = [
 export function HabitsPage() {
   const [activeTab, setActiveTab] = useState('today');
   const [showForm, setShowForm] = useState(false);
-  const { user } = useAuthContext();
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+  const { user, profile } = useAuthContext();
   const { partnerName } = useCoupleContext();
   const {
     myHabits,
+    todayHabits,
     todayLogs,
     partnerTodayLogs,
     loading,
     toggle,
     addCustomHabit,
+    removeHabit,
+    editHabit,
     getLogsForHabit,
   } = useHabits();
   const { streaks } = useStreaks();
 
   const userId = user?.uid;
+  const soundEnabled = profile?.settings?.soundEnabled ?? true;
+
+  function handleEdit(habitId: string) {
+    const habit = myHabits.find((h) => h.id === habitId);
+    if (habit) {
+      setEditingHabit(habit);
+      setShowForm(true);
+    }
+  }
+
+  function handleDelete(habitId: string) {
+    removeHabit(habitId);
+  }
+
+  function handleFormSubmit(data: Parameters<typeof addCustomHabit>[0]) {
+    if (editingHabit) {
+      editHabit(editingHabit.id, data);
+    } else {
+      addCustomHabit(data);
+    }
+    setEditingHabit(null);
+  }
 
   if (loading) {
     return (
@@ -64,8 +91,8 @@ export function HabitsPage() {
         />
         <HabitForm
           open={showForm}
-          onClose={() => setShowForm(false)}
-          onSubmit={addCustomHabit}
+          onClose={() => { setShowForm(false); setEditingHabit(null); }}
+          onSubmit={handleFormSubmit}
         />
       </div>
     );
@@ -85,14 +112,17 @@ export function HabitsPage() {
             className="space-y-6"
           >
             <HabitList
-              title="Mis hábitos"
-              habits={myHabits}
+              title="Mis habitos"
+              habits={todayHabits}
               logs={todayLogs}
               streaks={streaks}
               onToggle={(habitId, completed, value, metGoal) => toggle(habitId, completed, value, metGoal)}
               partnerLogs={partnerTodayLogs}
               partnerName={partnerName}
               currentUserId={userId}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              soundEnabled={soundEnabled}
             />
           </motion.div>
         )}
@@ -151,8 +181,9 @@ export function HabitsPage() {
 
       <HabitForm
         open={showForm}
-        onClose={() => setShowForm(false)}
-        onSubmit={addCustomHabit}
+        onClose={() => { setShowForm(false); setEditingHabit(null); }}
+        onSubmit={handleFormSubmit}
+        editingHabit={editingHabit || undefined}
       />
     </div>
   );

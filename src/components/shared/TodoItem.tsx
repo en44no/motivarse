@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { Check, Trash2 } from 'lucide-react';
+import { Check, Trash2, Calendar } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { formatRelativeTime, getToday } from '../../lib/date-utils';
 import type { SharedTodo } from '../../types/shared';
 
 interface TodoItemProps {
@@ -20,6 +21,14 @@ export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames 
 
   const createdByName = memberNames[todo.createdBy] || 'Alguien';
   const completedByName = todo.completedBy ? memberNames[todo.completedBy] || 'Alguien' : '';
+
+  // Due date color logic
+  const today = getToday();
+  let dueDateColor = 'text-text-muted';
+  if (todo.dueDate && !todo.completed) {
+    if (todo.dueDate < today) dueDateColor = 'text-danger';
+    else if (todo.dueDate === today) dueDateColor = 'text-secondary';
+  }
 
   return (
     <motion.div
@@ -52,11 +61,19 @@ export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames 
         )}>
           {todo.title}
         </p>
-        <p className="text-[10px] text-text-muted mt-0.5">
-          {todo.completed
-            ? `Completado por ${completedByName}`
-            : `Agregado por ${createdByName}`}
-        </p>
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          <p className="text-[10px] text-text-muted">
+            {todo.completed
+              ? `Completado por ${completedByName}${todo.completedAt ? ` · ${formatRelativeTime(todo.completedAt)}` : ''}`
+              : `Agregado por ${createdByName}`}
+          </p>
+          {todo.dueDate && (
+            <span className={cn('text-[10px] flex items-center gap-0.5', dueDateColor)}>
+              <Calendar size={9} />
+              {todo.dueDate}
+            </span>
+          )}
+        </div>
       </div>
 
       <button

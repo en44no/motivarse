@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { LogOut, Link, Download, User, Flame, Footprints, Trophy, Smartphone } from 'lucide-react';
+import { LogOut, Link, Download, User, Flame, Footprints, Trophy, Smartphone, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useStreaks } from '../hooks/useStreaks';
 import { useRunning } from '../hooks/useRunning';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { usePWA } from '../hooks/usePWA';
+import { updateUserSettings } from '../services/user.service';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export function ProfilePage() {
   const { profile, logout, linkPartner, error, isSubmitting } = useAuth();
@@ -18,6 +20,22 @@ export function ProfilePage() {
   const { couple, partnerName } = useCoupleContext();
   const { canInstall, install, isInstalled } = usePWA();
   const [partnerEmail, setPartnerEmail] = useState('');
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const soundEnabled = profile?.settings?.soundEnabled ?? true;
+
+  async function toggleSound() {
+    if (!user) return;
+    await updateUserSettings(user.uid, { soundEnabled: !soundEnabled });
+  }
+
+  function handleLogout() {
+    setShowLogoutConfirm(true);
+  }
+
+  function confirmLogout() {
+    setShowLogoutConfirm(false);
+    logout();
+  }
 
   const totalStreaks = streaks.reduce((sum, s) => sum + s.currentStreak, 0);
   const bestStreak = streaks.reduce((best, s) => Math.max(best, s.longestStreak), 0);
@@ -127,11 +145,41 @@ export function ProfilePage() {
         </Card>
       )}
 
+      {/* Sound toggle */}
+      <Card variant="interactive" onClick={toggleSound}>
+        <div className="flex items-center gap-3">
+          {soundEnabled ? (
+            <Volume2 size={20} className="text-primary" />
+          ) : (
+            <VolumeX size={20} className="text-text-muted" />
+          )}
+          <div className="flex-1">
+            <h3 className="text-sm font-bold text-text-primary">Sonidos</h3>
+            <p className="text-xs text-text-muted">
+              {soundEnabled ? 'Activados' : 'Desactivados'}
+            </p>
+          </div>
+          <div className={`w-10 h-6 rounded-full transition-colors ${soundEnabled ? 'bg-primary' : 'bg-surface-light'}`}>
+            <div className={`w-5 h-5 rounded-full bg-white shadow-sm mt-0.5 transition-transform ${soundEnabled ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
+          </div>
+        </div>
+      </Card>
+
       {/* Logout */}
-      <Button variant="ghost" className="w-full text-danger" onClick={logout}>
+      <Button variant="ghost" className="w-full text-danger" onClick={handleLogout}>
         <LogOut size={18} />
-        Cerrar sesión
+        Cerrar sesion
       </Button>
+
+      <ConfirmDialog
+        open={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={confirmLogout}
+        title="Cerrar sesion"
+        description="Vas a salir de tu cuenta. Tus datos no se pierden."
+        confirmLabel="Salir"
+        variant="danger"
+      />
     </div>
   );
 }

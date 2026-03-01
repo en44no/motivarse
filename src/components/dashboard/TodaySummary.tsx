@@ -1,18 +1,39 @@
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
+import { Confetti } from '../ui/Confetti';
+import { playCelebration } from '../../lib/sound-utils';
+import { vibrateMilestone } from '../../lib/celebration-utils';
 
 interface TodaySummaryProps {
   progress: number;
   completedCount: number;
   totalCount: number;
+  soundEnabled?: boolean;
 }
 
-export function TodaySummary({ progress, completedCount, totalCount }: TodaySummaryProps) {
+export function TodaySummary({ progress, completedCount, totalCount, soundEnabled = true }: TodaySummaryProps) {
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prevProgressRef = useRef(progress);
+
+  // Trigger confetti only when progress transitions to 100%
+  useEffect(() => {
+    if (progress >= 100 && prevProgressRef.current < 100 && totalCount > 0) {
+      setShowConfetti(true);
+      if (soundEnabled) playCelebration();
+      vibrateMilestone();
+      const timer = setTimeout(() => setShowConfetti(false), 4000);
+      return () => clearTimeout(timer);
+    }
+    prevProgressRef.current = progress;
+  }, [progress, totalCount, soundEnabled]);
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
+    <>
+    {showConfetti && <Confetti count={50} />}
     <div className={cn(
       'flex items-center gap-5 rounded-2xl border border-border p-5 shadow-md',
       'bg-gradient-to-br from-surface via-surface to-surface-light',
@@ -50,5 +71,6 @@ export function TodaySummary({ progress, completedCount, totalCount }: TodaySumm
         )}
       </div>
     </div>
+    </>
   );
 }

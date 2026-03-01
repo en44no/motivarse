@@ -6,6 +6,7 @@ export interface SharedTodo {
   title: string;
   completed: boolean;
   completedBy?: string;
+  completedAt?: number;
   createdBy: string;
   priority: TodoPriority;
   dueDate?: string;

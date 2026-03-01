@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { useAuthContext } from '../contexts/AuthContext';
 import { registerUser, loginUser, logoutUser, linkPartner } from '../services/auth.service';
 
@@ -42,7 +43,12 @@ export function useAuth() {
   }
 
   async function logout() {
-    await logoutUser();
+    try {
+      await logoutUser();
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast.error('No se pudo cerrar sesion. Intenta de nuevo.');
+    }
   }
 
   async function link(partnerEmail: string) {
