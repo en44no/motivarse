@@ -11,7 +11,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { HabitList } from '../components/habits/HabitList';
 import { HabitWeekView } from '../components/habits/HabitWeekView';
-import { HabitMonthView } from '../components/habits/HabitMonthView';
+import { HabitMonthCombined } from '../components/habits/HabitMonthCombined';
 import { HabitForm } from '../components/habits/HabitForm';
 import type { Habit } from '../types/habit';
 const TABS = [
@@ -156,16 +156,12 @@ export function HabitsPage() {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 10 }}
-            className="space-y-4"
           >
-            {myHabits.map((habit) => {
-              const habitLogs = getLogsForHabit(habit.id, userId);
-              return (
-                <div key={habit.id} className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
-                  <HabitMonthView logs={habitLogs} color={habit.color} habitName={habit.name} />
-                </div>
-              );
-            })}
+            <HabitMonthCombined
+              habits={myHabits}
+              getLogsForHabit={getLogsForHabit}
+              userId={userId}
+            />
           </motion.div>
         )}
       </AnimatePresence>

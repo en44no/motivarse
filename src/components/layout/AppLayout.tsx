@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useOutlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from './Header';
 import { BottomNav } from './BottomNav';
 import { InstallBanner } from './InstallBanner';
+import { warmUpAudio } from '../../lib/sound-utils';
 
 /**
  * Freezes the outlet content per animation instance so the exiting page
@@ -18,6 +19,16 @@ function FrozenOutlet() {
 
 export function AppLayout() {
   const location = useLocation();
+
+  // Warm up AudioContext on first user interaction so sounds work immediately
+  useEffect(() => {
+    function handleFirstInteraction() {
+      warmUpAudio();
+      window.removeEventListener('pointerdown', handleFirstInteraction);
+    }
+    window.addEventListener('pointerdown', handleFirstInteraction, { once: true });
+    return () => window.removeEventListener('pointerdown', handleFirstInteraction);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col max-w-lg mx-auto">
