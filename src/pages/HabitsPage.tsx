@@ -171,13 +171,12 @@ export function HabitsPage() {
       </AnimatePresence>
 
       {/* FAB */}
-      <motion.button
-        whileTap={{ scale: 0.9 }}
+      <button
         onClick={() => setShowForm(true)}
-        className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-emerald-600 text-white shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:from-primary-hover hover:to-emerald-700 transition-colors"
+        className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-emerald-600 text-white shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:from-primary-hover hover:to-emerald-700 transition-colors active:scale-90"
       >
         <Plus size={24} />
-      </motion.button>
+      </button>
 
       <HabitForm
         open={showForm}
