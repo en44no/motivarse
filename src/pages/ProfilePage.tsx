@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, Link, Download, User, Flame, Footprints, Trophy, Smartphone, Volume2, VolumeX } from 'lucide-react';
+import { LogOut, Link, Download, User, Flame, Footprints, Trophy, Smartphone, Volume2, VolumeX, ChevronDown } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useStreaks } from '../hooks/useStreaks';
@@ -23,6 +23,7 @@ export function ProfilePage() {
   const { canInstall, install, isInstalled } = usePWA();
   const [partnerEmail, setPartnerEmail] = useState('');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
   const soundEnabled = profile?.settings?.soundEnabled ?? true;
 
   async function toggleSound() {
@@ -167,30 +168,44 @@ export function ProfilePage() {
         </div>
       </Card>
 
-      {/* Achievements */}
-      <div>
-        <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-1">
-          Logros
-        </h3>
-        <div className="space-y-2">
-          {ACHIEVEMENT_DEFINITIONS.map((achievement) => (
-            <Card key={achievement.id} className="opacity-50 grayscale">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{achievement.icon}</span>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-text-primary">{achievement.name}</h3>
+      {/* Achievements — collapsible */}
+      <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
+        <button
+          onClick={() => setShowAchievements(!showAchievements)}
+          className="w-full flex items-center justify-between p-4 hover:bg-surface-hover transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Trophy size={20} className="text-accent" />
+            <div className="text-left">
+              <p className="text-sm font-bold text-text-primary">Logros</p>
+              <p className="text-xs text-text-muted">{ACHIEVEMENT_DEFINITIONS.length} logros por desbloquear</p>
+            </div>
+          </div>
+          <ChevronDown
+            size={18}
+            className={`text-text-muted transition-transform duration-200 ${showAchievements ? 'rotate-180' : ''}`}
+          />
+        </button>
+
+        {showAchievements && (
+          <div className="border-t border-border divide-y divide-border/50">
+            {ACHIEVEMENT_DEFINITIONS.map((achievement) => (
+              <div key={achievement.id} className="flex items-center gap-3 px-4 py-3 opacity-50">
+                <span className="text-xl">{achievement.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-semibold text-text-primary">{achievement.name}</p>
                     <Badge variant={achievement.type === 'couple' ? 'accent' : 'default'}>
                       {achievement.type === 'couple' ? 'Pareja' : 'Individual'}
                     </Badge>
                   </div>
                   <p className="text-xs text-text-muted mt-0.5">{achievement.description}</p>
                 </div>
-                <span className="text-lg text-text-muted">🔒</span>
+                <span className="text-base text-text-muted shrink-0">🔒</span>
               </div>
-            </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Logout */}

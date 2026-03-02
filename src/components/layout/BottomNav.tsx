@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, ListChecks, Footprints, Heart, User } from 'lucide-react';
+import { Home, ListChecks, Footprints, ShoppingCart, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ROUTES } from '../../config/routes';
 import { cn } from '../../lib/utils';
@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { path: ROUTES.DASHBOARD, icon: Home, label: 'Home' },
   { path: ROUTES.HABITS, icon: ListChecks, label: 'Hábitos' },
   { path: ROUTES.RUNNING, icon: Footprints, label: 'Correr' },
-  { path: ROUTES.SHARED, icon: Heart, label: 'Mandados' },
+  { path: ROUTES.SHARED, icon: ShoppingCart, label: 'Mandados' },
   { path: ROUTES.PROFILE, icon: User, label: 'Perfil' },
 ];
 
