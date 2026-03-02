@@ -5,7 +5,6 @@ import {
   subscribeToCategories,
   addCategory,
   deleteCategory,
-  seedDefaultCategories,
 } from '../services/category.service';
 import type { CoupleCategory } from '../types/category';
 
@@ -24,9 +23,6 @@ export function useCategories() {
       setLoading(false);
       return;
     }
-
-    // Seed defaults on first use (no-op if already exists)
-    seedDefaultCategories(coupleId, userId).catch(console.error);
 
     const unsub = subscribeToCategories(coupleId, (cats) => {
       setCategories(cats);

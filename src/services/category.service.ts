@@ -6,12 +6,10 @@ import {
   query,
   where,
   onSnapshot,
-  getDocs,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import type { CoupleCategory } from '../types/category';
-import { DEFAULT_CATEGORIES } from '../config/constants';
 
 const categoriesCol = collection(db, 'coupleCategories');
 
@@ -46,24 +44,3 @@ export async function deleteCategory(id: string): Promise<void> {
   await deleteDoc(doc(db, 'coupleCategories', id));
 }
 
-export async function seedDefaultCategories(
-  coupleId: string,
-  userId: string
-): Promise<void> {
-  const q = query(categoriesCol, where('coupleId', '==', coupleId));
-  const snap = await getDocs(q);
-  if (snap.size > 0) return;
-
-  const now = Date.now();
-  await Promise.all(
-    DEFAULT_CATEGORIES.map((cat) =>
-      addDoc(categoriesCol, {
-        coupleId,
-        label: cat.label,
-        emoji: cat.emoji,
-        createdAt: now,
-        createdBy: userId,
-      })
-    )
-  );
-}
