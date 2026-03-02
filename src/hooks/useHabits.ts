@@ -112,8 +112,9 @@ export function useHabits() {
   }
 
   async function removeHabit(id: string) {
+    if (!userId) return;
     try {
-      await deleteHabit(id);
+      await deleteHabit(id, userId);
       toast.success('Hábito eliminado');
     } catch (error) {
       console.error('Error deleting habit:', error);

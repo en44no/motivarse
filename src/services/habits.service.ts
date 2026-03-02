@@ -68,17 +68,15 @@ export async function updateHabit(id: string, data: Partial<Habit>): Promise<voi
   await updateDoc(doc(db, 'habits', id), data);
 }
 
-export async function deleteHabit(id: string): Promise<void> {
-  // Hard delete: remove habit doc + all its logs + all its streaks
-  const [logsSnap, streaksSnap] = await Promise.all([
-    getDocs(query(logsCol, where('habitId', '==', id))),
-    getDocs(query(streaksCol, where('habitId', '==', id))),
-  ]);
+export async function deleteHabit(id: string, userId: string): Promise<void> {
+  // Query logs by habitId (logs use coupleId+date index, no rules issue)
+  const logsSnap = await getDocs(query(logsCol, where('habitId', '==', id)));
 
   await Promise.all([
     deleteDoc(doc(db, 'habits', id)),
+    // Delete streak by direct ref (avoids Firestore rules issues with queries)
+    deleteDoc(doc(db, 'streaks', `${id}_${userId}`)),
     ...logsSnap.docs.map((d) => deleteDoc(d.ref)),
-    ...streaksSnap.docs.map((d) => deleteDoc(d.ref)),
   ]);
 }
 
