@@ -30,6 +30,7 @@ interface CoachContext {
   completedToday: number;
   totalToday: number;
   bestStreak: number;
+  memory?: string;
 }
 
 // ── Scheduled function ────────────────────────────────────────────────────────
@@ -68,7 +69,7 @@ export const aiProxy = onCall(
     }
 
     const { type, data } = request.data as {
-      type: 'autocategorize' | 'generateHabits' | 'coach';
+      type: 'autocategorize' | 'generateHabits' | 'coach' | 'updateMemory';
       data: unknown;
     };
 
@@ -168,7 +169,13 @@ Devolvé SOLO un array JSON válido con esta estructura exacta, sin texto adicio
         context: CoachContext;
       };
 
+      const memorySection = context.memory
+        ? `\nLo que ya sabés del usuario:\n${context.memory}\n`
+        : '';
+
       const systemPrompt = `Sos un coach de bienestar personal llamado "Moti" dentro de la app Motivarse. Respondés en español, con un tono cálido, motivador y breve (máx 3 oraciones salvo que te pidan más detalle).
+
+IMPORTANTE: Solo respondés sobre hábitos, bienestar personal, mandados/tareas, pareja y motivación. Si te preguntan algo fuera de estos temas, respondé amablemente que solo podés ayudar con temas de la app Motivarse.
 
 Datos del usuario:
 - Nombre: ${context.userName}
@@ -176,7 +183,7 @@ ${context.partnerName ? `- Pareja: ${context.partnerName}` : ''}
 - Hábitos activos: ${context.habitsCount}
 - Hábitos completados hoy: ${context.completedToday} de ${context.totalToday}
 - Mejor racha: ${context.bestStreak} días
-
+${memorySection}
 Ayudá al usuario con motivación, consejos de hábitos, estrategias de bienestar, o simplemente escuchalo. No inventes datos que no tenés.`;
 
       const response = await client.messages.create({
@@ -191,6 +198,32 @@ Ayudá al usuario con motivación, consejos de hábitos, estrategias de bienesta
 
       const content = (response.content[0] as { type: string; text: string }).text;
       return { content };
+    }
+
+    // ── updateMemory ──────────────────────────────────────────────────────────
+    if (type === 'updateMemory') {
+      const { messages, existingMemory, userName } = data as {
+        messages: CoachMessage[];
+        existingMemory: string;
+        userName: string;
+      };
+
+      const convo = messages.map((m) => `${m.role === 'user' ? userName : 'Moti'}: ${m.content}`).join('\n');
+      const existing = existingMemory ? `Memoria actual:\n${existingMemory}\n\n` : '';
+
+      const response = await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        messages: [
+          {
+            role: 'user',
+            content: `${existing}Conversación reciente:\n${convo}\n\nExtrae y actualiza los hechos clave sobre el usuario que sean útiles para futuras conversaciones de coaching. Máximo 150 palabras, en formato bullets, en español. Solo hechos concretos (metas, dificultades, logros, preferencias). No repitas información ya presente en la memoria actual.`,
+          },
+        ],
+      });
+
+      const memory = (response.content[0] as { type: string; text: string }).text.trim();
+      return { memory };
     }
 
     throw new HttpsError('invalid-argument', `Tipo de request desconocido: ${type}`);

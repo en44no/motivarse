@@ -7,7 +7,13 @@ import { useAuthContext } from '../../contexts/AuthContext';
 import { useCoupleContext } from '../../contexts/CoupleContext';
 import { useHabits } from '../../hooks/useHabits';
 import { useStreaks } from '../../hooks/useStreaks';
-import { coachMessage, type CoachMessage } from '../../services/ai.service';
+import { coachMessage, updateCoachMemory, type CoachMessage } from '../../services/ai.service';
+import {
+  loadCoachHistory,
+  saveCoachHistory,
+  loadCoachMemory,
+  saveCoachMemory,
+} from '../../services/coachMemory.service';
 
 function TypingDots() {
   return (
@@ -30,6 +36,8 @@ export function CoachChat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [memory, setMemory] = useState('');
+  const newUserMessages = useRef(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -38,7 +46,6 @@ export function CoachChat() {
   const { myHabits, todayHabits, todayLogs } = useHabits();
   const { bestStreak } = useStreaks();
 
-  // Build context object
   function buildContext() {
     const userId = profile?.uid;
     const completedToday = todayLogs.filter(
@@ -55,29 +62,69 @@ export function CoachChat() {
     };
   }
 
-  // Auto-scroll on new messages
+  function buildPreQuestions(): string[] {
+    const ctx = buildContext();
+    const chips: string[] = [];
+
+    if (ctx.completedToday === 0 && ctx.totalToday > 0) {
+      chips.push('¿Cómo me motivo para arrancar hoy?');
+    } else if (ctx.completedToday === ctx.totalToday && ctx.totalToday > 0) {
+      chips.push('¡Completé todo! ¿Qué más puedo hacer?');
+    }
+
+    if (ctx.bestStreak >= 7) {
+      chips.push(`¿Cómo mantengo mi racha de ${ctx.bestStreak} días?`);
+    }
+
+    const pool = [
+      'Dame un consejo para hoy',
+      '¿Qué hábito mejorar?',
+      '¿Cómo va mi pareja?',
+      'Necesito motivación',
+    ];
+
+    for (const item of pool) {
+      if (chips.length >= 4) break;
+      chips.push(item);
+    }
+
+    return chips.slice(0, 4);
+  }
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // Focus input when opened
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 350);
     }
   }, [open]);
 
-  // Send welcome message on first open
   async function handleOpen() {
     setOpen(true);
     if (initialized) return;
     setInitialized(true);
     setLoading(true);
 
+    const userId = profile?.uid;
+    const [history, mem] = await Promise.all([
+      userId ? loadCoachHistory(userId) : Promise.resolve([] as CoachMessage[]),
+      userId ? loadCoachMemory(userId) : Promise.resolve(''),
+    ]);
+
+    setMemory(mem);
+
+    if (history.length > 0) {
+      setMessages(history);
+      setLoading(false);
+      return;
+    }
+
     const ctx = buildContext();
     const reply = await coachMessage(
       [{ role: 'user', content: 'Saluda al usuario brevemente y ofrecé ayuda con sus hábitos.' }],
-      ctx
+      { ...ctx, memory: mem }
     );
 
     setLoading(false);
@@ -89,18 +136,19 @@ export function CoachChat() {
     }
   }
 
-  async function handleSend() {
-    const text = input.trim();
-    if (!text || loading) return;
+  async function handleSend(text?: string) {
+    const content = (text ?? input).trim();
+    if (!content || loading) return;
 
-    const userMsg: CoachMessage = { role: 'user', content: text };
+    const userMsg: CoachMessage = { role: 'user', content };
     const nextMessages = [...messages, userMsg];
     setMessages(nextMessages);
     setInput('');
     setLoading(true);
+    newUserMessages.current++;
 
     const ctx = buildContext();
-    const reply = await coachMessage(nextMessages, ctx);
+    const reply = await coachMessage(nextMessages, { ...ctx, memory });
 
     setLoading(false);
     if (reply) {
@@ -110,9 +158,29 @@ export function CoachChat() {
     }
   }
 
+  function handleClose() {
+    setOpen(false);
+    const userId = profile?.uid;
+    if (!userId || !messages.length) return;
+
+    saveCoachHistory(userId, messages);
+
+    if (newUserMessages.current >= 2) {
+      const ctx = buildContext();
+      updateCoachMemory(messages, memory, ctx.userName).then((newMem) => {
+        if (newMem) saveCoachMemory(userId, newMem);
+      });
+    }
+
+    newUserMessages.current = 0;
+    setTimeout(() => setInitialized(false), 300);
+  }
+
+  const preQuestions = buildPreQuestions();
+  const showChips = messages.length <= 1 && !loading;
+
   return (
     <>
-      {/* FAB — izquierda, sobre la nav */}
       {createPortal(
         <button
           onClick={handleOpen}
@@ -124,21 +192,18 @@ export function CoachChat() {
         document.body
       )}
 
-      {/* Chat drawer */}
       {createPortal(
         <AnimatePresence>
           {open && (
             <>
-              {/* Backdrop */}
               <motion.div
                 className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                onClick={() => setOpen(false)}
+                onClick={handleClose}
               />
 
-              {/* Drawer */}
               <motion.div
                 className="fixed inset-x-0 bottom-0 z-50 flex flex-col bg-surface border-t border-border rounded-t-3xl max-w-lg mx-auto"
                 style={{ height: '85vh' }}
@@ -157,7 +222,7 @@ export function CoachChat() {
                     <p className="text-xs text-text-muted">Moti · tu coach personal</p>
                   </div>
                   <button
-                    onClick={() => setOpen(false)}
+                    onClick={handleClose}
                     className="w-8 h-8 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover flex items-center justify-center transition-colors"
                   >
                     <X size={18} />
@@ -187,7 +252,6 @@ export function CoachChat() {
                     ))}
                   </AnimatePresence>
 
-                  {/* Loading dots */}
                   {loading && (
                     <div className="flex justify-start">
                       <div className="bg-surface-hover rounded-2xl rounded-bl-sm">
@@ -198,6 +262,30 @@ export function CoachChat() {
 
                   <div ref={bottomRef} />
                 </div>
+
+                {/* Pre-questions chips */}
+                <AnimatePresence>
+                  {showChips && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 6 }}
+                      className="px-4 pb-2 shrink-0"
+                    >
+                      <div className="flex gap-2 overflow-x-auto scrollbar-none">
+                        {preQuestions.map((q) => (
+                          <button
+                            key={q}
+                            onClick={() => handleSend(q)}
+                            className="shrink-0 rounded-full border border-border bg-surface-hover text-text-secondary text-xs px-3 py-1.5 hover:border-primary/60 hover:text-primary transition-colors active:scale-95"
+                          >
+                            {q}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* Input */}
                 <div className="px-4 py-3 border-t border-border shrink-0 flex gap-2 items-center pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))]">
@@ -211,7 +299,7 @@ export function CoachChat() {
                     className="flex-1 rounded-xl border border-border bg-surface-hover px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
                   />
                   <button
-                    onClick={handleSend}
+                    onClick={() => handleSend()}
                     disabled={!input.trim() || loading}
                     className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-hover transition-colors disabled:opacity-40 shrink-0 active:scale-90"
                   >

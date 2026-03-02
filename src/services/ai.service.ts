@@ -28,6 +28,7 @@ export interface CoachContext {
   completedToday: number;
   totalToday: number;
   bestStreak: number;
+  memory?: string;
 }
 
 // ── Functions ─────────────────────────────────────────────────────────────────
@@ -81,6 +82,24 @@ export async function coachMessage(
     return content ?? '';
   } catch (err) {
     console.error('[CoachMessage error]', err);
+    return '';
+  }
+}
+
+export async function updateCoachMemory(
+  messages: CoachMessage[],
+  existingMemory: string,
+  userName: string
+): Promise<string> {
+  try {
+    const result = await aiProxy({
+      type: 'updateMemory',
+      data: { messages, existingMemory, userName },
+    });
+    const { memory } = result.data as { memory: string };
+    return memory ?? '';
+  } catch (err) {
+    console.error('[UpdateCoachMemory error]', err);
     return '';
   }
 }
