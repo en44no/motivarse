@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
@@ -12,7 +11,6 @@ export function useSharedTodos() {
   const { todos, loading } = useDataContext();
 
   const coupleId = profile?.coupleId || couple?.coupleId || null;
-  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const ARCHIVE_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -78,30 +76,13 @@ export function useSharedTodos() {
     }
   }
 
-  function remove(id: string) {
-    const todo = todos.find((t) => t.id === id);
-    if (!todo) return;
-
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-
-    let cancelled = false;
-    toast('Mandado eliminado', {
-      action: {
-        label: 'Deshacer',
-        onClick: () => { cancelled = true; },
-      },
-      duration: 3000,
-    });
-
-    undoTimerRef.current = setTimeout(async () => {
-      if (cancelled) return;
-      try {
-        await deleteTodo(id);
-      } catch (error) {
-        console.error('Error removing todo:', error);
-        toast.error('No se pudo eliminar el mandado.');
-      }
-    }, 3200);
+  async function remove(id: string) {
+    try {
+      await deleteTodo(id);
+    } catch (error) {
+      console.error('Error removing todo:', error);
+      toast.error('No se pudo eliminar el mandado.');
+    }
   }
 
   return { todos, pending, completed, recentlyCompleted, archived, loading, add, toggle, remove };
