@@ -159,6 +159,7 @@ export function CacoTimer({
   return (
     <motion.div
       className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-between overflow-hidden"
+      style={{ top: 0, bottom: 0, left: 0, right: 0, margin: 0 }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -245,7 +246,7 @@ export function CacoTimer({
       </AnimatePresence>
 
       {/* Close button */}
-      <div className="relative z-10 w-full flex justify-end p-4 pt-safe">
+      <div className="relative z-10 w-full flex justify-end p-4 safe-top">
         <button
           onClick={onClose}
           className="p-2 rounded-full text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
@@ -366,7 +367,7 @@ export function CacoTimer({
 
       {/* Controls */}
       {state !== 'completed' && (
-        <div className="relative z-10 flex items-center justify-center gap-6 pb-12 pt-4">
+        <div className="relative z-10 flex items-center justify-center gap-6 pt-4 pb-[max(3rem,env(safe-area-inset-bottom,3rem))]">
           {/* Stop button */}
           {(state === 'running' || state === 'paused') && (
             <motion.button

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHabits } from '../hooks/useHabits';
@@ -207,13 +208,16 @@ export function HabitsPage() {
         })()}
       </AnimatePresence>
 
-      {/* FAB */}
-      <button
-        onClick={() => setShowForm(true)}
-        className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-emerald-600 text-white shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:from-primary-hover hover:to-emerald-700 transition-colors active:scale-90"
-      >
-        <Plus size={24} />
-      </button>
+      {/* FAB — portalled to body so page transitions don't animate it */}
+      {createPortal(
+        <button
+          onClick={() => setShowForm(true)}
+          className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-emerald-600 text-white shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:from-primary-hover hover:to-emerald-700 transition-colors active:scale-90"
+        >
+          <Plus size={24} />
+        </button>,
+        document.body
+      )}
 
       <HabitForm
         open={showForm}
