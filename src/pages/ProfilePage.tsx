@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, Link, Download, User, Flame, Footprints, Trophy, Smartphone, Volume2, VolumeX, ChevronDown, Bell, BellOff } from 'lucide-react';
+import { LogOut, Link, Download, User, Flame, Footprints, Trophy, Smartphone, Volume2, VolumeX, ChevronDown, Bell, BellOff, RefreshCw } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useStreaks } from '../hooks/useStreaks';
@@ -52,6 +52,21 @@ export function ProfilePage() {
   function confirmLogout() {
     setShowLogoutConfirm(false);
     logout();
+  }
+
+  async function forceUpdate() {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+    } finally {
+      window.location.reload();
+    }
   }
 
   const totalStreaks = streaks.reduce((sum, s) => sum + s.currentStreak, 0);
@@ -241,6 +256,12 @@ export function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Force update */}
+      <Button variant="ghost" className="w-full text-text-muted" onClick={forceUpdate}>
+        <RefreshCw size={18} />
+        Actualizar app
+      </Button>
 
       {/* Logout */}
       <Button variant="ghost" className="w-full text-danger" onClick={handleLogout}>
