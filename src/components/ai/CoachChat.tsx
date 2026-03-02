@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, X, Send, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useCoupleContext } from '../../contexts/CoupleContext';
 import { useHabits } from '../../hooks/useHabits';
@@ -74,12 +75,17 @@ export function CoachChat() {
     setLoading(true);
 
     const ctx = buildContext();
-    const welcomeMessages: CoachMessage[] = [];
-    const reply = await coachMessage(welcomeMessages, ctx);
+    const reply = await coachMessage(
+      [{ role: 'user', content: 'Saluda al usuario brevemente y ofrecé ayuda con sus hábitos.' }],
+      ctx
+    );
 
     setLoading(false);
     if (reply) {
       setMessages([{ role: 'assistant', content: reply }]);
+    } else {
+      toast.error('No se pudo conectar con el Coach IA. Intentá de nuevo.');
+      setInitialized(false);
     }
   }
 
@@ -99,6 +105,8 @@ export function CoachChat() {
     setLoading(false);
     if (reply) {
       setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
+    } else {
+      toast.error('No se pudo obtener respuesta. Intentá de nuevo.');
     }
   }
 
