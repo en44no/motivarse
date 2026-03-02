@@ -13,11 +13,15 @@ import { HabitList } from '../components/habits/HabitList';
 import { HabitWeekView } from '../components/habits/HabitWeekView';
 import { HabitMonthCombined } from '../components/habits/HabitMonthCombined';
 import { HabitForm } from '../components/habits/HabitForm';
+import { HabitStats } from '../components/habits/HabitStats';
+import { HabitTrendChart } from '../components/habits/HabitTrendChart';
+import { PartnerComparison } from '../components/habits/PartnerComparison';
 import type { Habit } from '../types/habit';
 const TABS = [
   { id: 'today', label: 'Hoy' },
   { id: 'week', label: 'Semana' },
   { id: 'month', label: 'Mes' },
+  { id: 'stats', label: 'Stats' },
 ];
 
 export function HabitsPage() {
@@ -37,8 +41,9 @@ export function HabitsPage() {
     removeHabit,
     editHabit,
     getLogsForHabit,
+    getStatsData,
   } = useHabits();
-  const { streaks } = useStreaks();
+  const { streaks, bestStreak } = useStreaks();
 
   const userId = user?.uid;
   const soundEnabled = profile?.settings?.soundEnabled ?? true;
@@ -164,6 +169,42 @@ export function HabitsPage() {
             />
           </motion.div>
         )}
+
+        {activeTab === 'stats' && (() => {
+          const statsData = getStatsData();
+          // Get current/longest streak from useStreaks
+          const currentStreak = bestStreak?.currentStreak || 0;
+          const longestStreak = streaks.reduce((max, s) => Math.max(max, s.longestStreak), 0);
+          // Partner weekly percent from dailyData
+          const partnerWeeklyTotal = statsData.dailyData.slice(-7);
+          const partnerWeeklyPercent = partnerWeeklyTotal.length > 0
+            ? Math.round(partnerWeeklyTotal.reduce((sum, d) => sum + d.partnerPercent, 0) / partnerWeeklyTotal.length)
+            : 0;
+
+          return (
+            <motion.div
+              key="stats"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              className="space-y-4"
+            >
+              <HabitStats
+                stats={{
+                  ...statsData,
+                  currentStreak,
+                  longestStreak,
+                }}
+              />
+              <HabitTrendChart data={statsData.dailyData} />
+              <PartnerComparison
+                myPercent={statsData.weeklyPercent}
+                partnerPercent={partnerWeeklyPercent}
+                partnerName={partnerName}
+              />
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
 
       {/* FAB */}

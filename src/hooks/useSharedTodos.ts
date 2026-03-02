@@ -14,8 +14,18 @@ export function useSharedTodos() {
   const coupleId = profile?.coupleId || couple?.coupleId || null;
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const ARCHIVE_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 hours
+
   const pending = todos.filter((t) => !t.completed);
   const completed = todos.filter((t) => t.completed);
+
+  const now = Date.now();
+  const recentlyCompleted = completed.filter(
+    (t) => !t.completedAt || now - t.completedAt < ARCHIVE_THRESHOLD_MS
+  );
+  const archived = completed.filter(
+    (t) => t.completedAt != null && now - t.completedAt >= ARCHIVE_THRESHOLD_MS
+  );
 
   async function add(title: string, priority: TodoPriority = 'medium', dueDate?: string) {
     if (!user || !coupleId) return;
@@ -76,5 +86,5 @@ export function useSharedTodos() {
     }, 3200);
   }
 
-  return { todos, pending, completed, loading, add, toggle, remove };
+  return { todos, pending, completed, recentlyCompleted, archived, loading, add, toggle, remove };
 }

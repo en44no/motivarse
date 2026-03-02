@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trophy } from 'lucide-react';
+import { Trophy, ChevronDown } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useSharedTodos } from '../hooks/useSharedTodos';
@@ -21,7 +21,8 @@ export function SharedPage() {
   const [activeTab, setActiveTab] = useState('todos');
   const { user } = useAuthContext();
   const { couple } = useCoupleContext();
-  const { pending, completed, loading, add, toggle, remove } = useSharedTodos();
+  const { pending, recentlyCompleted, archived, loading, add, toggle, remove } = useSharedTodos();
+  const [showArchived, setShowArchived] = useState(false);
 
   const memberNames = couple?.memberNames || {};
 
@@ -57,13 +58,13 @@ export function SharedPage() {
             </div>
           )}
 
-          {completed.length > 0 && (
+          {recentlyCompleted.length > 0 && (
             <div>
               <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-1">
-                Completados ({completed.length})
+                Completados ({recentlyCompleted.length})
               </h3>
               <TodoList
-                todos={completed}
+                todos={recentlyCompleted}
                 onToggle={toggle}
                 onDelete={remove}
                 currentUserId={user?.uid || ''}
@@ -72,7 +73,31 @@ export function SharedPage() {
             </div>
           )}
 
-          {pending.length === 0 && completed.length === 0 && (
+          {archived.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowArchived(!showArchived)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-1 hover:text-text-secondary transition-colors"
+              >
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform duration-200 ${showArchived ? 'rotate-0' : '-rotate-90'}`}
+                />
+                Archivados ({archived.length})
+              </button>
+              {showArchived && (
+                <TodoList
+                  todos={archived}
+                  onToggle={toggle}
+                  onDelete={remove}
+                  currentUserId={user?.uid || ''}
+                  memberNames={memberNames}
+                />
+              )}
+            </div>
+          )}
+
+          {pending.length === 0 && recentlyCompleted.length === 0 && archived.length === 0 && (
             <EmptyState
               icon={<Trophy size={40} />}
               title="Sin mandados"
