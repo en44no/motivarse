@@ -28,8 +28,8 @@ export function CacoWeekDetail({ currentWeek, currentSession, onTimerComplete }:
       <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent shadow-md">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-text-primary">Semana {currentWeek}</h3>
-            <p className="text-xs text-text-muted">Sesión {currentSession} de {SESSIONS_PER_WEEK}</p>
+            <h3 className="text-base font-bold text-text-primary">Semana {currentWeek} de {CACO_PLAN.length}</h3>
+            <p className="text-xs text-text-muted">{SESSIONS_PER_WEEK} sesiones por semana</p>
           </div>
           <Badge variant="primary">
             <Play size={12} /> Próxima sesión
@@ -65,20 +65,30 @@ export function CacoWeekDetail({ currentWeek, currentSession, onTimerComplete }:
           Iniciar Timer
         </Button>
 
-        {/* Session dots */}
-        <div className="flex gap-2">
-          {Array.from({ length: SESSIONS_PER_WEEK }).map((_, i) => (
-            <div
-              key={i}
-              className={`flex-1 h-2 rounded-full ${
-                i < currentSession - 1
-                  ? 'bg-primary'
-                  : i === currentSession - 1
-                  ? 'bg-primary/50 animate-pulse'
-                  : 'bg-surface-light'
-              }`}
-            />
-          ))}
+        {/* Session progress */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-medium text-text-muted">Sesiones esta semana</span>
+            <span className="text-[11px] font-bold text-primary">{currentSession - 1} / {SESSIONS_PER_WEEK} completadas</span>
+          </div>
+          <div className="flex gap-2">
+            {Array.from({ length: SESSIONS_PER_WEEK }).map((_, i) => (
+              <div key={i} className="flex-1 space-y-1">
+                <div
+                  className={`h-2 rounded-full ${
+                    i < currentSession - 1
+                      ? 'bg-primary'
+                      : i === currentSession - 1
+                      ? 'bg-primary/40 animate-pulse'
+                      : 'bg-surface-light'
+                  }`}
+                />
+                <p className={`text-center text-[9px] font-medium ${i < currentSession - 1 ? 'text-primary' : 'text-text-muted'}`}>
+                  {i < currentSession - 1 ? '✓' : `Ses. ${i + 1}`}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <p className="text-xs text-text-muted mt-3 leading-relaxed">
