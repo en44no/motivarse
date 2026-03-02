@@ -186,20 +186,35 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
         </button>
       </div>
 
+      {/* AI searching indicator */}
+      <AnimatePresence>
+        {suggesting && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+            className="flex items-center gap-1.5 px-1"
+          >
+            <Loader2 size={11} className="animate-spin text-primary shrink-0" />
+            <span className="text-xs text-text-muted">Buscando categoría con IA...</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Category chips */}
-      <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none items-center">
+      <div className="flex gap-1.5 overflow-x-auto py-1 px-0.5 scrollbar-none items-center">
         {/* Sin cat. */}
         <button
           type="button"
           onClick={() => { setCategory(undefined); setAiSelectedCategoryId(null); userOverrode.current = true; }}
           className={cn(
-            'shrink-0 h-7 px-2.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1',
+            'shrink-0 h-7 px-2.5 rounded-lg text-xs font-medium transition-all',
             category === undefined
               ? 'bg-primary/15 text-primary ring-1 ring-primary/40'
               : 'bg-surface-hover text-text-muted hover:text-text-secondary'
           )}
         >
-          {suggesting && <Loader2 size={10} className="animate-spin shrink-0" />}
           Sin cat.
         </button>
 
@@ -227,7 +242,7 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
                   ? 'ring-2 ring-offset-1 ring-offset-surface scale-95 ' + color.active
                   : isSelected
                   ? isAiSelected
-                    ? color.active + ' ring-2 ring-primary/50 shadow-sm shadow-primary/20'
+                    ? color.active + ' outline outline-2 outline-offset-1 outline-primary/50'
                     : color.active
                   : color.base
               )}
