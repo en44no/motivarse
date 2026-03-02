@@ -13,11 +13,11 @@ export function useStreaks() {
 
   // Delete orphaned streaks from Firestore when detected
   useEffect(() => {
-    if (!user?.uid || habits.length === 0 || streaks.length === activeStreaks.length) return;
+    if (!user?.uid || streaks.length === 0 || streaks.length === activeStreaks.length) return;
     const activeIds = Array.from(habitIds);
     deleteOrphanedStreaks(user.uid, activeIds).catch(console.error);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [streaks.length, habits.length, user?.uid]);
+  }, [streaks.length, activeStreaks.length, user?.uid]);
 
   function getStreak(habitId: string): HabitStreak | undefined {
     return activeStreaks.find((s) => s.habitId === habitId);

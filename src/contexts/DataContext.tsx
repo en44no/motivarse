@@ -185,10 +185,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
   }, [coupleId, userId, authLoading]);
 
-  // Clean up orphaned streaks once per session after habits + streaks are loaded
+  // Clean up orphaned streaks once per session after data is loaded
   useEffect(() => {
-    if (!userId || loading || orphanCleanedRef.current) return;
-    if (habits.length === 0 || streaks.length === 0) return;
+    if (!userId || loading || streaks.length === 0 || orphanCleanedRef.current) return;
     const activeIds = habits.map((h) => h.id);
     const hasOrphans = streaks.some((s) => !activeIds.includes(s.habitId));
     if (!hasOrphans) return;
