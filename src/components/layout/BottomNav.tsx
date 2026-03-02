@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { path: ROUTES.DASHBOARD, icon: Home, label: 'Home' },
   { path: ROUTES.HABITS, icon: ListChecks, label: 'Hábitos' },
   { path: ROUTES.RUNNING, icon: Footprints, label: 'Correr' },
-  { path: ROUTES.SHARED, icon: Heart, label: 'Nosotros' },
+  { path: ROUTES.SHARED, icon: Heart, label: 'Mandados' },
   { path: ROUTES.PROFILE, icon: User, label: 'Perfil' },
 ];
 

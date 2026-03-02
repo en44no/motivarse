@@ -10,7 +10,9 @@ import { updateUserSettings } from '../services/user.service';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { Badge } from '../components/ui/Badge';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { ACHIEVEMENT_DEFINITIONS } from '../config/constants';
 
 export function ProfilePage() {
   const { profile, logout, linkPartner, error, isSubmitting } = useAuth();
@@ -164,6 +166,32 @@ export function ProfilePage() {
           </div>
         </div>
       </Card>
+
+      {/* Achievements */}
+      <div>
+        <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-1">
+          Logros
+        </h3>
+        <div className="space-y-2">
+          {ACHIEVEMENT_DEFINITIONS.map((achievement) => (
+            <Card key={achievement.id} className="opacity-50 grayscale">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{achievement.icon}</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-text-primary">{achievement.name}</h3>
+                    <Badge variant={achievement.type === 'couple' ? 'accent' : 'default'}>
+                      {achievement.type === 'couple' ? 'Pareja' : 'Individual'}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-text-muted mt-0.5">{achievement.description}</p>
+                </div>
+                <span className="text-lg text-text-muted">🔒</span>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
 
       {/* Logout */}
       <Button variant="ghost" className="w-full text-danger" onClick={handleLogout}>

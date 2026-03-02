@@ -91,3 +91,40 @@ export function playError() {
   playTone(300, 0.2, now, ctx, 0.25);
   playTone(250, 0.3, now + 0.15, ctx, 0.25);
 }
+
+/** Timer phase switch: sharp alert — "CORRER!" */
+export function playTimerRun() {
+  const ctx = ensureContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  playTone(880, 0.1, now, ctx, 0.4);
+  playTone(1047, 0.25, now + 0.1, ctx, 0.45);
+}
+
+/** Timer phase switch: calm descend — "CAMINAR!" */
+export function playTimerWalk() {
+  const ctx = ensureContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  playTone(659, 0.12, now, ctx, 0.35);
+  playTone(523, 0.25, now + 0.12, ctx, 0.35);
+}
+
+/** Timer: 3-2-1 countdown beep */
+export function playTimerBeep() {
+  const ctx = ensureContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  playTone(880, 0.08, now, ctx, 0.3);
+}
+
+/** Timer: session complete fanfare */
+export function playTimerComplete() {
+  const ctx = ensureContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  playTone(523, 0.12, now, ctx, 0.3);
+  playTone(659, 0.12, now + 0.1, ctx, 0.3);
+  playTone(784, 0.12, now + 0.2, ctx, 0.3);
+  playTone(1047, 0.4, now + 0.32, ctx, 0.5);
+}

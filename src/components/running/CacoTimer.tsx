@@ -4,6 +4,7 @@ import { Play, Pause, Square, X, SkipForward } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Confetti } from '../ui/Confetti';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { playTimerRun, playTimerWalk, playTimerBeep, playTimerComplete } from '../../lib/sound-utils';
 
 interface CacoTimerProps {
   runMinutes: number;
@@ -74,6 +75,8 @@ export function CacoTimer({
           handleIntervalEnd();
           return 0;
         }
+        // Countdown beeps for last 3 seconds
+        if (prev <= 4) playTimerBeep();
         return prev - 1;
       });
     }, 1000);
@@ -88,10 +91,12 @@ export function CacoTimer({
       if (walkMinutes <= 0) {
         // No walk phase, go to next rep or complete
         if (currentRep >= repetitions) {
+          playTimerComplete();
           setState('completed');
           return;
         }
         // Show phase switch then start next run
+        playTimerRun();
         setState('phase_switch');
         setPhaseLabel('CORRER!');
         setTimeout(() => {
@@ -103,6 +108,7 @@ export function CacoTimer({
         return;
       }
       // Switch to walk
+      playTimerWalk();
       setState('phase_switch');
       setPhaseLabel('CAMINAR!');
       setTimeout(() => {
@@ -113,10 +119,12 @@ export function CacoTimer({
     } else {
       // After walk, check if all reps done
       if (currentRep >= repetitions) {
+        playTimerComplete();
         setState('completed');
         return;
       }
       // Switch to run (next rep)
+      playTimerRun();
       setState('phase_switch');
       setPhaseLabel('CORRER!');
       setTimeout(() => {
