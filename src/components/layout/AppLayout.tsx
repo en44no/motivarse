@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from './Header';
 import { BottomNav } from './BottomNav';
 import { InstallBanner } from './InstallBanner';
+import { CoachChat } from '../ai/CoachChat';
 import { warmUpAudio } from '../../lib/sound-utils';
 
 /**
@@ -48,6 +49,7 @@ export function AppLayout() {
         </AnimatePresence>
       </main>
       <BottomNav />
+      <CoachChat />
     </div>
   );
 }

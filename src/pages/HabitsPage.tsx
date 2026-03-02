@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, ChevronDown, RotateCcw } from 'lucide-react';
+import { Plus, ChevronDown, RotateCcw, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHabits } from '../hooks/useHabits';
 import { useStreaks } from '../hooks/useStreaks';
@@ -14,6 +14,7 @@ import { HabitList } from '../components/habits/HabitList';
 import { HabitWeekView } from '../components/habits/HabitWeekView';
 import { HabitMonthCombined } from '../components/habits/HabitMonthCombined';
 import { HabitForm } from '../components/habits/HabitForm';
+import { HabitGenerator } from '../components/habits/HabitGenerator';
 import { HabitStats } from '../components/habits/HabitStats';
 import { HabitTrendChart } from '../components/habits/HabitTrendChart';
 import { PartnerComparison } from '../components/habits/PartnerComparison';
@@ -28,6 +29,7 @@ const TABS = [
 export function HabitsPage() {
   const [activeTab, setActiveTab] = useState('today');
   const [showForm, setShowForm] = useState(false);
+  const [showGenerator, setShowGenerator] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const { user, profile } = useAuthContext();
@@ -92,16 +94,29 @@ export function HabitsPage() {
           title="¡Empezá con tus hábitos!"
           description="Creá tu primer hábito para comenzar a trackear tu progreso."
           action={
-            <Button onClick={() => setShowForm(true)} size="lg">
-              <Plus size={18} />
-              Crear hábito
-            </Button>
+            <div className="flex flex-col gap-2 items-center">
+              <Button onClick={() => setShowForm(true)} size="lg">
+                <Plus size={18} />
+                Crear hábito
+              </Button>
+              <button
+                onClick={() => setShowGenerator(true)}
+                className="flex items-center gap-1.5 text-sm text-primary font-medium hover:opacity-80 transition-opacity"
+              >
+                <Sparkles size={14} />
+                Sugerí hábitos con IA
+              </button>
+            </div>
           }
         />
         <HabitForm
           open={showForm}
           onClose={() => { setShowForm(false); setEditingHabit(null); }}
           onSubmit={handleFormSubmit}
+        />
+        <HabitGenerator
+          open={showGenerator}
+          onClose={() => setShowGenerator(false)}
         />
       </div>
     );
@@ -249,7 +264,7 @@ export function HabitsPage() {
         })()}
       </AnimatePresence>
 
-      {/* FAB — portalled to body so page transitions don't animate it */}
+      {/* FAB principal — portalled to body */}
       {createPortal(
         <button
           onClick={() => setShowForm(true)}
@@ -260,11 +275,28 @@ export function HabitsPage() {
         document.body
       )}
 
+      {/* FAB IA Sparkles — encima del principal */}
+      {createPortal(
+        <button
+          onClick={() => setShowGenerator(true)}
+          className="fixed bottom-44 right-4 w-12 h-12 rounded-full bg-surface border border-primary/30 text-primary shadow-md flex items-center justify-center z-30 hover:bg-primary/10 transition-colors active:scale-90"
+          title="Generar hábitos con IA"
+        >
+          <Sparkles size={20} />
+        </button>,
+        document.body
+      )}
+
       <HabitForm
         open={showForm}
         onClose={() => { setShowForm(false); setEditingHabit(null); }}
         onSubmit={handleFormSubmit}
         editingHabit={editingHabit || undefined}
+      />
+
+      <HabitGenerator
+        open={showGenerator}
+        onClose={() => setShowGenerator(false)}
       />
     </div>
   );

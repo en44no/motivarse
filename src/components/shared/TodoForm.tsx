@@ -1,8 +1,9 @@
-import { useState, useRef, type FormEvent, type KeyboardEvent } from 'react';
-import { Plus, Check, X, Trash2 } from 'lucide-react';
+import { useState, useRef, useEffect, type FormEvent, type KeyboardEvent } from 'react';
+import { Plus, Check, X, Trash2, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { TodoPriority } from '../../types/shared';
 import type { CoupleCategory } from '../../types/category';
+import { autocategorize } from '../../services/ai.service';
 
 interface TodoFormProps {
   categories: CoupleCategory[];
@@ -49,12 +50,52 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didLongPress = useRef(false);
 
+  // ── AI autocategorize ─────────────────────────────────────────────────────
+  const [suggestedCategoryId, setSuggestedCategoryId] = useState<string | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
+  const dismissedForTitle = useRef<string>('');
+
+  useEffect(() => {
+    if (title.trim().length <= 3 || categories.length === 0) {
+      setSuggestedCategoryId(null);
+      return;
+    }
+    if (title.trim() === dismissedForTitle.current) return;
+
+    const timer = setTimeout(async () => {
+      setSuggesting(true);
+      const id = await autocategorize(title.trim(), categories);
+      setSuggesting(false);
+      if (id && id !== category) {
+        setSuggestedCategoryId(id);
+      } else {
+        setSuggestedCategoryId(null);
+      }
+    }, 700);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title]);
+
+  function acceptSuggestion() {
+    if (suggestedCategoryId) {
+      setCategory(suggestedCategoryId);
+      setSuggestedCategoryId(null);
+    }
+  }
+  function dismissSuggestion() {
+    dismissedForTitle.current = title.trim();
+    setSuggestedCategoryId(null);
+  }
+
   // ── Todo submit ──────────────────────────────────────────────
   function doSubmit() {
     if (!title.trim()) return;
     onSubmit(title.trim(), priority, category);
     setTitle('');
     setCategory(undefined);
+    setSuggestedCategoryId(null);
+    dismissedForTitle.current = '';
   }
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -114,6 +155,7 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
   function handleChipClick(cat: CoupleCategory) {
     if (didLongPress.current) return; // long-press already handled
     setCategory(category === cat.id ? undefined : cat.id);
+    setSuggestedCategoryId(null);
   }
 
   // ── Edit category actions ─────────────────────────────────────
@@ -159,14 +201,15 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
         {/* Sin cat. */}
         <button
           type="button"
-          onClick={() => setCategory(undefined)}
+          onClick={() => { setCategory(undefined); setSuggestedCategoryId(null); }}
           className={cn(
-            'shrink-0 h-7 px-2.5 rounded-lg text-xs font-medium transition-all flex items-center',
+            'shrink-0 h-7 px-2.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1',
             category === undefined
               ? 'bg-primary/15 text-primary ring-1 ring-primary/40'
               : 'bg-surface-hover text-text-muted hover:text-text-secondary'
           )}
         >
+          {suggesting && <Loader2 size={10} className="animate-spin shrink-0" />}
           Sin cat.
         </button>
 
@@ -210,6 +253,34 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
           </button>
         )}
       </div>
+
+      {/* AI suggestion pill */}
+      {suggestedCategoryId && (() => {
+        const suggested = categories.find((c) => c.id === suggestedCategoryId);
+        if (!suggested) return null;
+        return (
+          <div className="flex items-center gap-2 bg-primary/8 border border-primary/20 rounded-xl px-3 py-1.5">
+            <Sparkles size={12} className="text-primary shrink-0" />
+            <span className="text-xs text-text-secondary flex-1">
+              ¿{suggested.emoji} {suggested.label}?
+            </span>
+            <button
+              type="button"
+              onClick={acceptSuggestion}
+              className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors px-1"
+            >
+              Sí
+            </button>
+            <button
+              type="button"
+              onClick={dismissSuggestion}
+              className="text-text-muted hover:text-danger transition-colors"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        );
+      })()}
 
       {/* Edit existing category — shown on long-press */}
       {managingCat && (
