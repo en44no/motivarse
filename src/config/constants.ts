@@ -15,6 +15,16 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDef[] = [
   { id: 'early_birds', name: 'Madrugadores', description: 'Ambos se despertaron temprano por una semana', icon: '🌅', type: 'couple', condition: 'couple_early_week' },
 ];
 
+export const TODO_CATEGORIES: { value: import('../types/shared').TodoCategory; label: string; emoji: string }[] = [
+  { value: 'super', label: 'Super', emoji: '🛒' },
+  { value: 'farmacia', label: 'Farmacia', emoji: '💊' },
+  { value: 'casa', label: 'Casa', emoji: '🏠' },
+  { value: 'comida', label: 'Comida', emoji: '🍽️' },
+  { value: 'finanzas', label: 'Finanzas', emoji: '💰' },
+  { value: 'auto', label: 'Auto', emoji: '🚗' },
+  { value: 'otros', label: 'Otros', emoji: '📦' },
+];
+
 export const MOOD_OPTIONS = [
   { value: 1, emoji: '😫', label: 'Terrible' },
   { value: 2, emoji: '😕', label: 'Difícil' },

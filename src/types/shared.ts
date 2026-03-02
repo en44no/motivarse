@@ -1,4 +1,6 @@
 export type TodoPriority = 'low' | 'medium' | 'high';
+export type TodoCategory = 'super' | 'farmacia' | 'casa' | 'comida' | 'finanzas' | 'auto' | 'otros';
+export type TodoRecurring = 'none' | 'weekly' | 'monthly';
 
 export interface SharedTodo {
   id: string;
@@ -10,6 +12,8 @@ export interface SharedTodo {
   createdBy: string;
   priority: TodoPriority;
   dueDate?: string;
+  category?: TodoCategory;
+  recurring?: TodoRecurring;
   createdAt: number;
 }
 

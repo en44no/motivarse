@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
-import { Check, Trash2, Calendar } from 'lucide-react';
+import { Check, Trash2, Calendar, RefreshCw } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatRelativeTime, getToday } from '../../lib/date-utils';
 import type { SharedTodo } from '../../types/shared';
+import { TODO_CATEGORIES } from '../../config/constants';
 
 interface TodoItemProps {
   todo: SharedTodo;
@@ -21,6 +22,8 @@ export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames 
 
   const createdByName = memberNames[todo.createdBy] || 'Alguien';
   const completedByName = todo.completedBy ? memberNames[todo.completedBy] || 'Alguien' : '';
+  const categoryDef = todo.category ? TODO_CATEGORIES.find(c => c.value === todo.category) : null;
+  const recurringLabel = todo.recurring === 'weekly' ? 'Semanal' : todo.recurring === 'monthly' ? 'Mensual' : null;
 
   // Due date color logic
   const today = getToday();
@@ -55,12 +58,17 @@ export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames 
       </button>
 
       <div className="flex-1 min-w-0">
-        <p className={cn(
-          'text-sm font-medium',
-          todo.completed ? 'text-text-muted line-through' : 'text-text-primary'
-        )}>
-          {todo.title}
-        </p>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {categoryDef && (
+            <span className="text-sm">{categoryDef.emoji}</span>
+          )}
+          <p className={cn(
+            'text-sm font-medium',
+            todo.completed ? 'text-text-muted line-through' : 'text-text-primary'
+          )}>
+            {todo.title}
+          </p>
+        </div>
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <p className="text-[10px] text-text-muted">
             {todo.completed
@@ -71,6 +79,12 @@ export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames 
             <span className={cn('text-[10px] flex items-center gap-0.5', dueDateColor)}>
               <Calendar size={9} />
               {todo.dueDate}
+            </span>
+          )}
+          {recurringLabel && (
+            <span className="text-[10px] flex items-center gap-0.5 text-accent">
+              <RefreshCw size={9} />
+              {recurringLabel}
             </span>
           )}
         </div>

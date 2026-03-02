@@ -4,7 +4,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useDataContext } from '../contexts/DataContext';
 import { addTodo, updateTodo, deleteTodo } from '../services/shared.service';
-import type { TodoPriority } from '../types/shared';
+import type { TodoPriority, TodoCategory, TodoRecurring } from '../types/shared';
 
 export function useSharedTodos() {
   const { user, profile } = useAuthContext();
@@ -27,7 +27,13 @@ export function useSharedTodos() {
     (t) => t.completedAt != null && now - t.completedAt >= ARCHIVE_THRESHOLD_MS
   );
 
-  async function add(title: string, priority: TodoPriority = 'medium', dueDate?: string) {
+  async function add(
+    title: string,
+    priority: TodoPriority = 'medium',
+    category?: TodoCategory,
+    recurring?: TodoRecurring,
+    dueDate?: string,
+  ) {
     if (!user || !coupleId) return;
     try {
       await addTodo({
@@ -36,7 +42,9 @@ export function useSharedTodos() {
         completed: false,
         createdBy: user.uid,
         priority,
-        dueDate,
+        ...(category ? { category } : {}),
+        ...(recurring ? { recurring } : {}),
+        ...(dueDate ? { dueDate } : {}),
         createdAt: Date.now(),
       });
     } catch (error) {
@@ -53,6 +61,23 @@ export function useSharedTodos() {
         completedBy: completed ? user.uid : undefined,
         completedAt: completed ? Date.now() : undefined,
       });
+
+      // Auto-recreate recurring todos when completed
+      if (completed && coupleId) {
+        const todo = todos.find((t) => t.id === id);
+        if (todo?.recurring && todo.recurring !== 'none') {
+          await addTodo({
+            coupleId,
+            title: todo.title,
+            completed: false,
+            createdBy: todo.createdBy,
+            priority: todo.priority,
+            ...(todo.category ? { category: todo.category } : {}),
+            recurring: todo.recurring,
+            createdAt: Date.now(),
+          });
+        }
+      }
     } catch (error) {
       console.error('Error toggling todo:', error);
       toast.error('No se pudo actualizar el mandado.');
