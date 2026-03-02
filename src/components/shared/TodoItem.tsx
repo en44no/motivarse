@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
-import { Check, Trash2, Calendar, RefreshCw } from 'lucide-react';
+import { Check, Trash2, Calendar } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatRelativeTime, getToday } from '../../lib/date-utils';
 import type { SharedTodo } from '../../types/shared';
-import { TODO_CATEGORIES } from '../../config/constants';
+import type { CoupleCategory } from '../../types/category';
 
 interface TodoItemProps {
   todo: SharedTodo;
@@ -11,9 +11,10 @@ interface TodoItemProps {
   onDelete: () => void;
   currentUserId: string;
   memberNames: Record<string, string>;
+  categories?: CoupleCategory[];
 }
 
-export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames }: TodoItemProps) {
+export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames, categories = [] }: TodoItemProps) {
   const priorityColors = {
     low: 'border-l-text-muted',
     medium: 'border-l-secondary',
@@ -22,8 +23,7 @@ export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames 
 
   const createdByName = memberNames[todo.createdBy] || 'Alguien';
   const completedByName = todo.completedBy ? memberNames[todo.completedBy] || 'Alguien' : '';
-  const categoryDef = todo.category ? TODO_CATEGORIES.find(c => c.value === todo.category) : null;
-  const recurringLabel = todo.recurring === 'weekly' ? 'Semanal' : todo.recurring === 'monthly' ? 'Mensual' : null;
+  const categoryDef = todo.category ? categories.find((c) => c.id === todo.category) : null;
 
   // Due date color logic
   const today = getToday();
@@ -32,6 +32,9 @@ export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames 
     if (todo.dueDate < today) dueDateColor = 'text-danger';
     else if (todo.dueDate === today) dueDateColor = 'text-secondary';
   }
+
+  // Silence unused variable warning
+  void currentUserId;
 
   return (
     <motion.div
@@ -79,12 +82,6 @@ export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames 
             <span className={cn('text-[10px] flex items-center gap-0.5', dueDateColor)}>
               <Calendar size={9} />
               {todo.dueDate}
-            </span>
-          )}
-          {recurringLabel && (
-            <span className="text-[10px] flex items-center gap-0.5 text-accent">
-              <RefreshCw size={9} />
-              {recurringLabel}
             </span>
           )}
         </div>

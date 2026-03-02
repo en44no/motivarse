@@ -10,11 +10,12 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import type { SharedTodo } from '../types/shared';
+import type { SharedTodo, PurchaseRecord } from '../types/shared';
 import type { Achievement } from '../types/shared';
 
 const todosCol = collection(db, 'sharedTodos');
 const achievementsCol = collection(db, 'achievements');
+const purchaseHistoryCol = collection(db, 'purchaseHistory');
 
 export function subscribeToTodos(coupleId: string, callback: (todos: SharedTodo[]) => void): Unsubscribe {
   const q = query(todosCol, where('coupleId', '==', coupleId));
@@ -57,4 +58,30 @@ export function subscribeToAchievements(coupleId: string, callback: (achievement
 
 export async function unlockAchievement(achievement: Omit<Achievement, 'id'>): Promise<void> {
   await addDoc(achievementsCol, achievement);
+}
+
+export function subscribeToPurchaseHistory(
+  coupleId: string,
+  callback: (records: PurchaseRecord[]) => void
+): Unsubscribe {
+  const q = query(purchaseHistoryCol, where('coupleId', '==', coupleId));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const records = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() } as PurchaseRecord))
+        .sort((a, b) => b.completedAt - a.completedAt);
+      callback(records);
+    },
+    (error) => {
+      console.error('Error subscribing to purchase history:', error);
+      callback([]);
+    }
+  );
+}
+
+export async function addPurchaseRecord(
+  record: Omit<PurchaseRecord, 'id'>
+): Promise<void> {
+  await addDoc(purchaseHistoryCol, record);
 }

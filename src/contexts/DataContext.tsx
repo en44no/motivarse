@@ -3,12 +3,12 @@ import { useAuthContext } from './AuthContext';
 import { useCoupleContext } from './CoupleContext';
 import { subscribeToHabits, subscribeToHabitLogs, subscribeToStreaks } from '../services/habits.service';
 import { subscribeToRunLogs, subscribeToRunProgress } from '../services/running.service';
-import { subscribeToTodos } from '../services/shared.service';
+import { subscribeToTodos, subscribeToPurchaseHistory } from '../services/shared.service';
 import { getToday, formatDate } from '../lib/date-utils';
 import { subDays } from 'date-fns';
 import type { Habit, HabitLog, HabitStreak } from '../types/habit';
 import type { RunLog, RunProgress } from '../types/running';
-import type { SharedTodo } from '../types/shared';
+import type { SharedTodo, PurchaseRecord } from '../types/shared';
 
 interface DataContextType {
   habits: Habit[];
@@ -17,6 +17,7 @@ interface DataContextType {
   runLogs: RunLog[];
   runProgress: RunProgress | null;
   todos: SharedTodo[];
+  purchaseHistory: PurchaseRecord[];
   loading: boolean;
   error: string | null;
 }
@@ -28,6 +29,7 @@ const DataContext = createContext<DataContextType>({
   runLogs: [],
   runProgress: null,
   todos: [],
+  purchaseHistory: [],
   loading: true,
   error: null,
 });
@@ -39,6 +41,7 @@ function clearAllData(
   setRunLogs: (v: RunLog[]) => void,
   setRunProgress: (v: RunProgress | null) => void,
   setTodos: (v: SharedTodo[]) => void,
+  setPurchaseHistory: (v: PurchaseRecord[]) => void,
 ) {
   setHabits([]);
   setHabitLogs([]);
@@ -46,6 +49,7 @@ function clearAllData(
   setRunLogs([]);
   setRunProgress(null);
   setTodos([]);
+  setPurchaseHistory([]);
 }
 
 export function DataProvider({ children }: { children: ReactNode }) {
@@ -58,6 +62,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [runLogs, setRunLogs] = useState<RunLog[]>([]);
   const [runProgress, setRunProgress] = useState<RunProgress | null>(null);
   const [todos, setTodos] = useState<SharedTodo[]>([]);
+  const [purchaseHistory, setPurchaseHistory] = useState<PurchaseRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,7 +82,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // No user = logged out → clear everything
     if (!user) {
-      clearAllData(setHabits, setHabitLogs, setStreaks, setRunLogs, setRunProgress, setTodos);
+      clearAllData(setHabits, setHabitLogs, setStreaks, setRunLogs, setRunProgress, setTodos, setPurchaseHistory);
       hasLoadedRef.current = false;
       setLoading(false);
       return;
@@ -85,7 +90,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     if (!coupleId) {
       if (profile && !profile.coupleId) {
-        clearAllData(setHabits, setHabitLogs, setStreaks, setRunLogs, setRunProgress, setTodos);
+        clearAllData(setHabits, setHabitLogs, setStreaks, setRunLogs, setRunProgress, setTodos, setPurchaseHistory);
         hasLoadedRef.current = false;
         setLoading(false);
         return;
@@ -99,7 +104,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // We have a coupleId → subscribe to all data
     let cancelled = false;
     respondedRef.current = 0;
-    expectedRef.current = userId ? 6 : 4;
+    expectedRef.current = userId ? 7 : 5;
     setError(null);
     // Only show loading on first load; on re-subscriptions keep showing existing data
     if (!hasLoadedRef.current) setLoading(true);
@@ -148,6 +153,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (todosFirst) { todosFirst = false; onResponse(); }
     }));
 
+    let purchaseFirst = true;
+    unsubs.push(subscribeToPurchaseHistory(coupleId, (records) => {
+      if (cancelled) return;
+      setPurchaseHistory(records);
+      if (purchaseFirst) { purchaseFirst = false; onResponse(); }
+    }));
+
     // User-scoped subscriptions
     if (userId) {
       let streaksFirst = true;
@@ -173,7 +185,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [coupleId, userId, authLoading]);
 
   return (
-    <DataContext.Provider value={{ habits, habitLogs, streaks, runLogs, runProgress, todos, loading, error }}>
+    <DataContext.Provider value={{ habits, habitLogs, streaks, runLogs, runProgress, todos, purchaseHistory, loading, error }}>
       {children}
     </DataContext.Provider>
   );

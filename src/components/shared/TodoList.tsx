@@ -3,6 +3,7 @@ import { ShoppingCart } from 'lucide-react';
 import { TodoItem } from './TodoItem';
 import { EmptyState } from '../ui/EmptyState';
 import type { SharedTodo } from '../../types/shared';
+import type { CoupleCategory } from '../../types/category';
 
 interface TodoListProps {
   todos: SharedTodo[];
@@ -10,9 +11,10 @@ interface TodoListProps {
   onDelete: (id: string) => void;
   currentUserId: string;
   memberNames: Record<string, string>;
+  categories?: CoupleCategory[];
 }
 
-export function TodoList({ todos, onToggle, onDelete, currentUserId, memberNames }: TodoListProps) {
+export function TodoList({ todos, onToggle, onDelete, currentUserId, memberNames, categories = [] }: TodoListProps) {
   if (todos.length === 0) {
     return (
       <EmptyState
@@ -34,6 +36,7 @@ export function TodoList({ todos, onToggle, onDelete, currentUserId, memberNames
             onDelete={() => onDelete(todo.id)}
             currentUserId={currentUserId}
             memberNames={memberNames}
+            categories={categories}
           />
         ))}
       </AnimatePresence>

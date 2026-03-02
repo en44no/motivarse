@@ -1,4 +1,5 @@
 import type { AchievementDef } from '../types/shared';
+import type { CoupleCategory } from '../types/category';
 
 export const ACHIEVEMENT_DEFINITIONS: AchievementDef[] = [
   { id: 'first_habit', name: 'Primer paso', description: 'Completaste tu primer hábito', icon: '🌱', type: 'individual', condition: 'complete_1_habit' },
@@ -15,14 +16,14 @@ export const ACHIEVEMENT_DEFINITIONS: AchievementDef[] = [
   { id: 'early_birds', name: 'Madrugadores', description: 'Ambos se despertaron temprano por una semana', icon: '🌅', type: 'couple', condition: 'couple_early_week' },
 ];
 
-export const TODO_CATEGORIES: { value: import('../types/shared').TodoCategory; label: string; emoji: string }[] = [
-  { value: 'super', label: 'Super', emoji: '🛒' },
-  { value: 'farmacia', label: 'Farmacia', emoji: '💊' },
-  { value: 'casa', label: 'Casa', emoji: '🏠' },
-  { value: 'comida', label: 'Comida', emoji: '🍽️' },
-  { value: 'finanzas', label: 'Finanzas', emoji: '💰' },
-  { value: 'auto', label: 'Auto', emoji: '🚗' },
-  { value: 'otros', label: 'Otros', emoji: '📦' },
+export const DEFAULT_CATEGORIES: Omit<CoupleCategory, 'id' | 'coupleId' | 'createdAt' | 'createdBy'>[] = [
+  { label: 'Super', emoji: '🛒' },
+  { label: 'Farmacia', emoji: '💊' },
+  { label: 'Casa', emoji: '🏠' },
+  { label: 'Comida', emoji: '🍽️' },
+  { label: 'Finanzas', emoji: '💰' },
+  { label: 'Auto', emoji: '🚗' },
+  { label: 'Otros', emoji: '📦' },
 ];
 
 export const MOOD_OPTIONS = [

@@ -3,8 +3,8 @@ import { toast } from 'sonner';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useDataContext } from '../contexts/DataContext';
-import { addTodo, updateTodo, deleteTodo } from '../services/shared.service';
-import type { TodoPriority, TodoCategory, TodoRecurring } from '../types/shared';
+import { addTodo, updateTodo, deleteTodo, addPurchaseRecord } from '../services/shared.service';
+import type { TodoPriority } from '../types/shared';
 
 export function useSharedTodos() {
   const { user, profile } = useAuthContext();
@@ -30,8 +30,7 @@ export function useSharedTodos() {
   async function add(
     title: string,
     priority: TodoPriority = 'medium',
-    category?: TodoCategory,
-    recurring?: TodoRecurring,
+    category?: string,
     dueDate?: string,
   ) {
     if (!user || !coupleId) return;
@@ -43,7 +42,6 @@ export function useSharedTodos() {
         createdBy: user.uid,
         priority,
         ...(category ? { category } : {}),
-        ...(recurring ? { recurring } : {}),
         ...(dueDate ? { dueDate } : {}),
         createdAt: Date.now(),
       });
@@ -54,29 +52,25 @@ export function useSharedTodos() {
   }
 
   async function toggle(id: string, completed: boolean) {
-    if (!user) return;
+    if (!user || !coupleId) return;
     try {
+      const todo = todos.find((t) => t.id === id);
       await updateTodo(id, {
         completed,
         completedBy: completed ? user.uid : undefined,
         completedAt: completed ? Date.now() : undefined,
       });
 
-      // Auto-recreate recurring todos when completed
-      if (completed && coupleId) {
-        const todo = todos.find((t) => t.id === id);
-        if (todo?.recurring && todo.recurring !== 'none') {
-          await addTodo({
-            coupleId,
-            title: todo.title,
-            completed: false,
-            createdBy: todo.createdBy,
-            priority: todo.priority,
-            ...(todo.category ? { category: todo.category } : {}),
-            recurring: todo.recurring,
-            createdAt: Date.now(),
-          });
-        }
+      // Write purchase record when completing a todo
+      if (completed && todo) {
+        await addPurchaseRecord({
+          coupleId,
+          title: todo.title.trim().toLowerCase(),
+          originalTitle: todo.title.trim(),
+          ...(todo.category ? { category: todo.category } : {}),
+          completedBy: user.uid,
+          completedAt: Date.now(),
+        });
       }
     } catch (error) {
       console.error('Error toggling todo:', error);
@@ -85,7 +79,6 @@ export function useSharedTodos() {
   }
 
   function remove(id: string) {
-    // Undo pattern: show toast with undo button, delete after 3s
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
 

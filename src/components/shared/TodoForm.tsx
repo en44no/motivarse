@@ -1,11 +1,13 @@
-import { useState, type FormEvent } from 'react';
-import { Plus, RefreshCw } from 'lucide-react';
+import { useState, useRef, type FormEvent, type KeyboardEvent } from 'react';
+import { Plus, Check, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import type { TodoPriority, TodoCategory, TodoRecurring } from '../../types/shared';
-import { TODO_CATEGORIES } from '../../config/constants';
+import type { TodoPriority } from '../../types/shared';
+import type { CoupleCategory } from '../../types/category';
 
 interface TodoFormProps {
-  onSubmit: (title: string, priority: TodoPriority, category?: TodoCategory, recurring?: TodoRecurring) => void;
+  categories: CoupleCategory[];
+  onSubmit: (title: string, priority: TodoPriority, category?: string) => void;
+  onAddCategory: (label: string, emoji: string) => Promise<CoupleCategory | null>;
 }
 
 const PRIORITIES: { value: TodoPriority; label: string; color: string }[] = [
@@ -14,31 +16,62 @@ const PRIORITIES: { value: TodoPriority; label: string; color: string }[] = [
   { value: 'high', label: 'Alta', color: 'bg-danger-soft text-danger' },
 ];
 
-const RECURRING_OPTIONS: { value: TodoRecurring; label: string }[] = [
-  { value: 'none', label: 'No' },
-  { value: 'weekly', label: 'Sem' },
-  { value: 'monthly', label: 'Mes' },
-];
-
-export function TodoForm({ onSubmit }: TodoFormProps) {
+export function TodoForm({ categories, onSubmit, onAddCategory }: TodoFormProps) {
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<TodoPriority>('medium');
-  const [category, setCategory] = useState<TodoCategory | undefined>(undefined);
-  const [recurring, setRecurring] = useState<TodoRecurring>('none');
+  const [category, setCategory] = useState<string | undefined>(undefined);
+
+  // Inline new-category form state
+  const [showNewCat, setShowNewCat] = useState(false);
+  const [newEmoji, setNewEmoji] = useState('');
+  const [newLabel, setNewLabel] = useState('');
+  const [savingCat, setSavingCat] = useState(false);
+  const labelRef = useRef<HTMLInputElement>(null);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
-    onSubmit(title.trim(), priority, category, recurring !== 'none' ? recurring : undefined);
+    onSubmit(title.trim(), priority, category);
     setTitle('');
     setCategory(undefined);
-    setRecurring('none');
   }
 
-  function cycleRecurring() {
-    const order: TodoRecurring[] = ['none', 'weekly', 'monthly'];
-    const idx = order.indexOf(recurring);
-    setRecurring(order[(idx + 1) % order.length]);
+  function openNewCat() {
+    setShowNewCat(true);
+    setNewEmoji('');
+    setNewLabel('');
+    setTimeout(() => labelRef.current?.focus(), 50);
+  }
+
+  function cancelNewCat() {
+    setShowNewCat(false);
+    setNewEmoji('');
+    setNewLabel('');
+  }
+
+  async function confirmNewCat() {
+    const label = newLabel.trim();
+    const emoji = newEmoji.trim() || '📌';
+    if (!label) return;
+    setSavingCat(true);
+    try {
+      const created = await onAddCategory(label, emoji);
+      if (created) setCategory(created.id);
+    } finally {
+      setSavingCat(false);
+      setShowNewCat(false);
+      setNewEmoji('');
+      setNewLabel('');
+    }
+  }
+
+  function handleNewCatKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      confirmNewCat();
+    } else if (e.key === 'Escape') {
+      cancelNewCat();
+    }
   }
 
   return (
@@ -62,6 +95,7 @@ export function TodoForm({ onSubmit }: TodoFormProps) {
 
       {/* Category chips — horizontal scroll */}
       <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+        {/* "None" chip */}
         <button
           type="button"
           onClick={() => setCategory(undefined)}
@@ -74,14 +108,16 @@ export function TodoForm({ onSubmit }: TodoFormProps) {
         >
           Sin cat.
         </button>
-        {TODO_CATEGORIES.map((cat) => (
+
+        {/* Loaded categories */}
+        {categories.map((cat) => (
           <button
-            key={cat.value}
+            key={cat.id}
             type="button"
-            onClick={() => setCategory(cat.value === category ? undefined : cat.value)}
+            onClick={() => setCategory(cat.id === category ? undefined : cat.id)}
             className={cn(
               'shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-all',
-              category === cat.value
+              category === cat.id
                 ? 'bg-primary/15 text-primary ring-1 ring-primary/40'
                 : 'bg-surface-hover text-text-muted hover:text-text-secondary'
             )}
@@ -90,41 +126,73 @@ export function TodoForm({ onSubmit }: TodoFormProps) {
             <span>{cat.label}</span>
           </button>
         ))}
+
+        {/* "+ Nueva" button or inline form */}
+        {!showNewCat ? (
+          <button
+            type="button"
+            onClick={openNewCat}
+            className="shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium bg-surface-hover text-text-muted hover:text-primary hover:bg-primary/10 transition-all border border-dashed border-border"
+          >
+            + Nueva
+          </button>
+        ) : (
+          <div className="shrink-0 flex items-center gap-1 bg-surface border border-primary/40 rounded-lg px-2 py-0.5 ring-1 ring-primary/20">
+            {/* Emoji input */}
+            <input
+              value={newEmoji}
+              onChange={(e) => setNewEmoji(e.target.value)}
+              onKeyDown={handleNewCatKeyDown}
+              placeholder="😀"
+              maxLength={2}
+              className="w-7 text-center text-sm bg-transparent outline-none placeholder:text-text-muted"
+            />
+            {/* Label input */}
+            <input
+              ref={labelRef}
+              value={newLabel}
+              onChange={(e) => setNewLabel(e.target.value)}
+              onKeyDown={handleNewCatKeyDown}
+              placeholder="Nombre"
+              className="w-20 text-xs bg-transparent outline-none text-text-primary placeholder:text-text-muted"
+            />
+            {/* Confirm */}
+            <button
+              type="button"
+              onClick={confirmNewCat}
+              disabled={!newLabel.trim() || savingCat}
+              className="text-primary disabled:opacity-40 hover:text-primary-hover transition-colors"
+            >
+              <Check size={13} strokeWidth={2.5} />
+            </button>
+            {/* Cancel */}
+            <button
+              type="button"
+              onClick={cancelNewCat}
+              className="text-text-muted hover:text-danger transition-colors"
+            >
+              <X size={13} strokeWidth={2.5} />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Priority + Recurring row */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-1.5">
-          {PRIORITIES.map((p) => (
-            <button
-              key={p.value}
-              type="button"
-              onClick={() => setPriority(p.value)}
-              className={cn(
-                'px-3 py-1 rounded-lg text-xs font-medium transition-all',
-                priority === p.value ? p.color : 'bg-transparent text-text-muted',
-                priority === p.value && 'ring-1 ring-current'
-              )}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Recurring cycle button */}
-        <button
-          type="button"
-          onClick={cycleRecurring}
-          className={cn(
-            'flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-all',
-            recurring !== 'none'
-              ? 'bg-accent/15 text-accent ring-1 ring-accent/40'
-              : 'bg-surface-hover text-text-muted hover:text-text-secondary'
-          )}
-        >
-          <RefreshCw size={11} />
-          <span>{RECURRING_OPTIONS.find(o => o.value === recurring)?.label ?? 'No'}</span>
-        </button>
+      {/* Priority row */}
+      <div className="flex gap-1.5">
+        {PRIORITIES.map((p) => (
+          <button
+            key={p.value}
+            type="button"
+            onClick={() => setPriority(p.value)}
+            className={cn(
+              'px-3 py-1 rounded-lg text-xs font-medium transition-all',
+              priority === p.value ? p.color : 'bg-transparent text-text-muted',
+              priority === p.value && 'ring-1 ring-current'
+            )}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
     </form>
   );
