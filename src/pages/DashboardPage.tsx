@@ -1,14 +1,18 @@
+import { Link } from 'react-router-dom';
+import { ShoppingCart } from 'lucide-react';
 import { useHabits } from '../hooks/useHabits';
 import { useStreaks } from '../hooks/useStreaks';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useRunning } from '../hooks/useRunning';
+import { useDataContext } from '../contexts/DataContext';
 import { TodaySummary } from '../components/dashboard/TodaySummary';
 import { PartnerStatus } from '../components/dashboard/PartnerStatus';
 import { StreakHighlight } from '../components/dashboard/StreakHighlight';
 import { RunningProgress } from '../components/dashboard/RunningProgress';
 import { QuickActions } from '../components/dashboard/QuickActions';
 import { CardSkeleton } from '../components/ui/Skeleton';
+import { ROUTES } from '../config/routes';
 
 export function DashboardPage() {
   const { todayHabits, todayProgress, partnerTodayLogs, loading: habitsLoading } = useHabits();
@@ -16,7 +20,10 @@ export function DashboardPage() {
   const { profile } = useAuthContext();
   const { partnerName } = useCoupleContext();
   const { progress } = useRunning();
+  const { todos } = useDataContext();
   const soundEnabled = profile?.settings?.soundEnabled ?? true;
+
+  const pendingTodos = todos.filter((t) => !t.completed);
 
   // Count unique habits completed by partner today
   const partnerCompletedToday = new Set(
@@ -53,6 +60,23 @@ export function DashboardPage() {
       )}
 
       <StreakHighlight bestStreak={bestStreak} habits={todayHabits} />
+
+      {pendingTodos.length > 0 && (
+        <Link to={ROUTES.SHARED} className="block">
+          <div className="bg-surface rounded-2xl border border-border p-4 flex items-center gap-3 shadow-sm hover:bg-surface-hover transition-colors">
+            <div className="w-10 h-10 rounded-xl bg-secondary-soft flex items-center justify-center shrink-0">
+              <ShoppingCart size={20} className="text-secondary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-text-primary">Mandados pendientes</p>
+              <p className="text-xs text-text-muted">
+                {pendingTodos.length} {pendingTodos.length === 1 ? 'mandado por hacer' : 'mandados por hacer'}
+              </p>
+            </div>
+            <span className="shrink-0 text-lg font-bold text-secondary">{pendingTodos.length}</span>
+          </div>
+        </Link>
+      )}
 
       <RunningProgress progress={progress} />
 

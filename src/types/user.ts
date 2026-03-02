@@ -5,6 +5,8 @@ export interface UserProfile {
   partnerId: string | null;
   coupleId: string | null;
   createdAt: number;
+  fcmToken?: string;
+  notificationsEnabled?: boolean;
   settings: {
     notifications: boolean;
     soundEnabled?: boolean;

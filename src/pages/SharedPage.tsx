@@ -17,7 +17,7 @@ export function SharedPage() {
   const { user } = useAuthContext();
   const { couple } = useCoupleContext();
   const { pending, recentlyCompleted, archived, loading, add, toggle, remove } = useSharedTodos();
-  const { categories, add: addCategory } = useCategories();
+  const { categories, add: addCategory, remove: removeCategory } = useCategories();
   const [showArchived, setShowArchived] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('lista');
@@ -86,6 +86,7 @@ export function SharedPage() {
             categories={categories}
             onSubmit={(title, priority, category) => add(title, priority, category)}
             onAddCategory={addCategory}
+            onDeleteCategory={removeCategory}
           />
 
           {/* Category filter — only shown when there are categorised todos */}
@@ -191,7 +192,7 @@ export function SharedPage() {
         <PlanificacionSection
           pendingTodos={pending}
           categories={categories}
-          onAddToList={(title) => add(title, 'medium')}
+          onAddToList={(title, category) => add(title, 'medium', category)}
         />
       )}
     </div>

@@ -8,7 +8,7 @@ import type { CoupleCategory } from '../../types/category';
 interface PlanificacionSectionProps {
   pendingTodos: SharedTodo[];
   categories: CoupleCategory[];
-  onAddToList: (title: string) => void;
+  onAddToList: (title: string, category?: string) => void;
 }
 
 const SORT_TABS: { value: SortMode; label: string }[] = [
@@ -155,7 +155,7 @@ export function PlanificacionSection({ pendingTodos, categories, onAddToList }: 
 
               {/* Add to list button */}
               <button
-                onClick={() => onAddToList(stat.displayTitle)}
+                onClick={() => onAddToList(stat.displayTitle, stat.category)}
                 disabled={stat.isInList}
                 className={cn(
                   'shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all',

@@ -23,13 +23,16 @@ export function subscribeToHabits(coupleId: string, callback: (habits: Habit[]) 
   return onSnapshot(q, (snap) => {
     const habits = snap.docs
       .map((d) => ({ id: d.id, ...d.data() } as Habit))
-      .filter((h) => h.isActive)
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     callback(habits);
   }, (error) => {
     console.error('Error subscribing to habits:', error);
     callback([]);
   });
+}
+
+export async function restoreHabit(id: string): Promise<void> {
+  await updateDoc(doc(db, 'habits', id), { isActive: true });
 }
 
 export function subscribeToHabitLogs(
