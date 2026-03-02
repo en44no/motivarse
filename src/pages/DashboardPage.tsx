@@ -15,7 +15,7 @@ import { CardSkeleton } from '../components/ui/Skeleton';
 import { ROUTES } from '../config/routes';
 
 export function DashboardPage() {
-  const { todayHabits, todayProgress, partnerTodayLogs, loading: habitsLoading } = useHabits();
+  const { todayHabits, myHabits, todayProgress, partnerTodayLogs, loading: habitsLoading } = useHabits();
   const { bestStreak } = useStreaks();
   const { profile } = useAuthContext();
   const { partnerName } = useCoupleContext();
@@ -59,7 +59,7 @@ export function DashboardPage() {
         />
       )}
 
-      <StreakHighlight bestStreak={bestStreak} habits={todayHabits} />
+      <StreakHighlight bestStreak={bestStreak} habits={myHabits} />
 
       {pendingTodos.length > 0 && (
         <Link to={ROUTES.SHARED} className="block">
