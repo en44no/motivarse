@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, type FormEvent, type KeyboardEvent } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Check, X, Trash2, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { TodoPriority } from '../../types/shared';
@@ -51,25 +52,24 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
   const didLongPress = useRef(false);
 
   // ── AI autocategorize ─────────────────────────────────────────────────────
-  const [suggestedCategoryId, setSuggestedCategoryId] = useState<string | null>(null);
+  const [aiSelectedCategoryId, setAiSelectedCategoryId] = useState<string | null>(null);
   const [suggesting, setSuggesting] = useState(false);
-  const dismissedForTitle = useRef<string>('');
+  const userOverrode = useRef(false);
 
   useEffect(() => {
+    userOverrode.current = false;
     if (title.trim().length <= 3 || categories.length === 0) {
-      setSuggestedCategoryId(null);
+      setAiSelectedCategoryId(null);
       return;
     }
-    if (title.trim() === dismissedForTitle.current) return;
 
     const timer = setTimeout(async () => {
       setSuggesting(true);
       const id = await autocategorize(title.trim(), categories);
       setSuggesting(false);
-      if (id && id !== category) {
-        setSuggestedCategoryId(id);
-      } else {
-        setSuggestedCategoryId(null);
+      if (id && !userOverrode.current) {
+        setCategory(id);
+        setAiSelectedCategoryId(id);
       }
     }, 700);
 
@@ -77,32 +77,21 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title]);
 
-  function acceptSuggestion() {
-    if (suggestedCategoryId) {
-      setCategory(suggestedCategoryId);
-      setSuggestedCategoryId(null);
-    }
-  }
-  function dismissSuggestion() {
-    dismissedForTitle.current = title.trim();
-    setSuggestedCategoryId(null);
-  }
-
-  // ── Todo submit ──────────────────────────────────────────────
+  // ── Todo submit ───────────────────────────────────────────────────────────
   function doSubmit() {
     if (!title.trim()) return;
     onSubmit(title.trim(), priority, category);
     setTitle('');
     setCategory(undefined);
-    setSuggestedCategoryId(null);
-    dismissedForTitle.current = '';
+    setAiSelectedCategoryId(null);
+    userOverrode.current = false;
   }
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     doSubmit();
   }
 
-  // ── New category ─────────────────────────────────────────────
+  // ── New category ──────────────────────────────────────────────────────────
   function openNewCat() {
     setManagingCat(null);
     setShowNewCat(true);
@@ -135,7 +124,7 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
     else if (e.key === 'Escape') cancelNewCat();
   }
 
-  // ── Long-press to manage category ────────────────────────────
+  // ── Long-press to manage category ─────────────────────────────────────────
   function startLongPress(cat: CoupleCategory) {
     didLongPress.current = false;
     longPressTimer.current = setTimeout(() => {
@@ -153,12 +142,13 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
     }
   }
   function handleChipClick(cat: CoupleCategory) {
-    if (didLongPress.current) return; // long-press already handled
+    if (didLongPress.current) return;
     setCategory(category === cat.id ? undefined : cat.id);
-    setSuggestedCategoryId(null);
+    setAiSelectedCategoryId(null);
+    userOverrode.current = true;
   }
 
-  // ── Edit category actions ─────────────────────────────────────
+  // ── Edit category actions ─────────────────────────────────────────────────
   async function saveEdit() {
     if (!managingCat || !managingCat.label.trim()) return;
     onUpdateCategory(managingCat.id, managingCat.label.trim(), managingCat.emoji.trim() || '📌');
@@ -201,7 +191,7 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
         {/* Sin cat. */}
         <button
           type="button"
-          onClick={() => { setCategory(undefined); setSuggestedCategoryId(null); }}
+          onClick={() => { setCategory(undefined); setAiSelectedCategoryId(null); userOverrode.current = true; }}
           className={cn(
             'shrink-0 h-7 px-2.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1',
             category === undefined
@@ -213,13 +203,15 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
           Sin cat.
         </button>
 
-        {/* Category chips — long-press to edit/delete */}
+        {/* Category chips */}
         {categories.map((cat, i) => {
           const color = CAT_COLORS[i % CAT_COLORS.length];
           const isSelected = category === cat.id;
           const isManaging = managingCat?.id === cat.id;
+          const isAiSelected = aiSelectedCategoryId === cat.id;
+
           return (
-            <button
+            <motion.button
               key={cat.id}
               type="button"
               onPointerDown={() => startLongPress(cat)}
@@ -227,18 +219,35 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
               onPointerLeave={cancelLongPress}
               onPointerCancel={cancelLongPress}
               onClick={() => handleChipClick(cat)}
+              animate={isAiSelected ? { scale: [1, 1.14, 1] } : {}}
+              transition={{ duration: 0.38, ease: 'backOut' }}
               className={cn(
                 'shrink-0 h-7 flex items-center gap-1 px-2.5 rounded-lg text-xs font-medium transition-all select-none',
                 isManaging
                   ? 'ring-2 ring-offset-1 ring-offset-surface scale-95 ' + color.active
                   : isSelected
-                  ? color.active
+                  ? isAiSelected
+                    ? color.active + ' ring-2 ring-primary/50 shadow-sm shadow-primary/20'
+                    : color.active
                   : color.base
               )}
             >
+              <AnimatePresence>
+                {isAiSelected && (
+                  <motion.span
+                    initial={{ width: 0, opacity: 0, scale: 0.4 }}
+                    animate={{ width: 14, opacity: 1, scale: 1 }}
+                    exit={{ width: 0, opacity: 0, scale: 0.4 }}
+                    transition={{ duration: 0.22, ease: 'backOut' }}
+                    className="flex items-center overflow-hidden"
+                  >
+                    <Sparkles size={10} className="text-primary shrink-0" />
+                  </motion.span>
+                )}
+              </AnimatePresence>
               <span>{cat.emoji}</span>
               <span>{cat.label}</span>
-            </button>
+            </motion.button>
           );
         })}
 
@@ -253,34 +262,6 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
           </button>
         )}
       </div>
-
-      {/* AI suggestion pill */}
-      {suggestedCategoryId && (() => {
-        const suggested = categories.find((c) => c.id === suggestedCategoryId);
-        if (!suggested) return null;
-        return (
-          <div className="flex items-center gap-2 bg-primary/8 border border-primary/20 rounded-xl px-3 py-1.5">
-            <Sparkles size={12} className="text-primary shrink-0" />
-            <span className="text-xs text-text-secondary flex-1">
-              ¿{suggested.emoji} {suggested.label}?
-            </span>
-            <button
-              type="button"
-              onClick={acceptSuggestion}
-              className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors px-1"
-            >
-              Sí
-            </button>
-            <button
-              type="button"
-              onClick={dismissSuggestion}
-              className="text-text-muted hover:text-danger transition-colors"
-            >
-              <X size={13} />
-            </button>
-          </div>
-        );
-      })()}
 
       {/* Edit existing category — shown on long-press */}
       {managingCat && (
