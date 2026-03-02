@@ -79,7 +79,8 @@ export async function coachMessage(
     });
     const { content } = result.data as { content: string };
     return content ?? '';
-  } catch {
+  } catch (err) {
+    console.error('[CoachMessage error]', err);
     return '';
   }
 }

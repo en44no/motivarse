@@ -86,7 +86,7 @@ export const aiProxy = onCall(
         .join('\n');
 
       const response = await client.messages.create({
-        model: 'claude-haiku-4-5',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 50,
         messages: [
           {
@@ -127,7 +127,7 @@ Responde únicamente con el id (ej: "cat_abc123") o "none".`,
         : '';
 
       const response = await client.messages.create({
-        model: 'claude-haiku-4-5',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 800,
         messages: [
           {
@@ -180,7 +180,7 @@ ${context.partnerName ? `- Pareja: ${context.partnerName}` : ''}
 Ayudá al usuario con motivación, consejos de hábitos, estrategias de bienestar, o simplemente escuchalo. No inventes datos que no tenés.`;
 
       const response = await client.messages.create({
-        model: 'claude-haiku-4-5',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 400,
         system: systemPrompt,
         messages: messages.map((m) => ({
