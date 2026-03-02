@@ -127,6 +127,12 @@ export function subscribeToStreaks(userId: string, callback: (streaks: HabitStre
   });
 }
 
+export async function deleteOrphanedStreaks(userId: string, activeHabitIds: string[]): Promise<void> {
+  const snap = await getDocs(query(streaksCol, where('userId', '==', userId)));
+  const orphaned = snap.docs.filter((d) => !activeHabitIds.includes((d.data() as HabitStreak).habitId));
+  await Promise.all(orphaned.map((d) => deleteDoc(d.ref)));
+}
+
 export async function getHabitLogsForDates(
   habitId: string,
   userId: string,

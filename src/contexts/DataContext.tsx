@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
 import { useAuthContext } from './AuthContext';
 import { useCoupleContext } from './CoupleContext';
-import { subscribeToHabits, subscribeToHabitLogs, subscribeToStreaks } from '../services/habits.service';
+import { subscribeToHabits, subscribeToHabitLogs, subscribeToStreaks, deleteOrphanedStreaks } from '../services/habits.service';
 import { subscribeToRunLogs, subscribeToRunProgress } from '../services/running.service';
 import { subscribeToTodos, subscribeToPurchaseHistory } from '../services/shared.service';
 import { getToday, formatDate } from '../lib/date-utils';
@@ -75,6 +75,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const expectedRef = useRef(0);
   // Once data has loaded, don't regress to loading state on re-subscriptions
   const hasLoadedRef = useRef(false);
+  const orphanCleanedRef = useRef(false);
 
   useEffect(() => {
     // Auth still loading → wait
@@ -183,6 +184,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
       unsubs.forEach((u) => u());
     };
   }, [coupleId, userId, authLoading]);
+
+  // Clean up orphaned streaks once per session after habits + streaks are loaded
+  useEffect(() => {
+    if (!userId || loading || orphanCleanedRef.current) return;
+    if (habits.length === 0 || streaks.length === 0) return;
+    const activeIds = habits.map((h) => h.id);
+    const hasOrphans = streaks.some((s) => !activeIds.includes(s.habitId));
+    if (!hasOrphans) return;
+    orphanCleanedRef.current = true;
+    deleteOrphanedStreaks(userId, activeIds).catch(console.error);
+  }, [userId, loading, habits, streaks]);
 
   return (
     <DataContext.Provider value={{ habits, habitLogs, streaks, runLogs, runProgress, todos, purchaseHistory, loading, error }}>
