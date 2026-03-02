@@ -5,6 +5,7 @@ import { cn } from '../../lib/utils';
 import { Confetti } from '../ui/Confetti';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { playTimerRun, playTimerWalk, playTimerBeep, playTimerComplete } from '../../lib/sound-utils';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 interface CacoTimerProps {
   runMinutes: number;
@@ -30,6 +31,9 @@ export function CacoTimer({
   onComplete,
   onClose,
 }: CacoTimerProps) {
+  const { profile } = useAuthContext();
+  const soundEnabled = profile?.settings?.soundEnabled ?? true;
+
   const [state, setState] = useState<TimerState>('idle');
   const [phase, setPhase] = useState<Phase>('run');
   const [currentRep, setCurrentRep] = useState(1);
@@ -76,7 +80,7 @@ export function CacoTimer({
           return 0;
         }
         // Countdown beeps for last 3 seconds
-        if (prev <= 4) playTimerBeep();
+        if (prev <= 4 && soundEnabled) playTimerBeep();
         return prev - 1;
       });
     }, 1000);
@@ -91,12 +95,12 @@ export function CacoTimer({
       if (walkMinutes <= 0) {
         // No walk phase, go to next rep or complete
         if (currentRep >= repetitions) {
-          playTimerComplete();
+          if (soundEnabled) playTimerComplete();
           setState('completed');
           return;
         }
         // Show phase switch then start next run
-        playTimerRun();
+        if (soundEnabled) playTimerRun();
         setState('phase_switch');
         setPhaseLabel('CORRER!');
         setTimeout(() => {
@@ -108,7 +112,7 @@ export function CacoTimer({
         return;
       }
       // Switch to walk
-      playTimerWalk();
+      if (soundEnabled) playTimerWalk();
       setState('phase_switch');
       setPhaseLabel('CAMINAR!');
       setTimeout(() => {

@@ -4,19 +4,18 @@
  */
 
 let audioCtx: AudioContext | null = null;
-let contextReady = false;
 
 function ensureContext(): AudioContext | null {
   try {
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
+    if (audioCtx.state === 'closed') return null;
+    // Resume if suspended — fire-and-forget. Tones scheduled with currentTime
+    // will play immediately once the context starts running (browser allows this
+    // from within a user-gesture call stack).
     if (audioCtx.state === 'suspended') {
-      audioCtx.resume().then(() => { contextReady = true; });
-      // First interaction — context won't be ready yet, skip this one
-      if (!contextReady) return null;
-    } else {
-      contextReady = true;
+      audioCtx.resume();
     }
     return audioCtx;
   } catch {
@@ -25,8 +24,8 @@ function ensureContext(): AudioContext | null {
 }
 
 /**
- * Call this once on any early user interaction (e.g. first tap on the app)
- * so that subsequent sound calls work immediately.
+ * Call on any early user interaction to ensure AudioContext is ready
+ * before the first sound is needed.
  */
 export function warmUpAudio() {
   try {
@@ -34,9 +33,7 @@ export function warmUpAudio() {
       audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
     if (audioCtx.state === 'suspended') {
-      audioCtx.resume().then(() => { contextReady = true; });
-    } else {
-      contextReady = true;
+      audioCtx.resume();
     }
   } catch {
     // Audio not supported
