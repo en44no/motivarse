@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, ChevronDown, RotateCcw, Sparkles } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHabits } from '../hooks/useHabits';
 import { useStreaks } from '../hooks/useStreaks';
@@ -31,12 +31,10 @@ export function HabitsPage() {
   const [showForm, setShowForm] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
-  const [showArchived, setShowArchived] = useState(false);
   const { user, profile } = useAuthContext();
   const { partnerName } = useCoupleContext();
   const {
     myHabits,
-    myArchivedHabits,
     todayHabits,
     todayLogs,
     partnerTodayLogs,
@@ -44,7 +42,6 @@ export function HabitsPage() {
     toggle,
     addCustomHabit,
     removeHabit,
-    restoreHabit,
     editHabit,
     getLogsForHabit,
     getStatsData,
@@ -149,43 +146,6 @@ export function HabitsPage() {
               soundEnabled={soundEnabled}
             />
 
-            {myArchivedHabits.length > 0 && (
-              <div>
-                <button
-                  onClick={() => setShowArchived(!showArchived)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-1 hover:text-text-secondary transition-colors"
-                >
-                  <ChevronDown
-                    size={14}
-                    className={`transition-transform duration-200 ${showArchived ? 'rotate-0' : '-rotate-90'}`}
-                  />
-                  Archivados ({myArchivedHabits.length})
-                </button>
-                {showArchived && (
-                  <div className="space-y-2">
-                    {myArchivedHabits.map((habit) => (
-                      <div
-                        key={habit.id}
-                        className="bg-surface rounded-xl border border-border p-3 flex items-center gap-3 opacity-60"
-                      >
-                        <div
-                          className="w-3 h-3 rounded-full shrink-0"
-                          style={{ backgroundColor: habit.color }}
-                        />
-                        <p className="flex-1 text-sm text-text-primary">{habit.name}</p>
-                        <button
-                          onClick={() => restoreHabit(habit.id)}
-                          className="shrink-0 w-8 h-8 rounded-lg bg-surface-hover text-text-muted hover:bg-primary hover:text-white flex items-center justify-center transition-all"
-                          title="Restaurar hábito"
-                        >
-                          <RotateCcw size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
           </motion.div>
         )}
 

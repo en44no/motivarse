@@ -69,7 +69,17 @@ export async function updateHabit(id: string, data: Partial<Habit>): Promise<voi
 }
 
 export async function deleteHabit(id: string): Promise<void> {
-  await updateDoc(doc(db, 'habits', id), { isActive: false });
+  // Hard delete: remove habit doc + all its logs + all its streaks
+  const [logsSnap, streaksSnap] = await Promise.all([
+    getDocs(query(logsCol, where('habitId', '==', id))),
+    getDocs(query(streaksCol, where('habitId', '==', id))),
+  ]);
+
+  await Promise.all([
+    deleteDoc(doc(db, 'habits', id)),
+    ...logsSnap.docs.map((d) => deleteDoc(d.ref)),
+    ...streaksSnap.docs.map((d) => deleteDoc(d.ref)),
+  ]);
 }
 
 export async function toggleHabitLog(

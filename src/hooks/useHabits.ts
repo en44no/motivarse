@@ -9,7 +9,6 @@ import {
   updateStreak,
   deleteHabit,
   updateHabit,
-  restoreHabit as restoreHabitService,
 } from '../services/habits.service';
 import { calculateStreak } from '../lib/streak-utils';
 import { getToday, isHabitScheduledForDate, getWeekDays, formatDate } from '../lib/date-utils';
@@ -28,8 +27,6 @@ export function useHabits() {
 
   // My active habits: habits I created + shared habits (active only)
   const myHabits = habits.filter((h) => h.isActive && (h.userId === userId || h.scope === 'shared'));
-  // My archived habits: inactive habits I created or shared ones
-  const myArchivedHabits = habits.filter((h) => !h.isActive && (h.userId === userId || h.scope === 'shared'));
 
   // Filter habits scheduled for today (respects frequency: daily/weekdays/weekends/custom)
   const todayHabits = myHabits.filter((h) => isHabitScheduledForDate(h));
@@ -117,20 +114,10 @@ export function useHabits() {
   async function removeHabit(id: string) {
     try {
       await deleteHabit(id);
-      toast('Hábito archivado');
+      toast.success('Hábito eliminado');
     } catch (error) {
-      console.error('Error archiving habit:', error);
-      toast.error('No se pudo archivar el hábito.');
-    }
-  }
-
-  async function restoreHabit(id: string) {
-    try {
-      await restoreHabitService(id);
-      toast.success('Hábito restaurado');
-    } catch (error) {
-      console.error('Error restoring habit:', error);
-      toast.error('No se pudo restaurar el hábito.');
+      console.error('Error deleting habit:', error);
+      toast.error('No se pudo eliminar el hábito.');
     }
   }
 
@@ -276,7 +263,6 @@ export function useHabits() {
   return {
     habits,
     myHabits,
-    myArchivedHabits,
     todayHabits,
     logs,
     todayLogs,
@@ -288,7 +274,6 @@ export function useHabits() {
     getPartnerLog,
     addCustomHabit,
     removeHabit,
-    restoreHabit,
     editHabit,
     todayProgress,
     getStatsData,
