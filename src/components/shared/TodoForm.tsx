@@ -1,5 +1,5 @@
 import { useState, useRef, type FormEvent, type KeyboardEvent } from 'react';
-import { Plus, Check, X, Pencil } from 'lucide-react';
+import { Plus, Check, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { TodoPriority } from '../../types/shared';
 import type { CoupleCategory } from '../../types/category';
@@ -8,7 +8,6 @@ interface TodoFormProps {
   categories: CoupleCategory[];
   onSubmit: (title: string, priority: TodoPriority, category?: string) => void;
   onAddCategory: (label: string, emoji: string) => Promise<CoupleCategory | null>;
-  onDeleteCategory: (id: string) => void;
 }
 
 const PRIORITIES: { value: TodoPriority; label: string; color: string }[] = [
@@ -17,13 +16,22 @@ const PRIORITIES: { value: TodoPriority; label: string; color: string }[] = [
   { value: 'high', label: 'Alta', color: 'bg-danger-soft text-danger' },
 ];
 
-export function TodoForm({ categories, onSubmit, onAddCategory, onDeleteCategory }: TodoFormProps) {
+// Unique color per category (cycles if > 8)
+const CAT_COLORS = [
+  { base: 'bg-violet-500/10 text-violet-400', active: 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-400/40' },
+  { base: 'bg-sky-500/10 text-sky-400', active: 'bg-sky-500/20 text-sky-400 ring-1 ring-sky-400/40' },
+  { base: 'bg-emerald-500/10 text-emerald-400', active: 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-400/40' },
+  { base: 'bg-amber-500/10 text-amber-400', active: 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-400/40' },
+  { base: 'bg-rose-500/10 text-rose-400', active: 'bg-rose-500/20 text-rose-400 ring-1 ring-rose-400/40' },
+  { base: 'bg-pink-500/10 text-pink-400', active: 'bg-pink-500/20 text-pink-400 ring-1 ring-pink-400/40' },
+  { base: 'bg-teal-500/10 text-teal-400', active: 'bg-teal-500/20 text-teal-400 ring-1 ring-teal-400/40' },
+  { base: 'bg-orange-500/10 text-orange-400', active: 'bg-orange-500/20 text-orange-400 ring-1 ring-orange-400/40' },
+];
+
+export function TodoForm({ categories, onSubmit, onAddCategory }: TodoFormProps) {
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<TodoPriority>('medium');
   const [category, setCategory] = useState<string | undefined>(undefined);
-  const [managingCats, setManagingCats] = useState(false);
-
-  // Inline new-category form state
   const [showNewCat, setShowNewCat] = useState(false);
   const [newEmoji, setNewEmoji] = useState('');
   const [newLabel, setNewLabel] = useState('');
@@ -102,120 +110,89 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onDeleteCategory
       </div>
 
       {/* Category chips — horizontal scroll */}
-      <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
-        {/* Manage categories toggle */}
-        {categories.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setManagingCats(!managingCats)}
-            className={cn(
-              'shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all',
-              managingCats
-                ? 'bg-primary/15 text-primary ring-1 ring-primary/40'
-                : 'bg-surface-hover text-text-muted hover:text-text-secondary'
-            )}
-            title={managingCats ? 'Salir del modo edición' : 'Gestionar categorías'}
-          >
-            <Pencil size={12} />
-          </button>
-        )}
+      <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none items-center">
+        {/* "None" chip */}
+        <button
+          type="button"
+          onClick={() => setCategory(undefined)}
+          className={cn(
+            'shrink-0 h-7 px-2.5 rounded-lg text-xs font-medium transition-all flex items-center',
+            category === undefined
+              ? 'bg-primary/15 text-primary ring-1 ring-primary/40'
+              : 'bg-surface-hover text-text-muted hover:text-text-secondary'
+          )}
+        >
+          Sin cat.
+        </button>
 
-        {/* "None" chip — hidden in managing mode */}
-        {!managingCats && (
-          <button
-            type="button"
-            onClick={() => setCategory(undefined)}
-            className={cn(
-              'shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-all',
-              category === undefined
-                ? 'bg-primary/15 text-primary ring-1 ring-primary/40'
-                : 'bg-surface-hover text-text-muted hover:text-text-secondary'
-            )}
-          >
-            Sin cat.
-          </button>
-        )}
-
-        {/* Loaded categories */}
-        {categories.map((cat) => (
-          <div key={cat.id} className="relative shrink-0">
+        {/* Category chips — each with a unique color */}
+        {categories.map((cat, i) => {
+          const color = CAT_COLORS[i % CAT_COLORS.length];
+          const isSelected = category === cat.id;
+          return (
             <button
+              key={cat.id}
               type="button"
-              onClick={() => !managingCats && setCategory(cat.id === category ? undefined : cat.id)}
+              onClick={() => setCategory(isSelected ? undefined : cat.id)}
               className={cn(
-                'flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-all',
-                managingCats
-                  ? 'bg-surface-hover text-text-muted pr-4'
-                  : category === cat.id
-                  ? 'bg-primary/15 text-primary ring-1 ring-primary/40'
-                  : 'bg-surface-hover text-text-muted hover:text-text-secondary'
+                'shrink-0 h-7 flex items-center gap-1 px-2.5 rounded-lg text-xs font-medium transition-all',
+                isSelected ? color.active : color.base
               )}
             >
               <span>{cat.emoji}</span>
               <span>{cat.label}</span>
             </button>
-            {managingCats && (
-              <button
-                type="button"
-                onClick={() => onDeleteCategory(cat.id)}
-                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-danger text-white flex items-center justify-center shadow-sm hover:bg-red-700 transition-colors"
-                title={`Eliminar ${cat.label}`}
-              >
-                <X size={9} strokeWidth={3} />
-              </button>
-            )}
-          </div>
-        ))}
+          );
+        })}
 
-        {/* "+ Nueva" button or inline form — hidden in managing mode */}
-        {!managingCats && !showNewCat ? (
+        {/* "+ Nueva" button */}
+        {!showNewCat && (
           <button
             type="button"
             onClick={openNewCat}
-            className="shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium bg-surface-hover text-text-muted hover:text-primary hover:bg-primary/10 transition-all border border-dashed border-border"
+            className="shrink-0 h-7 px-2.5 rounded-lg text-xs font-medium bg-surface-hover text-text-muted hover:text-primary hover:bg-primary/10 transition-all border border-dashed border-border flex items-center"
           >
             + Nueva
           </button>
-        ) : !managingCats ? (
-          <div className="shrink-0 flex items-center gap-1 bg-surface border border-primary/40 rounded-lg px-2 py-0.5 ring-1 ring-primary/20">
-            {/* Emoji input */}
-            <input
-              value={newEmoji}
-              onChange={(e) => setNewEmoji(e.target.value)}
-              onKeyDown={handleNewCatKeyDown}
-              placeholder="📌"
-              maxLength={2}
-              className="w-7 text-center text-sm bg-transparent outline-none placeholder:text-text-muted"
-            />
-            {/* Label input */}
-            <input
-              ref={labelRef}
-              value={newLabel}
-              onChange={(e) => setNewLabel(e.target.value)}
-              onKeyDown={handleNewCatKeyDown}
-              placeholder="Nombre"
-              className="w-20 text-xs bg-transparent outline-none text-text-primary placeholder:text-text-muted"
-            />
-            {/* Confirm */}
-            <button
-              type="button"
-              onClick={confirmNewCat}
-              disabled={!newLabel.trim() || savingCat}
-              className="text-primary disabled:opacity-40 hover:text-primary-hover transition-colors"
-            >
-              <Check size={13} strokeWidth={2.5} />
-            </button>
-            {/* Cancel */}
-            <button
-              type="button"
-              onClick={cancelNewCat}
-              className="text-text-muted hover:text-danger transition-colors"
-            >
-              <X size={13} strokeWidth={2.5} />
-            </button>
-          </div>
-        ) : null}
+        )}
       </div>
+
+      {/* New category form — below chips, bigger touch targets */}
+      {showNewCat && (
+        <div className="flex items-center gap-2 bg-surface-hover rounded-xl p-2 border border-primary/30">
+          <input
+            value={newEmoji}
+            onChange={(e) => setNewEmoji(e.target.value)}
+            onKeyDown={handleNewCatKeyDown}
+            placeholder="📌"
+            maxLength={2}
+            className="w-9 h-9 text-center text-base bg-surface rounded-lg border border-border outline-none placeholder:text-text-muted shrink-0"
+          />
+          <input
+            ref={labelRef}
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            onKeyDown={handleNewCatKeyDown}
+            placeholder="Nombre de categoría"
+            className="flex-1 h-9 text-sm bg-surface rounded-lg border border-border px-3 outline-none text-text-primary placeholder:text-text-muted min-w-0"
+          />
+          <button
+            type="button"
+            onClick={confirmNewCat}
+            disabled={!newLabel.trim() || savingCat}
+            className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary-hover transition-colors shrink-0"
+          >
+            <Check size={16} strokeWidth={2.5} />
+          </button>
+          <button
+            type="button"
+            onClick={cancelNewCat}
+            className="w-9 h-9 rounded-lg bg-surface text-text-muted border border-border hover:text-danger hover:border-danger/40 flex items-center justify-center transition-colors shrink-0"
+          >
+            <X size={16} strokeWidth={2.5} />
+          </button>
+        </div>
+      )}
 
       {/* Priority row */}
       <div className="flex gap-1.5">

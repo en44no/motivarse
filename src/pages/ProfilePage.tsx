@@ -29,23 +29,6 @@ export function ProfilePage() {
   const soundEnabled = profile?.settings?.soundEnabled ?? true;
   const notificationsEnabled = profile?.notificationsEnabled ?? false;
 
-  async function sendTestNotification() {
-    if (Notification.permission !== 'granted') {
-      toast.error('Primero activá las notificaciones');
-      return;
-    }
-    try {
-      const sw = await navigator.serviceWorker.ready;
-      await sw.showNotification('Motivarse 💪', {
-        body: '¡Esta es una notificación de prueba!',
-        icon: '/icons/icon-192.png',
-      });
-    } catch (error) {
-      console.error('Error sending test notification:', error);
-      toast.error('No se pudo enviar la notificación de prueba');
-    }
-  }
-
   async function toggleNotifications() {
     if (!user) return;
     if (notificationsEnabled) {
@@ -200,34 +183,24 @@ export function ProfilePage() {
       </Card>
 
       {/* Notifications toggle */}
-      <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
-        <Card variant="interactive" onClick={toggleNotifications}>
-          <div className="flex items-center gap-3">
-            {notificationsEnabled ? (
-              <Bell size={20} className="text-primary" />
-            ) : (
-              <BellOff size={20} className="text-text-muted" />
-            )}
-            <div className="flex-1">
-              <h3 className="text-sm font-bold text-text-primary">Notificaciones</h3>
-              <p className="text-xs text-text-muted">
-                {notificationsEnabled ? 'Activadas — recordatorio diario a las 22:00' : 'Desactivadas'}
-              </p>
-            </div>
-            <div className={`w-10 h-6 rounded-full transition-colors ${notificationsEnabled ? 'bg-primary' : 'bg-surface-light'}`}>
-              <div className={`w-5 h-5 rounded-full bg-white shadow-sm mt-0.5 transition-transform ${notificationsEnabled ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
-            </div>
+      <Card variant="interactive" onClick={toggleNotifications}>
+        <div className="flex items-center gap-3">
+          {notificationsEnabled ? (
+            <Bell size={20} className="text-primary" />
+          ) : (
+            <BellOff size={20} className="text-text-muted" />
+          )}
+          <div className="flex-1">
+            <h3 className="text-sm font-bold text-text-primary">Notificaciones</h3>
+            <p className="text-xs text-text-muted">
+              {notificationsEnabled ? 'Activadas — recordatorio diario a las 22:00' : 'Desactivadas'}
+            </p>
           </div>
-        </Card>
-        {notificationsEnabled && (
-          <button
-            onClick={sendTestNotification}
-            className="w-full border-t border-border px-4 py-2.5 text-xs font-semibold text-primary hover:bg-surface-hover transition-colors text-left"
-          >
-            Enviar notificación de prueba
-          </button>
-        )}
-      </div>
+          <div className={`w-10 h-6 rounded-full transition-colors ${notificationsEnabled ? 'bg-primary' : 'bg-surface-light'}`}>
+            <div className={`w-5 h-5 rounded-full bg-white shadow-sm mt-0.5 transition-transform ${notificationsEnabled ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
+          </div>
+        </div>
+      </Card>
 
       {/* Achievements — collapsible */}
       <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
