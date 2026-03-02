@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Square, X } from 'lucide-react';
+import { Play, Pause, Square, X, SkipForward } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Confetti } from '../ui/Confetti';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface CacoTimerProps {
   runMinutes: number;
@@ -21,8 +22,6 @@ function formatTime(totalSeconds: number): string {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Confetti particle component extracted to ../ui/Confetti.tsx
-
 export function CacoTimer({
   runMinutes,
   walkMinutes,
@@ -35,6 +34,7 @@ export function CacoTimer({
   const [currentRep, setCurrentRep] = useState(1);
   const [secondsLeft, setSecondsLeft] = useState(Math.round(runMinutes * 60));
   const [phaseLabel, setPhaseLabel] = useState('');
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const totalPhaseSeconds = Math.round(
@@ -49,6 +49,8 @@ export function CacoTimer({
   const radius = 120;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  const isActive = state === 'running' || state === 'paused' || state === 'phase_switch';
 
   const clearTimer = useCallback(() => {
     if (intervalRef.current) {
@@ -126,6 +128,11 @@ export function CacoTimer({
     }
   }
 
+  function handleSkip() {
+    clearTimer();
+    handleIntervalEnd();
+  }
+
   function handlePlayPause() {
     if (state === 'idle') {
       setPhase('run');
@@ -145,6 +152,20 @@ export function CacoTimer({
     setPhase('run');
     setCurrentRep(1);
     setSecondsLeft(Math.round(runMinutes * 60));
+  }
+
+  function handleCloseRequest() {
+    if (isActive) {
+      setShowCloseConfirm(true);
+    } else {
+      onClose();
+    }
+  }
+
+  function handleConfirmClose() {
+    clearTimer();
+    setShowCloseConfirm(false);
+    onClose();
   }
 
   function handleCompleteClose() {
@@ -248,7 +269,7 @@ export function CacoTimer({
       {/* Close button */}
       <div className="relative z-10 w-full flex justify-end p-4 safe-top">
         <button
-          onClick={onClose}
+          onClick={handleCloseRequest}
           className="p-2 rounded-full text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
         >
           <X size={24} />
@@ -400,8 +421,33 @@ export function CacoTimer({
               )}
             </motion.button>
           )}
+
+          {/* Skip button */}
+          {(state === 'running' || state === 'paused') && (
+            <motion.button
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              onClick={handleSkip}
+              className="w-14 h-14 rounded-full bg-surface-light flex items-center justify-center text-text-secondary hover:text-secondary hover:bg-secondary/20 transition-colors active:scale-90"
+            >
+              <SkipForward size={22} />
+            </motion.button>
+          )}
         </div>
       )}
+
+      {/* Confirm close dialog */}
+      <ConfirmDialog
+        open={showCloseConfirm}
+        onClose={() => setShowCloseConfirm(false)}
+        onConfirm={handleConfirmClose}
+        title="Salir del timer?"
+        description="Tu progreso actual se va a perder. Estas seguro?"
+        confirmLabel="Salir"
+        cancelLabel="Seguir"
+        variant="warning"
+      />
     </motion.div>
   );
 }
