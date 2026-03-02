@@ -17,7 +17,7 @@ export function SharedPage() {
   const { user } = useAuthContext();
   const { couple } = useCoupleContext();
   const { pending, recentlyCompleted, archived, loading, add, toggle, remove } = useSharedTodos();
-  const { categories, add: addCategory } = useCategories();
+  const { categories, add: addCategory, update: updateCategory, remove: removeCategory } = useCategories();
   const [showArchived, setShowArchived] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('lista');
@@ -86,6 +86,8 @@ export function SharedPage() {
             categories={categories}
             onSubmit={(title, priority, category) => add(title, priority, category)}
             onAddCategory={addCategory}
+            onUpdateCategory={updateCategory}
+            onDeleteCategory={removeCategory}
           />
 
           {/* Category filter — only shown when there are categorised todos */}

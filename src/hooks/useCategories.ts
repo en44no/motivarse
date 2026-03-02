@@ -4,6 +4,7 @@ import { useCoupleContext } from '../contexts/CoupleContext';
 import {
   subscribeToCategories,
   addCategory,
+  updateCategory,
   deleteCategory,
 } from '../services/category.service';
 import type { CoupleCategory } from '../types/category';
@@ -47,9 +48,13 @@ export function useCategories() {
     [coupleId, userId]
   );
 
+  const update = useCallback(async (id: string, label: string, emoji: string) => {
+    await updateCategory(id, label, emoji);
+  }, []);
+
   const remove = useCallback(async (id: string) => {
     await deleteCategory(id);
   }, []);
 
-  return { categories, loading, add, remove };
+  return { categories, loading, add, update, remove };
 }

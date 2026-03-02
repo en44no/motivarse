@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   addDoc,
+  updateDoc,
   deleteDoc,
   query,
   where,
@@ -38,6 +39,10 @@ export async function addCategory(
 ): Promise<string> {
   const docRef = await addDoc(categoriesCol, category);
   return docRef.id;
+}
+
+export async function updateCategory(id: string, label: string, emoji: string): Promise<void> {
+  await updateDoc(doc(db, 'coupleCategories', id), { label, emoji });
 }
 
 export async function deleteCategory(id: string): Promise<void> {

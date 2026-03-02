@@ -1,5 +1,5 @@
 import { useState, useRef, type FormEvent, type KeyboardEvent } from 'react';
-import { Plus, Check, X } from 'lucide-react';
+import { Plus, Check, X, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { TodoPriority } from '../../types/shared';
 import type { CoupleCategory } from '../../types/category';
@@ -8,6 +8,8 @@ interface TodoFormProps {
   categories: CoupleCategory[];
   onSubmit: (title: string, priority: TodoPriority, category?: string) => void;
   onAddCategory: (label: string, emoji: string) => Promise<CoupleCategory | null>;
+  onUpdateCategory: (id: string, label: string, emoji: string) => void;
+  onDeleteCategory: (id: string) => void;
 }
 
 const PRIORITIES: { value: TodoPriority; label: string; color: string }[] = [
@@ -16,7 +18,6 @@ const PRIORITIES: { value: TodoPriority; label: string; color: string }[] = [
   { value: 'high', label: 'Alta', color: 'bg-danger-soft text-danger' },
 ];
 
-// Unique color per category (cycles if > 8)
 const CAT_COLORS = [
   { base: 'bg-violet-500/10 text-violet-400', active: 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-400/40' },
   { base: 'bg-sky-500/10 text-sky-400', active: 'bg-sky-500/20 text-sky-400 ring-1 ring-sky-400/40' },
@@ -28,41 +29,51 @@ const CAT_COLORS = [
   { base: 'bg-orange-500/10 text-orange-400', active: 'bg-orange-500/20 text-orange-400 ring-1 ring-orange-400/40' },
 ];
 
-export function TodoForm({ categories, onSubmit, onAddCategory }: TodoFormProps) {
+type ManagingCat = { id: string; emoji: string; label: string } | null;
+
+export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory, onDeleteCategory }: TodoFormProps) {
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<TodoPriority>('medium');
   const [category, setCategory] = useState<string | undefined>(undefined);
+
+  // New category form
   const [showNewCat, setShowNewCat] = useState(false);
   const [newEmoji, setNewEmoji] = useState('');
   const [newLabel, setNewLabel] = useState('');
   const [savingCat, setSavingCat] = useState(false);
-  const labelRef = useRef<HTMLInputElement>(null);
+  const newLabelRef = useRef<HTMLInputElement>(null);
 
+  // Edit/delete category (long-press)
+  const [managingCat, setManagingCat] = useState<ManagingCat>(null);
+  const editLabelRef = useRef<HTMLInputElement>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPress = useRef(false);
+
+  // ── Todo submit ──────────────────────────────────────────────
   function doSubmit() {
     if (!title.trim()) return;
     onSubmit(title.trim(), priority, category);
     setTitle('');
     setCategory(undefined);
   }
-
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     doSubmit();
   }
 
+  // ── New category ─────────────────────────────────────────────
   function openNewCat() {
+    setManagingCat(null);
     setShowNewCat(true);
     setNewEmoji('');
     setNewLabel('');
-    setTimeout(() => labelRef.current?.focus(), 50);
+    setTimeout(() => newLabelRef.current?.focus(), 50);
   }
-
   function cancelNewCat() {
     setShowNewCat(false);
     setNewEmoji('');
     setNewLabel('');
   }
-
   async function confirmNewCat() {
     const label = newLabel.trim();
     const emoji = newEmoji.trim() || '📌';
@@ -78,14 +89,48 @@ export function TodoForm({ categories, onSubmit, onAddCategory }: TodoFormProps)
       setNewLabel('');
     }
   }
-
   function handleNewCatKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      confirmNewCat();
-    } else if (e.key === 'Escape') {
-      cancelNewCat();
+    if (e.key === 'Enter') { e.preventDefault(); confirmNewCat(); }
+    else if (e.key === 'Escape') cancelNewCat();
+  }
+
+  // ── Long-press to manage category ────────────────────────────
+  function startLongPress(cat: CoupleCategory) {
+    didLongPress.current = false;
+    longPressTimer.current = setTimeout(() => {
+      didLongPress.current = true;
+      setShowNewCat(false);
+      setManagingCat({ id: cat.id, emoji: cat.emoji, label: cat.label });
+      navigator.vibrate?.(40);
+      setTimeout(() => editLabelRef.current?.focus(), 50);
+    }, 500);
+  }
+  function cancelLongPress() {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
     }
+  }
+  function handleChipClick(cat: CoupleCategory) {
+    if (didLongPress.current) return; // long-press already handled
+    setCategory(category === cat.id ? undefined : cat.id);
+  }
+
+  // ── Edit category actions ─────────────────────────────────────
+  async function saveEdit() {
+    if (!managingCat || !managingCat.label.trim()) return;
+    onUpdateCategory(managingCat.id, managingCat.label.trim(), managingCat.emoji.trim() || '📌');
+    setManagingCat(null);
+  }
+  async function deleteManaging() {
+    if (!managingCat) return;
+    onDeleteCategory(managingCat.id);
+    if (category === managingCat.id) setCategory(undefined);
+    setManagingCat(null);
+  }
+  function handleEditKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Enter') { e.preventDefault(); saveEdit(); }
+    else if (e.key === 'Escape') setManagingCat(null);
   }
 
   return (
@@ -109,9 +154,9 @@ export function TodoForm({ categories, onSubmit, onAddCategory }: TodoFormProps)
         </button>
       </div>
 
-      {/* Category chips — horizontal scroll */}
+      {/* Category chips */}
       <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none items-center">
-        {/* "None" chip */}
+        {/* Sin cat. */}
         <button
           type="button"
           onClick={() => setCategory(undefined)}
@@ -125,18 +170,27 @@ export function TodoForm({ categories, onSubmit, onAddCategory }: TodoFormProps)
           Sin cat.
         </button>
 
-        {/* Category chips — each with a unique color */}
+        {/* Category chips — long-press to edit/delete */}
         {categories.map((cat, i) => {
           const color = CAT_COLORS[i % CAT_COLORS.length];
           const isSelected = category === cat.id;
+          const isManaging = managingCat?.id === cat.id;
           return (
             <button
               key={cat.id}
               type="button"
-              onClick={() => setCategory(isSelected ? undefined : cat.id)}
+              onPointerDown={() => startLongPress(cat)}
+              onPointerUp={cancelLongPress}
+              onPointerLeave={cancelLongPress}
+              onPointerCancel={cancelLongPress}
+              onClick={() => handleChipClick(cat)}
               className={cn(
-                'shrink-0 h-7 flex items-center gap-1 px-2.5 rounded-lg text-xs font-medium transition-all',
-                isSelected ? color.active : color.base
+                'shrink-0 h-7 flex items-center gap-1 px-2.5 rounded-lg text-xs font-medium transition-all select-none',
+                isManaging
+                  ? 'ring-2 ring-offset-1 ring-offset-surface scale-95 ' + color.active
+                  : isSelected
+                  ? color.active
+                  : color.base
               )}
             >
               <span>{cat.emoji}</span>
@@ -145,8 +199,8 @@ export function TodoForm({ categories, onSubmit, onAddCategory }: TodoFormProps)
           );
         })}
 
-        {/* "+ Nueva" button */}
-        {!showNewCat && (
+        {/* + Nueva */}
+        {!showNewCat && !managingCat && (
           <button
             type="button"
             onClick={openNewCat}
@@ -157,7 +211,50 @@ export function TodoForm({ categories, onSubmit, onAddCategory }: TodoFormProps)
         )}
       </div>
 
-      {/* New category form — below chips, bigger touch targets */}
+      {/* Edit existing category — shown on long-press */}
+      {managingCat && (
+        <div className="flex items-center gap-2 bg-surface-hover rounded-xl p-2 border border-primary/30">
+          <input
+            value={managingCat.emoji}
+            onChange={(e) => setManagingCat({ ...managingCat, emoji: e.target.value })}
+            onKeyDown={handleEditKeyDown}
+            maxLength={2}
+            className="w-9 h-9 text-center text-base bg-surface rounded-lg border border-border outline-none shrink-0"
+          />
+          <input
+            ref={editLabelRef}
+            value={managingCat.label}
+            onChange={(e) => setManagingCat({ ...managingCat, label: e.target.value })}
+            onKeyDown={handleEditKeyDown}
+            placeholder="Nombre"
+            className="flex-1 h-9 text-sm bg-surface rounded-lg border border-border px-3 outline-none text-text-primary placeholder:text-text-muted min-w-0"
+          />
+          <button
+            type="button"
+            onClick={saveEdit}
+            disabled={!managingCat.label.trim()}
+            className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary-hover transition-colors shrink-0"
+          >
+            <Check size={16} strokeWidth={2.5} />
+          </button>
+          <button
+            type="button"
+            onClick={deleteManaging}
+            className="w-9 h-9 rounded-lg bg-danger-soft text-danger flex items-center justify-center hover:bg-danger hover:text-white transition-colors shrink-0"
+          >
+            <Trash2 size={15} strokeWidth={2} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setManagingCat(null)}
+            className="w-9 h-9 rounded-lg bg-surface text-text-muted border border-border hover:text-danger hover:border-danger/40 flex items-center justify-center transition-colors shrink-0"
+          >
+            <X size={16} strokeWidth={2.5} />
+          </button>
+        </div>
+      )}
+
+      {/* New category form */}
       {showNewCat && (
         <div className="flex items-center gap-2 bg-surface-hover rounded-xl p-2 border border-primary/30">
           <input
@@ -169,7 +266,7 @@ export function TodoForm({ categories, onSubmit, onAddCategory }: TodoFormProps)
             className="w-9 h-9 text-center text-base bg-surface rounded-lg border border-border outline-none placeholder:text-text-muted shrink-0"
           />
           <input
-            ref={labelRef}
+            ref={newLabelRef}
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
             onKeyDown={handleNewCatKeyDown}
