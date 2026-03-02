@@ -23,7 +23,7 @@ export function Dialog({ open, onClose, title, children, className }: DialogProp
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
             <motion.div
               className={cn(
                 'w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-surface border border-border p-6',
@@ -34,6 +34,7 @@ export function Dialog({ open, onClose, title, children, className }: DialogProp
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
             >
               {title && (
                 <div className="flex items-center justify-between mb-4">
