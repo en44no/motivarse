@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.aiProxy = exports.notifyTaskCompleted = exports.dailyHabitReminder = void 0;
+exports.aiProxy = exports.notifyHabitCompleted = exports.notifyTaskCompleted = exports.weeklySummary = exports.dailyHabitReminder = void 0;
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
@@ -25,6 +25,104 @@ exports.dailyHabitReminder = (0, scheduler_1.onSchedule)({ schedule: '0 22 * * *
             body: '¡Recordá completar tus hábitos de hoy!',
         },
     }));
+    if (messages.length > 0) {
+        await (0, messaging_1.getMessaging)().sendEach(messages);
+    }
+});
+// ── Weekly Summary (Sundays 21:00 UY) ─────────────────────────────────────────
+exports.weeklySummary = (0, scheduler_1.onSchedule)({ schedule: '0 21 * * 0', timeZone: 'America/Montevideo' }, async () => {
+    const db = (0, firestore_1.getFirestore)();
+    // Calculate Monday–Sunday range for this week (ISO week)
+    const now = new Date();
+    const dayOfWeek = now.getUTCDay(); // 0=Sun
+    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(now);
+    monday.setUTCDate(now.getUTCDate() - diffToMonday);
+    const mondayStr = monday.toISOString().slice(0, 10); // YYYY-MM-DD
+    const sundayStr = now.toISOString().slice(0, 10);
+    const usersSnap = await db
+        .collection('users')
+        .where('notificationsEnabled', '==', true)
+        .get();
+    const eligibleUsers = usersSnap.docs.filter((d) => !!d.data().fcmToken);
+    if (eligibleUsers.length === 0)
+        return;
+    const messages = [];
+    for (const userDoc of eligibleUsers) {
+        try {
+            const uid = userDoc.id;
+            const userData = userDoc.data();
+            const coupleId = userData.coupleId;
+            // 1. Completed habit logs this week
+            const logsSnap = await db
+                .collection('habitLogs')
+                .where('userId', '==', uid)
+                .where('completed', '==', true)
+                .where('date', '>=', mondayStr)
+                .where('date', '<=', sundayStr)
+                .get();
+            const completedCount = logsSnap.size;
+            // 2. Active habits for this user
+            let activeHabitCount = 0;
+            if (coupleId) {
+                const habitsSnap = await db
+                    .collection('habits')
+                    .where('coupleId', '==', coupleId)
+                    .where('isActive', '==', true)
+                    .get();
+                activeHabitCount = habitsSnap.docs.filter((h) => h.data().userId === uid || h.data().scope === 'shared').length;
+            }
+            // 3. Weekly percent (approximate: habits * 7 days)
+            const totalPossible = activeHabitCount * 7;
+            const weeklyPercent = totalPossible > 0
+                ? Math.min(100, Math.round((completedCount / totalPossible) * 100))
+                : 0;
+            // 4. Best streak
+            const streaksSnap = await db
+                .collection('streaks')
+                .where('userId', '==', uid)
+                .get();
+            let bestStreak = 0;
+            for (const s of streaksSnap.docs) {
+                const d = s.data();
+                const longest = d.longestStreak || 0;
+                const current = d.currentStreak || 0;
+                bestStreak = Math.max(bestStreak, longest, current);
+            }
+            // 5. Runs this week
+            const runsSnap = await db
+                .collection('runLogs')
+                .where('userId', '==', uid)
+                .where('date', '>=', mondayStr)
+                .where('date', '<=', sundayStr)
+                .get();
+            const runsCount = runsSnap.size;
+            // 6. Build body parts
+            const parts = [];
+            if (activeHabitCount > 0) {
+                parts.push(`${weeklyPercent}% hábitos`);
+            }
+            if (bestStreak > 0) {
+                parts.push(`Racha: ${bestStreak} días`);
+            }
+            if (runsCount > 0) {
+                parts.push(`${runsCount} carrera${runsCount > 1 ? 's' : ''}`);
+            }
+            const body = parts.length > 0
+                ? `Esta semana: ${parts.join(' · ')} 💪`
+                : 'Revisá tus hábitos y arrancá la semana con todo 💪';
+            messages.push({
+                token: userData.fcmToken,
+                notification: {
+                    title: 'Resumen semanal 📊',
+                    body,
+                },
+            });
+        }
+        catch (err) {
+            console.error(`weeklySummary error for user ${userDoc.id}:`, err);
+        }
+    }
     if (messages.length > 0) {
         await (0, messaging_1.getMessaging)().sendEach(messages);
     }
@@ -63,6 +161,44 @@ exports.notifyTaskCompleted = (0, https_1.onCall)(async (request) => {
         notification: {
             title: 'Motivarse 💪',
             body: `${completedByName} completó: ${taskTitle}`,
+        },
+    });
+    return { sent: true };
+});
+// ── Notify habit completed ───────────────────────────────────────────────────
+exports.notifyHabitCompleted = (0, https_1.onCall)(async (request) => {
+    var _a;
+    if (!request.auth) {
+        throw new https_1.HttpsError('unauthenticated', 'Debes estar autenticado.');
+    }
+    const { coupleId, habitName } = request.data;
+    const completedByUid = request.auth.uid;
+    const db = (0, firestore_1.getFirestore)();
+    // Get couple doc to find members
+    const coupleDoc = await db.collection('couples').doc(coupleId).get();
+    if (!coupleDoc.exists)
+        return { sent: false };
+    const coupleData = coupleDoc.data();
+    const members = coupleData.members || [];
+    // Get the name of who completed
+    const completedByDoc = await db.collection('users').doc(completedByUid).get();
+    const completedByName = ((_a = completedByDoc.data()) === null || _a === void 0 ? void 0 : _a.displayName) || 'Tu pareja';
+    // Find the partner (not the one who completed)
+    const partnerUid = members.find((uid) => uid !== completedByUid);
+    if (!partnerUid)
+        return { sent: false };
+    const partnerDoc = await db.collection('users').doc(partnerUid).get();
+    if (!partnerDoc.exists)
+        return { sent: false };
+    const partnerData = partnerDoc.data();
+    if (!partnerData.notificationsEnabled || !partnerData.fcmToken) {
+        return { sent: false };
+    }
+    await (0, messaging_1.getMessaging)().send({
+        token: partnerData.fcmToken,
+        notification: {
+            title: 'Motivarse 💪',
+            body: `${completedByName} completó: ${habitName} ✅`,
         },
     });
     return { sent: true };

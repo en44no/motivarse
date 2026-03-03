@@ -8,18 +8,20 @@ import { useHabits } from '../hooks/useHabits';
 import { useStreaks } from '../hooks/useStreaks';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
+import { useDataContext } from '../contexts/DataContext';
 import { Tabs } from '../components/ui/Tabs';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { HabitList } from '../components/habits/HabitList';
 import { HabitWeekView } from '../components/habits/HabitWeekView';
-import { HabitMonthCombined } from '../components/habits/HabitMonthCombined';
+import { UnifiedCalendar } from '../components/habits/UnifiedCalendar';
 import { HabitForm } from '../components/habits/HabitForm';
 import { HabitGenerator } from '../components/habits/HabitGenerator';
 import { HabitStats } from '../components/habits/HabitStats';
 import { HabitTrendChart } from '../components/habits/HabitTrendChart';
 import { PartnerComparison } from '../components/habits/PartnerComparison';
+import { StreakHistory } from '../components/habits/StreakHistory';
 import { isHabitScheduledForDate } from '../lib/date-utils';
 import { getToday, formatDate } from '../lib/date-utils';
 import type { Habit } from '../types/habit';
@@ -29,7 +31,7 @@ const MAX_DAYS_BACK = 7;
 const TABS = [
   { id: 'today', label: 'Hoy' },
   { id: 'week', label: 'Semana' },
-  { id: 'month', label: 'Mes' },
+  { id: 'month', label: 'Calendario' },
   { id: 'stats', label: 'Stats' },
 ];
 
@@ -40,6 +42,7 @@ export function HabitsPage() {
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const { user, profile } = useAuthContext();
   const { partnerName } = useCoupleContext();
+  const { habitLogs, runLogs, todos } = useDataContext();
   const {
     myHabits,
     todayHabits,
@@ -256,9 +259,11 @@ export function HabitsPage() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 10 }}
           >
-            <HabitMonthCombined
+            <UnifiedCalendar
               habits={myHabits}
-              getLogsForHabit={getLogsForHabit}
+              habitLogs={habitLogs}
+              runLogs={runLogs}
+              todos={todos}
               userId={userId}
             />
           </motion.div>
@@ -294,6 +299,11 @@ export function HabitsPage() {
                 myPercent={statsData.weeklyPercent}
                 partnerPercent={partnerWeeklyPercent}
                 partnerName={partnerName}
+              />
+              <StreakHistory
+                habits={myHabits}
+                logs={habitLogs}
+                userId={userId}
               />
             </motion.div>
           );

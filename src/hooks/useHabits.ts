@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useDataContext } from '../contexts/DataContext';
@@ -15,6 +16,8 @@ import { getToday, isHabitScheduledForDate, getWeekDays, formatDate } from '../l
 import { subDays, startOfWeek, endOfWeek, format, parseISO, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Habit } from '../types/habit';
+
+const notifyHabitCompleted = httpsCallable(getFunctions(), 'notifyHabitCompleted');
 
 export function useHabits() {
   const { user, profile } = useAuthContext();
@@ -74,6 +77,14 @@ export function useHabits() {
         longestStreak: longest,
         lastCompletedDate: completed ? targetDate : uniqueDates.sort().reverse()[0] || '',
       });
+
+      // Fire-and-forget push notification to partner for shared habits
+      if (completed && coupleId) {
+        const habit = habits.find((h) => h.id === habitId);
+        if (habit?.scope === 'shared') {
+          notifyHabitCompleted({ coupleId, habitName: habit.name }).catch(() => {});
+        }
+      }
     } catch (error) {
       console.error('Error toggling habit:', error);
       toast.error('No se pudo actualizar el habito. Intenta de nuevo.');
