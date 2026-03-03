@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Trash2, Calendar } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -14,7 +15,7 @@ interface TodoItemProps {
   categories?: CoupleCategory[];
 }
 
-export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames, categories = [] }: TodoItemProps) {
+export const TodoItem = memo(function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames, categories = [] }: TodoItemProps) {
   const priorityColors = {
     low: 'border-l-text-muted',
     medium: 'border-l-secondary',
@@ -95,4 +96,4 @@ export function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames,
       </button>
     </motion.div>
   );
-}
+});

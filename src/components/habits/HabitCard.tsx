@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Sun, PhoneOff, AlarmClock, Footprints, Target, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
@@ -27,7 +28,7 @@ interface HabitCardProps {
   soundEnabled?: boolean;
 }
 
-export function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerName, onEdit, onDelete, soundEnabled = true }: HabitCardProps) {
+export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerName, onEdit, onDelete, soundEnabled = true }: HabitCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -81,6 +82,7 @@ export function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerNam
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
       transition={{ layout: { duration: 0.2 } }}
     >
       <Card className={cn(
@@ -194,4 +196,4 @@ export function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerNam
       </Card>
     </motion.div>
   );
-}
+});

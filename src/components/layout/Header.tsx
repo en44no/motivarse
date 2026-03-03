@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useCoupleContext } from '../../contexts/CoupleContext';
 import { usePWA } from '../../hooks/usePWA';
@@ -26,12 +27,19 @@ export function Header() {
           <h1 className="text-lg font-bold text-text-primary">{firstName}</h1>
         </div>
         <div className="flex items-center gap-3">
-          {!isOnline && (
-            <div className="flex items-center gap-1 text-secondary text-xs">
-              <WifiOff size={14} />
-              <span>Offline</span>
-            </div>
-          )}
+          <AnimatePresence>
+            {!isOnline && (
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="flex items-center gap-1.5 text-secondary text-xs bg-secondary/10 rounded-full px-2.5 py-1"
+              >
+                <WifiOff size={12} />
+                <span>Sin conexión</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
           {partnerName && (
             <div className="flex items-center gap-2 bg-surface rounded-full px-3 py-1.5 border border-primary/15 shadow-sm">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />

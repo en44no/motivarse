@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { subDays, addDays, format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { useHabits } from '../hooks/useHabits';
 import { useStreaks } from '../hooks/useStreaks';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -18,7 +20,12 @@ import { HabitGenerator } from '../components/habits/HabitGenerator';
 import { HabitStats } from '../components/habits/HabitStats';
 import { HabitTrendChart } from '../components/habits/HabitTrendChart';
 import { PartnerComparison } from '../components/habits/PartnerComparison';
+import { isHabitScheduledForDate } from '../lib/date-utils';
+import { getToday, formatDate } from '../lib/date-utils';
 import type { Habit } from '../types/habit';
+
+const MAX_DAYS_BACK = 7;
+
 const TABS = [
   { id: 'today', label: 'Hoy' },
   { id: 'week', label: 'Semana' },
@@ -44,12 +51,59 @@ export function HabitsPage() {
     removeHabit,
     editHabit,
     getLogsForHabit,
-    getStatsData,
+    getLogsForDate,
+    statsData,
   } = useHabits();
   const { streaks, bestStreak } = useStreaks();
 
   const userId = user?.uid;
   const soundEnabled = profile?.settings?.soundEnabled ?? true;
+
+  // Date navigation for "Hoy" tab
+  const today = getToday();
+  const [selectedDate, setSelectedDate] = useState(today);
+  const isToday = selectedDate === today;
+
+  const canGoBack = (() => {
+    const diff = Math.round((parseISO(today).getTime() - parseISO(selectedDate).getTime()) / (1000 * 60 * 60 * 24));
+    return diff < MAX_DAYS_BACK;
+  })();
+  const canGoForward = !isToday;
+
+  function goBack() {
+    if (!canGoBack) return;
+    setSelectedDate(formatDate(subDays(parseISO(selectedDate), 1)));
+  }
+  function goForward() {
+    if (!canGoForward) return;
+    setSelectedDate(formatDate(addDays(parseISO(selectedDate), 1)));
+  }
+  function goToToday() {
+    setSelectedDate(today);
+  }
+
+  // Habits and logs for the selected date
+  const selectedDateObj = useMemo(() => parseISO(selectedDate), [selectedDate]);
+  const selectedHabits = useMemo(
+    () => isToday ? todayHabits : myHabits.filter((h) => isHabitScheduledForDate(h, selectedDateObj)),
+    [isToday, todayHabits, myHabits, selectedDateObj]
+  );
+  const selectedLogs = useMemo(
+    () => isToday ? todayLogs : getLogsForDate(selectedDate),
+    [isToday, todayLogs, selectedDate, getLogsForDate]
+  );
+  const selectedPartnerLogs = useMemo(
+    () => isToday ? partnerTodayLogs : selectedLogs.filter((l) => l.userId !== userId),
+    [isToday, partnerTodayLogs, selectedLogs, userId]
+  );
+
+  const dateLabel = useMemo(() => {
+    if (isToday) return 'Hoy';
+    const d = parseISO(selectedDate);
+    const diff = Math.round((parseISO(today).getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+    if (diff === 1) return 'Ayer';
+    return format(d, "EEEE d 'de' MMMM", { locale: es });
+  }, [selectedDate, isToday, today]);
 
   function handleEdit(habitId: string) {
     const habit = myHabits.find((h) => h.id === habitId);
@@ -130,22 +184,45 @@ export function HabitsPage() {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 10 }}
-            className="space-y-6"
+            className="space-y-4"
           >
+            {/* Date navigator */}
+            <div className="flex items-center justify-center gap-2">
+              <button
+                onClick={goBack}
+                disabled={!canGoBack}
+                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={goToToday}
+                className="text-sm font-semibold text-text-primary px-3 py-1 rounded-lg hover:bg-surface-hover transition-colors capitalize"
+              >
+                {dateLabel}
+              </button>
+              <button
+                onClick={goForward}
+                disabled={!canGoForward}
+                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+
             <HabitList
-              title="Mis habitos"
-              habits={todayHabits}
-              logs={todayLogs}
+              title={isToday ? 'Mis hábitos' : undefined}
+              habits={selectedHabits}
+              logs={selectedLogs}
               streaks={streaks}
-              onToggle={(habitId, completed, value, metGoal) => toggle(habitId, completed, value, metGoal)}
-              partnerLogs={partnerTodayLogs}
+              onToggle={(habitId, completed, value, metGoal) => toggle(habitId, completed, value, metGoal, isToday ? undefined : selectedDate)}
+              partnerLogs={selectedPartnerLogs}
               partnerName={partnerName}
               currentUserId={userId}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
+              onEdit={isToday ? handleEdit : undefined}
+              onDelete={isToday ? handleDelete : undefined}
               soundEnabled={soundEnabled}
             />
-
           </motion.div>
         )}
 
@@ -188,7 +265,6 @@ export function HabitsPage() {
         )}
 
         {activeTab === 'stats' && (() => {
-          const statsData = getStatsData();
           // Get current/longest streak from useStreaks
           const currentStreak = bestStreak?.currentStreak || 0;
           const longestStreak = streaks.reduce((max, s) => Math.max(max, s.longestStreak), 0);

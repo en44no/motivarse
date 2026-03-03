@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
@@ -53,30 +53,35 @@ export function useHabits() {
     [todayLogs, userId]
   );
 
-  async function toggle(habitId: string, completed: boolean, value?: string, metGoal?: boolean) {
+  async function toggle(habitId: string, completed: boolean, value?: string, metGoal?: boolean, date?: string) {
     if (!userId || !coupleId) {
       toast.error('Error: sesion no lista. Intenta de nuevo en unos segundos.');
       return;
     }
+    const targetDate = date || getToday();
     try {
-      await toggleHabitLog(habitId, userId, coupleId, getToday(), completed, value, metGoal);
+      await toggleHabitLog(habitId, userId, coupleId, targetDate, completed, value, metGoal);
 
       // Recalculate streak
       const habitLogs = logs
         .filter((l) => l.habitId === habitId && l.userId === userId && l.completed)
         .map((l) => l.date);
-      if (completed) habitLogs.push(getToday());
+      if (completed) habitLogs.push(targetDate);
       const uniqueDates = [...new Set(habitLogs)];
       const { current, longest } = calculateStreak(uniqueDates);
       await updateStreak(habitId, userId, {
         currentStreak: current,
         longestStreak: longest,
-        lastCompletedDate: completed ? getToday() : uniqueDates.sort().reverse()[0] || '',
+        lastCompletedDate: completed ? targetDate : uniqueDates.sort().reverse()[0] || '',
       });
     } catch (error) {
       console.error('Error toggling habit:', error);
       toast.error('No se pudo actualizar el habito. Intenta de nuevo.');
     }
+  }
+
+  function getLogsForDate(date: string) {
+    return logs.filter((l) => l.date === date);
   }
 
   async function addCustomHabit(data: {
@@ -132,7 +137,8 @@ export function useHabits() {
     }
   }
 
-  function getStatsData() {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const statsData = useMemo(() => {
     const today = new Date();
     const todayStr = getToday();
 
@@ -250,7 +256,7 @@ export function useHabits() {
       perfectDays,
       dailyData,
     };
-  }
+  }, [myHabits, logs, userId]);
 
   // Fix: use todayHabits (filtered by day frequency) for progress calculation
   const todayProgress = todayHabits.length > 0
@@ -277,6 +283,7 @@ export function useHabits() {
     removeHabit,
     editHabit,
     todayProgress,
-    getStatsData,
+    statsData,
+    getLogsForDate,
   };
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, useMemo, type ReactNode } from 'react';
 import { useAuthContext } from './AuthContext';
 import { useCoupleContext } from './CoupleContext';
 import { subscribeToHabits, subscribeToHabitLogs, subscribeToStreaks, deleteOrphanedStreaks } from '../services/habits.service';
@@ -195,8 +195,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     deleteOrphanedStreaks(userId, activeIds).catch(console.error);
   }, [userId, loading, habits, streaks]);
 
+  const value = useMemo(() => ({
+    habits, habitLogs, streaks, runLogs, runProgress, todos, purchaseHistory, loading, error,
+  }), [habits, habitLogs, streaks, runLogs, runProgress, todos, purchaseHistory, loading, error]);
+
   return (
-    <DataContext.Provider value={{ habits, habitLogs, streaks, runLogs, runProgress, todos, purchaseHistory, loading, error }}>
+    <DataContext.Provider value={value}>
       {children}
     </DataContext.Provider>
   );

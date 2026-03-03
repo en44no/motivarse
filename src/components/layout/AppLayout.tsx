@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useOutlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from './Header';
@@ -20,6 +20,22 @@ function FrozenOutlet() {
 
 export function AppLayout() {
   const location = useLocation();
+  const scrollPositions = useRef<Map<string, number>>(new Map());
+  const mainRef = useRef<HTMLElement>(null);
+
+  const handleScroll = useCallback(() => {
+    if (mainRef.current) {
+      scrollPositions.current.set(location.pathname, mainRef.current.scrollTop);
+    }
+  }, [location.pathname]);
+
+  // Restore scroll position when pathname changes
+  useEffect(() => {
+    const saved = scrollPositions.current.get(location.pathname) || 0;
+    if (mainRef.current) {
+      mainRef.current.scrollTop = saved;
+    }
+  }, [location.pathname]);
 
   // Warm up AudioContext on first user interaction so sounds work immediately
   useEffect(() => {
@@ -35,7 +51,7 @@ export function AppLayout() {
     <div className="min-h-screen bg-background flex flex-col max-w-lg mx-auto">
       <Header />
       <InstallBanner />
-      <main className="flex-1 px-4 pb-24 overflow-y-auto">
+      <main ref={mainRef} onScroll={handleScroll} className="flex-1 px-4 pb-24 overflow-y-auto">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}

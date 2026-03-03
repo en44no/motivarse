@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'framer-motion';
 import { HabitCard } from './HabitCard';
 import type { Habit, HabitLog, HabitStreak } from '../../types/habit';
 
@@ -25,6 +26,7 @@ export function HabitList({ habits, logs, streaks, onToggle, partnerLogs, partne
           {title}
         </h2>
       )}
+      <AnimatePresence>
       {habits.map((habit) => {
         // For my log: find the log matching this habit for the current user
         const log = logs.find(
@@ -54,6 +56,7 @@ export function HabitList({ habits, logs, streaks, onToggle, partnerLogs, partne
           />
         );
       })}
+      </AnimatePresence>
     </div>
   );
 }
