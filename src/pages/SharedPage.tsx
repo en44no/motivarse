@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trophy, ChevronDown, ShoppingCart, BarChart2 } from 'lucide-react';
+import { Trophy, ChevronDown, ShoppingCart, BarChart2, Eye, EyeOff } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useSharedTodos } from '../hooks/useSharedTodos';
@@ -18,6 +18,7 @@ export function SharedPage() {
   const { couple } = useCoupleContext();
   const { pending, recentlyCompleted, archived, loading, add, toggle, remove } = useSharedTodos();
   const { categories, add: addCategory, update: updateCategory, remove: removeCategory } = useCategories();
+  const [showCompleted, setShowCompleted] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('lista');
@@ -140,17 +141,23 @@ export function SharedPage() {
 
           {filteredRecent.length > 0 && (
             <div>
-              <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-1">
+              <button
+                onClick={() => setShowCompleted(!showCompleted)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-1 hover:text-text-secondary transition-colors"
+              >
+                {showCompleted ? <EyeOff size={13} /> : <Eye size={13} />}
                 Completados ({filteredRecent.length})
-              </h3>
-              <TodoList
-                todos={filteredRecent}
-                onToggle={toggle}
-                onDelete={remove}
-                currentUserId={user?.uid || ''}
-                memberNames={memberNames}
-                categories={categories}
-              />
+              </button>
+              {showCompleted && (
+                <TodoList
+                  todos={filteredRecent}
+                  onToggle={toggle}
+                  onDelete={remove}
+                  currentUserId={user?.uid || ''}
+                  memberNames={memberNames}
+                  categories={categories}
+                />
+              )}
             </div>
           )}
 

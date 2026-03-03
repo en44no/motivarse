@@ -80,7 +80,10 @@ export function CacoTimer({
           return 0;
         }
         // Countdown beeps for last 3 seconds
-        if (prev <= 4 && soundEnabled) playTimerBeep();
+        if (prev <= 4) {
+          if (soundEnabled) playTimerBeep();
+          navigator.vibrate?.(30);
+        }
         return prev - 1;
       });
     }, 1000);
@@ -96,11 +99,13 @@ export function CacoTimer({
         // No walk phase, go to next rep or complete
         if (currentRep >= repetitions) {
           if (soundEnabled) playTimerComplete();
+          navigator.vibrate?.([100, 50, 100, 50, 200]);
           setState('completed');
           return;
         }
         // Show phase switch then start next run
         if (soundEnabled) playTimerRun();
+        navigator.vibrate?.([50, 30, 50]);
         setState('phase_switch');
         setPhaseLabel('CORRER!');
         setTimeout(() => {
@@ -113,6 +118,7 @@ export function CacoTimer({
       }
       // Switch to walk
       if (soundEnabled) playTimerWalk();
+      navigator.vibrate?.([50, 30, 50]);
       setState('phase_switch');
       setPhaseLabel('CAMINAR!');
       setTimeout(() => {
@@ -123,12 +129,14 @@ export function CacoTimer({
     } else {
       // After walk, check if all reps done
       if (currentRep >= repetitions) {
-        playTimerComplete();
+        if (soundEnabled) playTimerComplete();
+        navigator.vibrate?.([100, 50, 100, 50, 200]);
         setState('completed');
         return;
       }
       // Switch to run (next rep)
-      playTimerRun();
+      if (soundEnabled) playTimerRun();
+      navigator.vibrate?.([50, 30, 50]);
       setState('phase_switch');
       setPhaseLabel('CORRER!');
       setTimeout(() => {

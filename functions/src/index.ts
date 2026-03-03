@@ -36,7 +36,7 @@ interface CoachContext {
 // ── Scheduled function ────────────────────────────────────────────────────────
 
 export const dailyHabitReminder = onSchedule(
-  { schedule: '0 1 * * *', timeZone: 'America/Montevideo' },
+  { schedule: '0 22 * * *', timeZone: 'America/Montevideo' },
   async () => {
     const snap = await getFirestore()
       .collection('users')
@@ -58,6 +58,55 @@ export const dailyHabitReminder = onSchedule(
     }
   }
 );
+
+// ── Notify task completed ─────────────────────────────────────────────────────
+
+export const notifyTaskCompleted = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes estar autenticado.');
+  }
+
+  const { coupleId, taskTitle } = request.data as {
+    coupleId: string;
+    taskTitle: string;
+  };
+
+  const completedByUid = request.auth.uid;
+  const db = getFirestore();
+
+  // Get couple doc to find members
+  const coupleDoc = await db.collection('couples').doc(coupleId).get();
+  if (!coupleDoc.exists) return { sent: false };
+
+  const coupleData = coupleDoc.data()!;
+  const members: string[] = coupleData.members || [];
+
+  // Get the name of who completed
+  const completedByDoc = await db.collection('users').doc(completedByUid).get();
+  const completedByName = completedByDoc.data()?.displayName || 'Tu pareja';
+
+  // Find the partner (not the one who completed)
+  const partnerUid = members.find((uid: string) => uid !== completedByUid);
+  if (!partnerUid) return { sent: false };
+
+  const partnerDoc = await db.collection('users').doc(partnerUid).get();
+  if (!partnerDoc.exists) return { sent: false };
+
+  const partnerData = partnerDoc.data()!;
+  if (!partnerData.notificationsEnabled || !partnerData.fcmToken) {
+    return { sent: false };
+  }
+
+  await getMessaging().send({
+    token: partnerData.fcmToken,
+    notification: {
+      title: 'Motivarse 💪',
+      body: `${completedByName} completó: ${taskTitle}`,
+    },
+  });
+
+  return { sent: true };
+});
 
 // ── AI Proxy ──────────────────────────────────────────────────────────────────
 

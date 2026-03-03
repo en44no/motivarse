@@ -3,6 +3,7 @@ import { Sun, PhoneOff, AlarmClock, Footprints, Target, MoreVertical, Pencil, Tr
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '../../lib/utils';
 import { Card } from '../ui/Card';
+import { MiniConfetti } from '../ui/MiniConfetti';
 import { HabitCheckButton } from './HabitCheckButton';
 import { HabitStreakBadge } from './HabitStreakBadge';
 import { HabitTimeInput } from './HabitTimeInput';
@@ -28,6 +29,7 @@ interface HabitCardProps {
 
 export function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerName, onEdit, onDelete, soundEnabled = true }: HabitCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on outside click
@@ -46,6 +48,7 @@ export function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerNam
     if (completed) {
       vibrateSuccess();
       if (soundEnabled) playSuccess();
+      setShowConfetti(true);
       // Check for streak milestone
       const nextStreak = (streak?.currentStreak || 0) + 1;
       if (isStreakMilestone(nextStreak)) {
@@ -88,6 +91,7 @@ export function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerNam
       )}
       style={completed ? { borderLeftColor: habit.color } : {}}
       >
+        {showConfetti && <MiniConfetti onComplete={() => setShowConfetti(false)} />}
         <div className="flex items-start gap-3">
           {/* Check / Icon */}
           {habit.type === 'boolean' && (

@@ -47,6 +47,8 @@ function playTone(
   ctx: AudioContext,
   volume = 0.3,
 ) {
+  // Re-activate context in case it was suspended (e.g. background tab)
+  if (ctx.state === 'suspended') ctx.resume();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = 'triangle'; // warmer than sine, more audible

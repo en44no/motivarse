@@ -98,7 +98,6 @@ export function HabitGenerator({ open, onClose }: HabitGeneratorProps) {
             onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
             placeholder='ej: "quiero dormir mejor" o "correr más seguido"'
             className="w-full rounded-xl border border-border bg-surface-hover px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
-            autoFocus
           />
         </div>
 

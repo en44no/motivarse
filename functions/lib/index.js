@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.aiProxy = exports.dailyHabitReminder = void 0;
+exports.aiProxy = exports.notifyTaskCompleted = exports.dailyHabitReminder = void 0;
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
@@ -11,7 +11,7 @@ const sdk_1 = require("@anthropic-ai/sdk");
 (0, app_1.initializeApp)();
 const anthropicKey = (0, params_1.defineSecret)('ANTHROPIC_API_KEY');
 // ── Scheduled function ────────────────────────────────────────────────────────
-exports.dailyHabitReminder = (0, scheduler_1.onSchedule)({ schedule: '0 1 * * *', timeZone: 'America/Montevideo' }, async () => {
+exports.dailyHabitReminder = (0, scheduler_1.onSchedule)({ schedule: '0 22 * * *', timeZone: 'America/Montevideo' }, async () => {
     const snap = await (0, firestore_1.getFirestore)()
         .collection('users')
         .where('notificationsEnabled', '==', true)
@@ -28,6 +28,44 @@ exports.dailyHabitReminder = (0, scheduler_1.onSchedule)({ schedule: '0 1 * * *'
     if (messages.length > 0) {
         await (0, messaging_1.getMessaging)().sendEach(messages);
     }
+});
+// ── Notify task completed ─────────────────────────────────────────────────────
+exports.notifyTaskCompleted = (0, https_1.onCall)(async (request) => {
+    var _a;
+    if (!request.auth) {
+        throw new https_1.HttpsError('unauthenticated', 'Debes estar autenticado.');
+    }
+    const { coupleId, taskTitle } = request.data;
+    const completedByUid = request.auth.uid;
+    const db = (0, firestore_1.getFirestore)();
+    // Get couple doc to find members
+    const coupleDoc = await db.collection('couples').doc(coupleId).get();
+    if (!coupleDoc.exists)
+        return { sent: false };
+    const coupleData = coupleDoc.data();
+    const members = coupleData.members || [];
+    // Get the name of who completed
+    const completedByDoc = await db.collection('users').doc(completedByUid).get();
+    const completedByName = ((_a = completedByDoc.data()) === null || _a === void 0 ? void 0 : _a.displayName) || 'Tu pareja';
+    // Find the partner (not the one who completed)
+    const partnerUid = members.find((uid) => uid !== completedByUid);
+    if (!partnerUid)
+        return { sent: false };
+    const partnerDoc = await db.collection('users').doc(partnerUid).get();
+    if (!partnerDoc.exists)
+        return { sent: false };
+    const partnerData = partnerDoc.data();
+    if (!partnerData.notificationsEnabled || !partnerData.fcmToken) {
+        return { sent: false };
+    }
+    await (0, messaging_1.getMessaging)().send({
+        token: partnerData.fcmToken,
+        notification: {
+            title: 'Motivarse 💪',
+            body: `${completedByName} completó: ${taskTitle}`,
+        },
+    });
+    return { sent: true };
 });
 // ── AI Proxy ──────────────────────────────────────────────────────────────────
 exports.aiProxy = (0, https_1.onCall)({ secrets: [anthropicKey] }, async (request) => {
@@ -109,7 +147,12 @@ Devolvé SOLO un array JSON válido con esta estructura exacta, sin texto adicio
     // ── coach ─────────────────────────────────────────────────────────────────
     if (type === 'coach') {
         const { messages, context } = data;
+        const memorySection = context.memory
+            ? `\nLo que ya sabés del usuario:\n${context.memory}\n`
+            : '';
         const systemPrompt = `Sos un coach de bienestar personal llamado "Moti" dentro de la app Motivarse. Respondés en español, con un tono cálido, motivador y breve (máx 3 oraciones salvo que te pidan más detalle).
+
+IMPORTANTE: Solo respondés sobre hábitos, bienestar personal, mandados/tareas, pareja y motivación. Si te preguntan algo fuera de estos temas, respondé amablemente que solo podés ayudar con temas de la app Motivarse.
 
 Datos del usuario:
 - Nombre: ${context.userName}
@@ -117,7 +160,7 @@ ${context.partnerName ? `- Pareja: ${context.partnerName}` : ''}
 - Hábitos activos: ${context.habitsCount}
 - Hábitos completados hoy: ${context.completedToday} de ${context.totalToday}
 - Mejor racha: ${context.bestStreak} días
-
+${memorySection}
 Ayudá al usuario con motivación, consejos de hábitos, estrategias de bienestar, o simplemente escuchalo. No inventes datos que no tenés.`;
         const response = await client.messages.create({
             model: 'claude-haiku-4-5-20251001',
@@ -130,6 +173,24 @@ Ayudá al usuario con motivación, consejos de hábitos, estrategias de bienesta
         });
         const content = response.content[0].text;
         return { content };
+    }
+    // ── updateMemory ──────────────────────────────────────────────────────────
+    if (type === 'updateMemory') {
+        const { messages, existingMemory, userName } = data;
+        const convo = messages.map((m) => `${m.role === 'user' ? userName : 'Moti'}: ${m.content}`).join('\n');
+        const existing = existingMemory ? `Memoria actual:\n${existingMemory}\n\n` : '';
+        const response = await client.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 300,
+            messages: [
+                {
+                    role: 'user',
+                    content: `${existing}Conversación reciente:\n${convo}\n\nExtrae y actualiza los hechos clave sobre el usuario que sean útiles para futuras conversaciones de coaching. Máximo 150 palabras, en formato bullets, en español. Solo hechos concretos (metas, dificultades, logros, preferencias). No repitas información ya presente en la memoria actual.`,
+                },
+            ],
+        });
+        const memory = response.content[0].text.trim();
+        return { memory };
     }
     throw new https_1.HttpsError('invalid-argument', `Tipo de request desconocido: ${type}`);
 });

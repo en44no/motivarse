@@ -1,9 +1,12 @@
 import { toast } from 'sonner';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useDataContext } from '../contexts/DataContext';
 import { addTodo, updateTodo, deleteTodo, addPurchaseRecord } from '../services/shared.service';
 import type { TodoPriority } from '../types/shared';
+
+const notifyTaskCompleted = httpsCallable(getFunctions(), 'notifyTaskCompleted');
 
 export function useSharedTodos() {
   const { user, profile } = useAuthContext();
@@ -59,7 +62,7 @@ export function useSharedTodos() {
         completedAt: completed ? Date.now() : undefined,
       });
 
-      // Write purchase record when completing a todo
+      // Write purchase record + notify partner when completing a todo
       if (completed && todo) {
         await addPurchaseRecord({
           coupleId,
@@ -69,6 +72,8 @@ export function useSharedTodos() {
           completedBy: user.uid,
           completedAt: Date.now(),
         });
+        // Fire-and-forget push notification to partner
+        notifyTaskCompleted({ coupleId, taskTitle: todo.title }).catch(() => {});
       }
     } catch (error) {
       console.error('Error toggling todo:', error);
