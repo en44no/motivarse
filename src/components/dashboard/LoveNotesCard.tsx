@@ -15,91 +15,93 @@ import { formatRelativeTime } from '../../lib/date-utils';
 import { cn } from '../../lib/utils';
 import type { LoveNote, NoteColor } from '../../types/notes';
 
-/* ─── Color palette for post-its ─── */
+/* ─── Real post-it colors: solid, warm, paper-like ─── */
 
-const NOTE_COLORS: Record<NoteColor, string> = {
-  yellow: 'rgba(251, 191, 36, 0.18)',
-  pink: 'rgba(244, 114, 182, 0.18)',
-  blue: 'rgba(56, 189, 248, 0.18)',
-  green: 'rgba(74, 222, 128, 0.18)',
-  purple: 'rgba(167, 139, 250, 0.18)',
+const POSTIT_BG: Record<NoteColor, string> = {
+  yellow: '#fef3c7',
+  pink: '#fce7f3',
+  blue: '#dbeafe',
+  green: '#dcfce7',
+  purple: '#ede9fe',
 };
 
-const NOTE_ACCENTS: Record<NoteColor, string> = {
-  yellow: 'rgba(251, 191, 36, 0.5)',
-  pink: 'rgba(244, 114, 182, 0.5)',
-  blue: 'rgba(56, 189, 248, 0.5)',
-  green: 'rgba(74, 222, 128, 0.5)',
-  purple: 'rgba(167, 139, 250, 0.5)',
+const POSTIT_FOLD: Record<NoteColor, string> = {
+  yellow: '#fcd34d',
+  pink: '#f9a8d4',
+  blue: '#93c5fd',
+  green: '#86efac',
+  purple: '#c4b5fd',
 };
 
-const TAPE_COLORS: Record<NoteColor, string> = {
-  yellow: 'rgba(251, 191, 36, 0.25)',
-  pink: 'rgba(244, 114, 182, 0.25)',
-  blue: 'rgba(56, 189, 248, 0.25)',
-  green: 'rgba(74, 222, 128, 0.25)',
-  purple: 'rgba(167, 139, 250, 0.25)',
+const POSTIT_TEXT: Record<NoteColor, string> = {
+  yellow: '#78350f',
+  pink: '#831843',
+  blue: '#1e3a5f',
+  green: '#14532d',
+  purple: '#3b0764',
 };
 
-const ROTATIONS = [-1.8, 2.2, -0.7, 1.5, -2.4, 0.9, -1.3, 2.6];
+const POSTIT_SUB: Record<NoteColor, string> = {
+  yellow: '#92400e',
+  pink: '#9d174d',
+  blue: '#1e40af',
+  green: '#166534',
+  purple: '#5b21b6',
+};
+
+const ROTATIONS = [-2.2, 1.6, -0.9, 2.8, -1.5, 0.6, -2.8, 1.2];
 
 function getRotation(index: number): number {
   return ROTATIONS[index % ROTATIONS.length];
 }
 
-/* ─── Default emoji presets ─── */
-
 const DEFAULT_EMOJIS = ['😘', '❤️', '💕', '🥰', '💋', '✨', '🌹', '💌'];
 
-/* ─── Single floating post-it ─── */
+/* ─── Single Post-it Note ─── */
 
-function FloatingPostIt({
+function PostIt({
   note,
-  fromName,
+  label,
   index,
-  onMarkRead,
   onDelete,
+  onMarkRead,
 }: {
   note: LoveNote;
-  fromName: string;
+  label: string;
   index: number;
-  onMarkRead: (id: string) => void;
   onDelete: (id: string) => void;
+  onMarkRead?: (id: string) => void;
 }) {
   const rotation = getRotation(index);
-  const bgColor = NOTE_COLORS[note.color];
-  const accentColor = NOTE_ACCENTS[note.color];
-  const tapeColor = TAPE_COLORS[note.color];
+  const bg = POSTIT_BG[note.color];
+  const fold = POSTIT_FOLD[note.color];
+  const textColor = POSTIT_TEXT[note.color];
+  const subColor = POSTIT_SUB[note.color];
   const x = useMotionValue(0);
-  const deleteOpacity = useTransform(x, [-100, -50], [1, 0]);
+  const swipeOpacity = useTransform(x, [-100, -50], [1, 0]);
+
+  const FOLD_SIZE = 18;
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.8, y: -20, rotate: rotation * 2 }}
-      animate={{ opacity: 1, scale: 1, y: 0, rotate: rotation }}
-      exit={{ opacity: 0, scale: 0.5, y: -30, rotate: rotation * 3 }}
-      transition={{ type: 'spring', stiffness: 350, damping: 22, delay: index * 0.05 }}
+      initial={{ opacity: 0, scale: 0.85, rotate: rotation * 2 }}
+      animate={{ opacity: 1, scale: 1, rotate: rotation }}
+      exit={{ opacity: 0, scale: 0.6, x: -150, rotate: rotation * 3 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 24, delay: index * 0.06 }}
       className="relative"
     >
-      {/* Swipe delete bg */}
+      {/* Swipe delete background */}
       <motion.div
-        className="absolute inset-0 rounded-2xl bg-danger/80 flex items-center justify-end pr-4"
-        style={{ opacity: deleteOpacity }}
+        className="absolute inset-0 rounded-md bg-red-500 flex items-center justify-end pr-5"
+        style={{ opacity: swipeOpacity }}
       >
         <span className="text-white text-xs font-bold">Borrar</span>
       </motion.div>
 
       <motion.div
-        className="relative rounded-2xl p-4 pb-3 cursor-default"
-        style={{
-          x,
-          background: bgColor,
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          border: `1px solid ${accentColor}`,
-          boxShadow: `0 4px 20px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.06)`,
-        }}
+        className="relative cursor-default"
+        style={{ x }}
         drag="x"
         dragConstraints={{ left: -120, right: 0 }}
         dragElastic={0.1}
@@ -107,55 +109,122 @@ function FloatingPostIt({
           if (info.offset.x < -80) onDelete(note.id);
         }}
         onClick={() => {
-          if (!note.read) onMarkRead(note.id);
+          if (onMarkRead && !note.read) onMarkRead(note.id);
         }}
+        whileHover={{ rotate: 0, scale: 1.01 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       >
-        {/* Decorative tape strip */}
+        {/* Main paper body */}
         <div
-          className="absolute -top-[5px] left-1/2 -translate-x-1/2 w-12 h-[10px] rounded-sm"
+          className="relative rounded-[3px] px-4 pt-5 pb-3.5"
           style={{
-            background: tapeColor,
-            transform: `translateX(-50%) rotate(${rotation > 0 ? -1 : 1}deg)`,
+            background: bg,
+            boxShadow: `
+              2px 3px 8px rgba(0,0,0,0.12),
+              1px 1px 2px rgba(0,0,0,0.08),
+              inset 0 1px 0 rgba(255,255,255,0.5),
+              inset 0 -1px 0 rgba(0,0,0,0.04)
+            `,
+            /* Subtle paper grain via noise-like gradient */
+            backgroundImage: `
+              linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%),
+              linear-gradient(${bg}, ${bg})
+            `,
           }}
-        />
+        >
+          {/* Folded corner triangle — bottom-right */}
+          <div
+            className="absolute bottom-0 right-0 overflow-hidden"
+            style={{ width: FOLD_SIZE, height: FOLD_SIZE }}
+          >
+            {/* The fold: a triangle that reveals a darker shade */}
+            <div
+              className="absolute bottom-0 right-0"
+              style={{
+                width: 0,
+                height: 0,
+                borderStyle: 'solid',
+                borderWidth: `0 0 ${FOLD_SIZE}px ${FOLD_SIZE}px`,
+                borderColor: `transparent transparent var(--color-background) transparent`,
+              }}
+            />
+            <div
+              className="absolute bottom-0 right-0"
+              style={{
+                width: 0,
+                height: 0,
+                borderStyle: 'solid',
+                borderWidth: `${FOLD_SIZE}px ${FOLD_SIZE}px 0 0`,
+                borderColor: `${fold} transparent transparent transparent`,
+                filter: 'brightness(0.85)',
+              }}
+            />
+          </div>
 
-        {/* Unread shimmer */}
-        {!note.read && (
-          <div className="absolute top-2.5 right-3 w-2 h-2 rounded-full bg-primary animate-pulse" />
-        )}
+          {/* Pin / tape at top-center */}
+          <div
+            className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-8 h-3 rounded-sm opacity-60"
+            style={{
+              background: `linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.2))`,
+              backdropFilter: 'blur(2px)',
+              border: '0.5px solid rgba(255,255,255,0.3)',
+            }}
+          />
 
-        {/* Content */}
-        <div className="flex gap-2.5 items-start">
-          {note.emoji && (
-            <span className="text-xl leading-none mt-0.5 shrink-0">{note.emoji}</span>
+          {/* Unread dot */}
+          {!note.read && onMarkRead && (
+            <div
+              className="absolute top-2 right-3 w-2.5 h-2.5 rounded-full animate-pulse"
+              style={{ background: subColor }}
+            />
           )}
-          <p className="text-[13px] leading-[1.5] text-text-primary whitespace-pre-wrap break-words flex-1 min-w-0">
-            {note.text}
-          </p>
-        </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between mt-2.5 pt-2 border-t"
-          style={{ borderColor: accentColor }}
-        >
-          <span className="text-[11px] text-text-muted font-medium italic">
-            — {fromName}
-          </span>
-          <span className="text-[10px] text-text-muted/70">
-            {formatRelativeTime(note.createdAt)}
-          </span>
-        </div>
+          {/* Delete X */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(note.id);
+            }}
+            className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center opacity-30 hover:opacity-70 transition-opacity"
+            style={{ color: textColor }}
+          >
+            <X size={11} />
+          </button>
 
-        {/* Close / dismiss button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(note.id);
-          }}
-          className="absolute top-2 right-2 w-5 h-5 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition-colors"
-        >
-          <X size={10} className="text-text-muted" />
-        </button>
+          {/* Content */}
+          <div className="flex gap-2 items-start">
+            {note.emoji && (
+              <span className="text-xl leading-none mt-0.5 shrink-0 drop-shadow-sm">{note.emoji}</span>
+            )}
+            <p
+              className="text-[13.5px] leading-[1.55] whitespace-pre-wrap break-words flex-1 min-w-0"
+              style={{
+                color: textColor,
+                fontStyle: 'italic',
+              }}
+            >
+              {note.text}
+            </p>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between mt-3 pt-1.5"
+            style={{ borderTop: `1px dashed ${fold}` }}
+          >
+            <span
+              className="text-[11px] font-medium"
+              style={{ color: subColor }}
+            >
+              {label}
+            </span>
+            <span
+              className="text-[10px] opacity-60"
+              style={{ color: subColor }}
+            >
+              {formatRelativeTime(note.createdAt)}
+            </span>
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   );
@@ -180,7 +249,6 @@ export function ComposeNoteDialog({
   const coupleId = couple?.coupleId || null;
   const userId = user?.uid || null;
 
-  // Reset on close
   useEffect(() => {
     if (!open) {
       setText('');
@@ -208,7 +276,6 @@ export function ComposeNoteDialog({
   return (
     <Dialog open={open} onClose={onClose} title="Nota de amor 💌">
       <div className="space-y-4">
-        {/* Textarea — NO autoFocus */}
         <textarea
           className="w-full rounded-xl bg-surface-light border border-border p-3.5 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
           placeholder={`Escribile algo lindo a ${partnerName}...`}
@@ -218,12 +285,10 @@ export function ComposeNoteDialog({
           onChange={(e) => setText(e.target.value)}
         />
 
-        {/* Char counter */}
         <div className="flex justify-end -mt-2">
           <span className="text-[11px] text-text-muted">{text.length}/200</span>
         </div>
 
-        {/* Emoji presets */}
         <div>
           <span className="text-xs text-text-muted mb-2 block">Emoji (opcional)</span>
           <div className="flex flex-wrap gap-1.5">
@@ -247,7 +312,6 @@ export function ComposeNoteDialog({
             ))}
           </div>
 
-          {/* Custom emoji input */}
           <div className="flex items-center gap-2 mt-2.5">
             <span className="text-[11px] text-text-muted">o escribí uno:</span>
             <input
@@ -263,7 +327,6 @@ export function ComposeNoteDialog({
           </div>
         </div>
 
-        {/* Send */}
         <button
           type="button"
           disabled={!text.trim() || sending}
@@ -283,7 +346,7 @@ export function ComposeNoteDialog({
   );
 }
 
-/* ─── Floating notes display (above TodaySummary) ─── */
+/* ─── Floating notes (above TodaySummary) ─── */
 
 export function FloatingLoveNotes() {
   const { user } = useAuthContext();
@@ -299,9 +362,15 @@ export function FloatingLoveNotes() {
     return () => unsub();
   }, [coupleId]);
 
-  // Only show notes TO me (received), newest first
+  // Received notes (from partner to me)
   const receivedNotes = useMemo(
     () => notes.filter((n) => n.toUserId === userId),
+    [notes, userId],
+  );
+
+  // Sent notes that partner hasn't read yet (I can still delete them)
+  const sentUnread = useMemo(
+    () => notes.filter((n) => n.fromUserId === userId && !n.read),
     [notes, userId],
   );
 
@@ -313,22 +382,42 @@ export function FloatingLoveNotes() {
     await deleteNote(noteId).catch(() => {});
   }, []);
 
-  if (!coupleId || receivedNotes.length === 0) return null;
+  const hasNotes = receivedNotes.length > 0 || sentUnread.length > 0;
+
+  if (!coupleId || !hasNotes) return null;
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
+      {/* Received notes */}
       <AnimatePresence mode="popLayout">
         {receivedNotes.map((note, i) => (
-          <FloatingPostIt
+          <PostIt
             key={note.id}
             note={note}
-            fromName={partnerName}
+            label={`— ${partnerName}`}
             index={i}
-            onMarkRead={handleMarkRead}
             onDelete={handleDelete}
+            onMarkRead={handleMarkRead}
           />
         ))}
       </AnimatePresence>
+
+      {/* Sent unread notes */}
+      {sentUnread.length > 0 && (
+        <>
+          <AnimatePresence mode="popLayout">
+            {sentUnread.map((note, i) => (
+              <PostIt
+                key={note.id}
+                note={note}
+                label="Enviada — sin leer"
+                index={i + receivedNotes.length}
+                onDelete={handleDelete}
+              />
+            ))}
+          </AnimatePresence>
+        </>
+      )}
     </div>
   );
 }
