@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 import { Bot, X, Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../../contexts/AuthContext';
@@ -246,7 +247,22 @@ export function CoachChat() {
                               : 'bg-surface-hover text-text-primary rounded-bl-sm'
                           }`}
                         >
-                          {msg.content}
+                          {msg.role === 'user' ? (
+                            msg.content
+                          ) : (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                                em: ({ children }) => <em className="italic">{children}</em>,
+                                ul: ({ children }) => <ul className="list-disc pl-4 mb-2 last:mb-0 space-y-0.5">{children}</ul>,
+                                ol: ({ children }) => <ol className="list-decimal pl-4 mb-2 last:mb-0 space-y-0.5">{children}</ol>,
+                                li: ({ children }) => <li>{children}</li>,
+                              }}
+                            >
+                              {msg.content}
+                            </ReactMarkdown>
+                          )}
                         </div>
                       </motion.div>
                     ))}

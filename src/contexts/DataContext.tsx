@@ -105,7 +105,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // We have a coupleId → subscribe to all data
     let cancelled = false;
     respondedRef.current = 0;
-    expectedRef.current = userId ? 7 : 5;
+    expectedRef.current = userId ? 7 : 6;
     setError(null);
     // Only show loading on first load; on re-subscriptions keep showing existing data
     if (!hasLoadedRef.current) setLoading(true);
@@ -161,6 +161,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (purchaseFirst) { purchaseFirst = false; onResponse(); }
     }));
 
+    let progressFirst = true;
+    unsubs.push(subscribeToRunProgress(coupleId, (p) => {
+      if (cancelled) return;
+      setRunProgress(p);
+      if (progressFirst) { progressFirst = false; onResponse(); }
+    }));
+
     // User-scoped subscriptions
     if (userId) {
       let streaksFirst = true;
@@ -168,13 +175,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         setStreaks(s);
         if (streaksFirst) { streaksFirst = false; onResponse(); }
-      }));
-
-      let progressFirst = true;
-      unsubs.push(subscribeToRunProgress(userId, (p) => {
-        if (cancelled) return;
-        setRunProgress(p);
-        if (progressFirst) { progressFirst = false; onResponse(); }
       }));
     }
 

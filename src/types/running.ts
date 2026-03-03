@@ -30,7 +30,7 @@ export interface RunLog {
 }
 
 export interface RunProgress {
-  userId: string;
+  coupleId: string;
   currentWeek: number;
   currentSession: number;
   totalRuns: number;

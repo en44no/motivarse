@@ -33,8 +33,8 @@ export async function addRunLog(log: Omit<RunLog, 'id'>): Promise<string> {
   return docRef.id;
 }
 
-export function subscribeToRunProgress(userId: string, callback: (progress: RunProgress | null) => void): Unsubscribe {
-  const docRef = doc(db, 'runProgress', userId);
+export function subscribeToRunProgress(coupleId: string, callback: (progress: RunProgress | null) => void): Unsubscribe {
+  const docRef = doc(db, 'runProgress', coupleId);
   return onSnapshot(docRef, (snap) => {
     callback(snap.exists() ? (snap.data() as RunProgress) : null);
   }, (error) => {
@@ -43,12 +43,12 @@ export function subscribeToRunProgress(userId: string, callback: (progress: RunP
   });
 }
 
-export async function updateRunProgress(userId: string, progress: Partial<RunProgress>): Promise<void> {
-  await setDoc(doc(db, 'runProgress', userId), { userId, ...progress }, { merge: true });
+export async function updateRunProgress(coupleId: string, progress: Partial<RunProgress>): Promise<void> {
+  await setDoc(doc(db, 'runProgress', coupleId), { coupleId, ...progress }, { merge: true });
 }
 
-export async function getRunProgress(userId: string): Promise<RunProgress | null> {
-  const snap = await getDoc(doc(db, 'runProgress', userId));
+export async function getRunProgress(coupleId: string): Promise<RunProgress | null> {
+  const snap = await getDoc(doc(db, 'runProgress', coupleId));
   return snap.exists() ? (snap.data() as RunProgress) : null;
 }
 

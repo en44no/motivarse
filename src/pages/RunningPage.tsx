@@ -3,6 +3,7 @@ import { Plus, Footprints } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useRunning } from '../hooks/useRunning';
+import { useCoupleContext } from '../contexts/CoupleContext';
 import { Tabs } from '../components/ui/Tabs';
 import { Button } from '../components/ui/Button';
 import { CardSkeleton } from '../components/ui/Skeleton';
@@ -24,10 +25,14 @@ export function RunningPage() {
   const [activeTab, setActiveTab] = useState('plan');
   const [showLogForm, setShowLogForm] = useState(false);
   const [defaultFreeRun, setDefaultFreeRun] = useState(false);
-  const { myLogs, progress, currentWeek, currentSession, currentPlan, isCompleted, loading, logRun } = useRunning();
+  const { couple } = useCoupleContext();
+  const { cacoLogs, myFreeRuns, partnerFreeRuns, runLogs, progress, currentWeek, currentSession, currentPlan, isCompleted, loading, logRun } = useRunning();
+  const memberNames = couple?.memberNames || {};
 
-  const freeRunLogs = useMemo(() => myLogs.filter((l) => l.isFreeRun), [myLogs]);
-  const cacoLogs = useMemo(() => myLogs.filter((l) => !l.isFreeRun), [myLogs]);
+  const allFreeRuns = useMemo(() =>
+    [...myFreeRuns, ...partnerFreeRuns].sort((a, b) => (b.date > a.date ? 1 : -1)),
+    [myFreeRuns, partnerFreeRuns]
+  );
 
   if (loading) {
     return (
@@ -86,7 +91,7 @@ export function RunningPage() {
           <CacoPlanOverview currentWeek={currentWeek} />
 
           {cacoLogs.length > 0 && (
-            <RunHistory logs={cacoLogs} title="Sesiones CaCo" />
+            <RunHistory logs={cacoLogs} title="Sesiones CaCo" memberNames={memberNames} />
           )}
         </div>
       )}
@@ -103,8 +108,8 @@ export function RunningPage() {
             Registrar carrera libre
           </Button>
 
-          {freeRunLogs.length > 0 ? (
-            <RunHistory logs={freeRunLogs} title="Carreras libres" />
+          {allFreeRuns.length > 0 ? (
+            <RunHistory logs={allFreeRuns} title="Carreras libres" memberNames={memberNames} />
           ) : (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -125,9 +130,9 @@ export function RunningPage() {
 
       {activeTab === 'stats' && (
         <div className="space-y-4">
-          <RunStatsCards progress={progress} totalLogs={myLogs.length} />
-          <RunProgressChart logs={myLogs} />
-          <RunHistory logs={myLogs} title="Todo el historial" allowDelete />
+          <RunStatsCards progress={progress} totalLogs={runLogs.length} />
+          <RunProgressChart logs={runLogs} />
+          <RunHistory logs={runLogs} title="Todo el historial" allowDelete memberNames={memberNames} showFilters />
         </div>
       )}
 

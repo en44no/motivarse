@@ -14,6 +14,13 @@ export function useRunning() {
   const coupleId = profile?.coupleId || couple?.coupleId || null;
   const userId = user?.uid;
 
+  // CaCo sessions are always shared — show ALL couple's CaCo logs
+  const cacoLogs = runLogs.filter((l) => !l.isFreeRun);
+  // Free runs: own runs
+  const myFreeRuns = runLogs.filter((l) => l.isFreeRun && l.userId === userId);
+  // Free runs: partner's shared runs
+  const partnerFreeRuns = runLogs.filter((l) => l.isFreeRun && l.userId !== userId && l.isSharedRun);
+  // Legacy: all my logs (for backward compat)
   const myLogs = runLogs.filter((l) => l.userId === userId);
   const partnerLogs = runLogs.filter((l) => l.userId !== userId);
 
@@ -91,7 +98,7 @@ export function useRunning() {
           nextWeek = Math.min(currentWeek + 1, CACO_PLAN.length + 1);
         }
 
-        await updateRunProgress(userId, {
+        await updateRunProgress(coupleId, {
           currentWeek: nextWeek,
           currentSession: nextSession,
           totalRuns: (progress?.totalRuns || 0) + 1,
@@ -100,7 +107,7 @@ export function useRunning() {
         });
       } else {
         // Free runs still count toward total stats but don't advance the plan
-        await updateRunProgress(userId, {
+        await updateRunProgress(coupleId, {
           currentWeek: rawWeek,
           currentSession,
           totalRuns: (progress?.totalRuns || 0) + 1,
@@ -120,6 +127,9 @@ export function useRunning() {
     runLogs,
     myLogs,
     partnerLogs,
+    cacoLogs,
+    myFreeRuns,
+    partnerFreeRuns,
     progress,
     currentWeek,
     currentSession,

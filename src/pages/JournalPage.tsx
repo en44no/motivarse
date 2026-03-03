@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, ChevronLeft, ChevronRight, Trash2, Lock, Check, Plus,
+  ArrowLeft, ChevronLeft, ChevronRight, Trash2, Lock, Check, Plus, Save,
   CalendarDays, Flame, BookOpen,
 } from 'lucide-react';
 import { subDays, addDays, isToday as isTodayFn, format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns';
@@ -14,8 +14,6 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { MOOD_OPTIONS } from '../config/constants';
 import type { JournalEntry } from '../types/journal';
-
-const AUTOSAVE_DELAY = 1500;
 
 type ViewMode = 'list' | 'write';
 
@@ -31,16 +29,18 @@ export function JournalPage() {
   const [deleteTarget, setDeleteTarget] = useState<JournalEntry | null>(null);
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
 
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const contentRef = useRef(content);
-  const moodRef = useRef(mood);
 
   const dateStr = formatDate(writeDate);
   const isToday = isTodayFn(writeDate);
 
   // Find existing entry for write date
   const currentEntry = entries.find((e) => e.date === dateStr);
+
+  // Track if content has unsaved changes
+  const hasChanges = currentEntry
+    ? content !== currentEntry.content || mood !== currentEntry.mood
+    : content.trim() !== '' || mood !== undefined;
 
   // Sync content/mood when date changes
   useEffect(() => {
@@ -52,8 +52,6 @@ export function JournalPage() {
       setMood(undefined);
     }
     setSaveStatus('idle');
-    contentRef.current = currentEntry?.content ?? '';
-    moodRef.current = currentEntry?.mood;
   }, [dateStr, currentEntry?.id]);
 
   // Auto-resize textarea
@@ -67,48 +65,24 @@ export function JournalPage() {
   // Focus textarea when entering write mode
   useEffect(() => {
     if (viewMode === 'write' && textareaRef.current) {
-      // Small delay to let animation settle
       setTimeout(() => textareaRef.current?.focus(), 300);
     }
   }, [viewMode]);
 
-  const doSave = useCallback(
-    async (text: string, selectedMood?: string) => {
-      if (!text.trim() && !selectedMood) return;
-      setSaveStatus('saving');
-      try {
-        await saveEntry(dateStr, text, selectedMood);
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus((s) => (s === 'saved' ? 'idle' : s)), 2000);
-      } catch {
-        setSaveStatus('idle');
-      }
-    },
-    [dateStr, saveEntry],
-  );
-
-  const handleContentChange = (newContent: string) => {
-    setContent(newContent);
-    contentRef.current = newContent;
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    if (!newContent.trim() && !moodRef.current) {
+  const handleSave = useCallback(async () => {
+    if (!content.trim() && !mood) return;
+    setSaveStatus('saving');
+    try {
+      await saveEntry(dateStr, content, mood);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus((s) => (s === 'saved' ? 'idle' : s)), 2000);
+    } catch {
       setSaveStatus('idle');
-      return;
     }
-    setSaveStatus('idle');
-    saveTimeoutRef.current = setTimeout(() => {
-      doSave(newContent, moodRef.current);
-    }, AUTOSAVE_DELAY);
-  };
+  }, [dateStr, content, mood, saveEntry]);
 
   const handleMoodSelect = (emoji: string) => {
-    const newMood = mood === emoji ? undefined : emoji;
-    setMood(newMood);
-    moodRef.current = newMood;
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    if (contentRef.current.trim() || newMood) {
-      doSave(contentRef.current, newMood);
-    }
+    setMood((prev) => prev === emoji ? undefined : emoji);
   };
 
   const goToPrevDay = () => setWriteDate((d) => subDays(d, 1));
@@ -127,12 +101,7 @@ export function JournalPage() {
     setViewMode('write');
   };
 
-  // Cleanup timeout
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    };
-  }, []);
+  // No cleanup needed — manual save only
 
   // --- Stats ---
   const stats = useMemo(() => {
@@ -462,49 +431,47 @@ export function JournalPage() {
             </div>
 
             {/* Textarea */}
-            <div className="relative">
-              <textarea
-                ref={textareaRef}
-                value={content}
-                onChange={(e) => handleContentChange(e.target.value)}
-                placeholder="¿Cómo fue tu día?"
-                className={cn(
-                  'w-full min-h-[200px] max-h-[400px] resize-none rounded-2xl',
-                  'bg-surface border border-border p-4 text-sm text-text-primary leading-relaxed',
-                  'placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30',
-                  'transition-all',
-                )}
-                rows={6}
-              />
-              {/* Save status */}
-              <div className="absolute bottom-3 right-3">
-                <AnimatePresence mode="wait">
-                  {saveStatus === 'saving' && (
-                    <motion.span
-                      key="saving"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-[11px] text-text-muted"
-                    >
-                      Guardando...
-                    </motion.span>
-                  )}
-                  {saveStatus === 'saved' && (
-                    <motion.span
-                      key="saved"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="inline-flex items-center gap-1 text-[11px] text-primary font-medium"
-                    >
-                      <Check size={12} />
-                      Guardado
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="¿Cómo fue tu día?"
+              className={cn(
+                'w-full min-h-[200px] max-h-[400px] resize-none rounded-2xl',
+                'bg-surface border border-border p-4 text-sm text-text-primary leading-relaxed',
+                'placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30',
+                'transition-all',
+              )}
+              rows={6}
+            />
+
+            {/* Save button */}
+            <button
+              onClick={handleSave}
+              disabled={saveStatus === 'saving' || (!hasChanges && saveStatus !== 'saved')}
+              className={cn(
+                'w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold transition-all',
+                saveStatus === 'saved'
+                  ? 'bg-green-500/15 text-green-600'
+                  : hasChanges
+                    ? 'bg-primary text-white shadow-sm shadow-primary/25 active:scale-[0.98]'
+                    : 'bg-surface-hover text-text-muted cursor-not-allowed',
+              )}
+            >
+              {saveStatus === 'saving' ? (
+                <>Guardando...</>
+              ) : saveStatus === 'saved' ? (
+                <>
+                  <Check size={16} />
+                  Guardado
+                </>
+              ) : (
+                <>
+                  <Save size={16} />
+                  Guardar
+                </>
+              )}
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
