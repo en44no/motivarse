@@ -26,9 +26,10 @@ interface HabitCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   soundEnabled?: boolean;
+  isDragging?: boolean;
 }
 
-export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerName, onEdit, onDelete, soundEnabled = true }: HabitCardProps) {
+export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerName, onEdit, onDelete, soundEnabled = true, isDragging = false }: HabitCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -89,7 +90,8 @@ export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle,
         'transition-all duration-300',
         completed && 'bg-gradient-to-r from-primary/8 to-transparent border-primary/20 border-l-2',
         completed && `border-l-[${habit.color}]`,
-        partiallyCompleted && 'border-primary/10 bg-primary-soft/15'
+        partiallyCompleted && 'border-primary/10 bg-primary-soft/15',
+        isDragging && 'shadow-xl scale-[1.02] z-50 relative'
       )}
       style={completed ? { borderLeftColor: habit.color } : {}}
       >

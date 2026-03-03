@@ -53,6 +53,7 @@ export function HabitsPage() {
     addCustomHabit,
     removeHabit,
     editHabit,
+    reorderHabits,
     getLogsForHabit,
     getLogsForDate,
     statsData,
@@ -107,6 +108,10 @@ export function HabitsPage() {
     if (diff === 1) return 'Ayer';
     return format(d, "EEEE d 'de' MMMM", { locale: es });
   }, [selectedDate, isToday, today]);
+
+  function handleReorder(orderedIds: string[]) {
+    reorderHabits(orderedIds);
+  }
 
   function handleEdit(habitId: string) {
     const habit = myHabits.find((h) => h.id === habitId);
@@ -225,6 +230,8 @@ export function HabitsPage() {
               onEdit={isToday ? handleEdit : undefined}
               onDelete={isToday ? handleDelete : undefined}
               soundEnabled={soundEnabled}
+              reorderable={isToday}
+              onReorder={isToday ? handleReorder : undefined}
             />
           </motion.div>
         )}

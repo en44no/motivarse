@@ -10,6 +10,7 @@ import {
   updateStreak,
   deleteHabit,
   updateHabit,
+  batchUpdateHabitOrder,
 } from '../services/habits.service';
 import { calculateStreak } from '../lib/streak-utils';
 import { getToday, isHabitScheduledForDate, getWeekDays, formatDate } from '../lib/date-utils';
@@ -135,6 +136,15 @@ export function useHabits() {
     } catch (error) {
       console.error('Error deleting habit:', error);
       toast.error('No se pudo eliminar el hábito.');
+    }
+  }
+
+  async function reorderHabits(orderedIds: string[]) {
+    try {
+      await batchUpdateHabitOrder(orderedIds);
+    } catch (error) {
+      console.error('Error reordering habits:', error);
+      toast.error('No se pudo reordenar los hábitos.');
     }
   }
 
@@ -293,6 +303,7 @@ export function useHabits() {
     addCustomHabit,
     removeHabit,
     editHabit,
+    reorderHabits,
     todayProgress,
     statsData,
     getLogsForDate,

@@ -9,6 +9,7 @@ import {
   onSnapshot,
   setDoc,
   getDocs,
+  writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -129,6 +130,14 @@ export async function deleteOrphanedStreaks(userId: string, activeHabitIds: stri
   const snap = await getDocs(query(streaksCol, where('userId', '==', userId)));
   const orphaned = snap.docs.filter((d) => !activeHabitIds.includes((d.data() as HabitStreak).habitId));
   await Promise.all(orphaned.map((d) => deleteDoc(d.ref)));
+}
+
+export async function batchUpdateHabitOrder(orderedIds: string[]): Promise<void> {
+  const batch = writeBatch(db);
+  orderedIds.forEach((id, index) => {
+    batch.update(doc(db, 'habits', id), { order: index });
+  });
+  await batch.commit();
 }
 
 export async function getHabitLogsForDates(
