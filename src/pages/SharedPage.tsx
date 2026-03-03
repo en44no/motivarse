@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trophy, ChevronDown, ShoppingCart, BarChart2, Heart, Eye, EyeOff } from 'lucide-react';
+import { Trophy, ChevronDown, ShoppingCart, Heart, Eye, EyeOff } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useSharedTodos } from '../hooks/useSharedTodos';
@@ -8,11 +8,10 @@ import { CardSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { TodoList } from '../components/shared/TodoList';
 import { TodoForm } from '../components/shared/TodoForm';
-import { PlanificacionSection } from '../components/shared/PlanificacionSection';
 import { WishlistTab } from '../components/wishlist/WishlistTab';
 import { cn } from '../lib/utils';
 
-type Tab = 'lista' | 'planificacion' | 'deseos';
+type Tab = 'lista' | 'deseos';
 
 export function SharedPage() {
   const { user } = useAuthContext();
@@ -67,18 +66,6 @@ export function SharedPage() {
         >
           <ShoppingCart size={14} />
           Lista
-        </button>
-        <button
-          onClick={() => setTab('planificacion')}
-          className={cn(
-            'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all',
-            tab === 'planificacion'
-              ? 'bg-surface text-text-primary shadow-sm'
-              : 'text-text-muted hover:text-text-secondary'
-          )}
-        >
-          <BarChart2 size={14} />
-          Planificación
         </button>
         <button
           onClick={() => setTab('deseos')}
@@ -207,14 +194,6 @@ export function SharedPage() {
             />
           )}
         </>
-      )}
-
-      {tab === 'planificacion' && (
-        <PlanificacionSection
-          pendingTodos={pending}
-          categories={categories}
-          onAddToList={(title, category) => add(title, 'medium', category)}
-        />
       )}
 
       {tab === 'deseos' && <WishlistTab />}
