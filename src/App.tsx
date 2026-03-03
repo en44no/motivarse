@@ -16,6 +16,7 @@ const LoginPage = lazy(() => import('./pages/LoginPage').then((m) => ({ default:
 const RunningPage = lazy(() => import('./pages/RunningPage').then((m) => ({ default: m.RunningPage })));
 const SharedPage = lazy(() => import('./pages/SharedPage').then((m) => ({ default: m.SharedPage })));
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })));
+const JournalPage = lazy(() => import('./pages/JournalPage').then((m) => ({ default: m.JournalPage })));
 
 function PageSkeleton() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
               <Route path={ROUTES.RUNNING} element={<Suspense fallback={<PageSkeleton />}><RunningPage /></Suspense>} />
               <Route path={ROUTES.SHARED} element={<Suspense fallback={<PageSkeleton />}><SharedPage /></Suspense>} />
               <Route path={ROUTES.PROFILE} element={<Suspense fallback={<PageSkeleton />}><ProfilePage /></Suspense>} />
+              <Route path={ROUTES.JOURNAL} element={<Suspense fallback={<PageSkeleton />}><JournalPage /></Suspense>} />
             </Route>
             <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
           </Routes>

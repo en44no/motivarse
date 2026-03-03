@@ -1,8 +1,9 @@
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthContext } from '../../contexts/AuthContext';
-import { useCoupleContext } from '../../contexts/CoupleContext';
 import { usePWA } from '../../hooks/usePWA';
-import { WifiOff } from 'lucide-react';
+import { WifiOff, BookOpen } from 'lucide-react';
+import { ROUTES } from '../../config/routes';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -14,8 +15,8 @@ function getGreeting(): string {
 
 export function Header() {
   const { profile, user } = useAuthContext();
-  const { partnerName } = useCoupleContext();
   const { isOnline } = usePWA();
+  const navigate = useNavigate();
 
   const firstName = profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Usuario';
 
@@ -40,12 +41,13 @@ export function Header() {
               </motion.div>
             )}
           </AnimatePresence>
-          {partnerName && (
-            <div className="flex items-center gap-2 bg-surface rounded-full px-3 py-1.5 border border-primary/15 shadow-sm">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs text-text-secondary font-medium">{partnerName}</span>
-            </div>
-          )}
+          <button
+            onClick={() => navigate(ROUTES.JOURNAL)}
+            className="flex items-center gap-2 bg-surface rounded-full px-3 py-1.5 border border-primary/15 shadow-sm hover:bg-surface-hover transition-colors active:scale-95"
+          >
+            <BookOpen size={14} className="text-primary" />
+            <span className="text-xs text-text-secondary font-medium">Diario</span>
+          </button>
         </div>
       </div>
       {/* Gradient border bottom */}

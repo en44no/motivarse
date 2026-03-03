@@ -5,4 +5,5 @@ export const ROUTES = {
   RUNNING: '/running',
   SHARED: '/shared',
   PROFILE: '/profile',
+  JOURNAL: '/journal',
 } as const;

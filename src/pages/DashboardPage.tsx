@@ -11,7 +11,6 @@ import { PartnerStatus } from '../components/dashboard/PartnerStatus';
 import { StreakHighlight } from '../components/dashboard/StreakHighlight';
 import { RunningProgress } from '../components/dashboard/RunningProgress';
 import { QuickActions } from '../components/dashboard/QuickActions';
-import { JournalCard } from '../components/journal/JournalCard';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { ROUTES } from '../config/routes';
 
@@ -59,8 +58,6 @@ export function DashboardPage() {
           totalCount={todayHabits.length}
         />
       )}
-
-      <JournalCard />
 
       <StreakHighlight bestStreak={bestStreak} habits={myHabits} />
 
