@@ -13,7 +13,7 @@ import { RunningProgress } from '../components/dashboard/RunningProgress';
 import { QuickActions } from '../components/dashboard/QuickActions';
 import { ChallengeCard } from '../components/dashboard/ChallengeCard';
 import { ReceivedReactions } from '../components/dashboard/ReceivedReactions';
-import { LoveNotesCard } from '../components/dashboard/LoveNotesCard';
+import { FloatingLoveNotes } from '../components/dashboard/LoveNotesCard';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { ROUTES } from '../config/routes';
 
@@ -48,6 +48,7 @@ export function DashboardPage() {
   return (
     <div className="space-y-4 py-4">
       <ReceivedReactions />
+      {partnerName && <FloatingLoveNotes />}
       <TodaySummary
         progress={todayProgress}
         completedCount={completedCount}
@@ -62,8 +63,6 @@ export function DashboardPage() {
           totalCount={todayHabits.length}
         />
       )}
-
-      {partnerName && <LoveNotesCard />}
 
       <StreakHighlight bestStreak={bestStreak} habits={myHabits} />
 
