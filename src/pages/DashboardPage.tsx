@@ -62,8 +62,6 @@ export function DashboardPage() {
         />
       )}
 
-      <ChallengeCard />
-
       <StreakHighlight bestStreak={bestStreak} habits={myHabits} />
 
       {pendingTodos.length > 0 && (
@@ -97,6 +95,8 @@ export function DashboardPage() {
       </Link>
 
       <RunningProgress progress={progress} />
+
+      <ChallengeCard />
 
       <div>
         <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 px-1">

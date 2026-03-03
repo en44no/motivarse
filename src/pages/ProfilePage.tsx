@@ -185,53 +185,6 @@ export function ProfilePage() {
         </Card>
       )}
 
-      {/* Theme selector */}
-      <Card>
-        <div className="flex items-center gap-3 mb-4">
-          <Palette size={20} className="text-primary" />
-          <div>
-            <h3 className="text-sm font-bold text-text-primary">Tema</h3>
-            <p className="text-xs text-text-muted">Personalizá los colores de la app</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {themes.map((theme) => {
-            const isActive = currentTheme.id === theme.id;
-            const colors = theme.colors;
-            return (
-              <button
-                key={theme.id}
-                onClick={() => setTheme(theme.id)}
-                className={cn(
-                  'relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200',
-                  isActive
-                    ? 'border-primary bg-primary/10 scale-[1.02]'
-                    : 'border-border hover:border-primary/30 bg-surface-hover/50',
-                )}
-              >
-                {isActive && (
-                  <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                    <Check size={12} className="text-white" />
-                  </div>
-                )}
-                <div className="flex gap-1">
-                  {['--color-background', '--color-primary', '--color-secondary', '--color-accent'].map((key) => (
-                    <div
-                      key={key}
-                      className="w-5 h-5 rounded-full border border-white/10"
-                      style={{ backgroundColor: colors[key] }}
-                    />
-                  ))}
-                </div>
-                <span className="text-xs font-medium text-text-primary">
-                  {theme.emoji} {theme.name}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </Card>
-
       {/* Sound toggle */}
       <Card variant="interactive" onClick={toggleSound}>
         <div className="flex items-center gap-3">
@@ -281,6 +234,38 @@ export function ProfilePage() {
         selectedAchievement={selectedAchievement}
         setSelectedAchievement={setSelectedAchievement}
       />
+
+      {/* Theme selector */}
+      <Card>
+        <div className="flex items-center gap-3 mb-3">
+          <Palette size={20} className="text-primary" />
+          <div>
+            <h3 className="text-sm font-bold text-text-primary">Tema</h3>
+            <p className="text-xs text-text-muted">Personalizá los colores</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {themes.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTheme(t.id)}
+              className={cn(
+                'flex items-center gap-2 p-2 rounded-xl border transition-all text-left',
+                currentTheme === t.id
+                  ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                  : 'border-border hover:bg-surface-hover'
+              )}
+            >
+              <span
+                className="w-5 h-5 rounded-full shrink-0 border border-white/20 shadow-sm"
+                style={{ background: t.preview }}
+              />
+              <span className="text-xs font-medium text-text-primary truncate">{t.name}</span>
+              {currentTheme === t.id && <Check size={14} className="text-primary ml-auto shrink-0" />}
+            </button>
+          ))}
+        </div>
+      </Card>
 
       {/* Force update */}
       <Button variant="ghost" className="w-full text-text-muted" onClick={forceUpdate}>
