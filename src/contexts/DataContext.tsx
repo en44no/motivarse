@@ -192,7 +192,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const hasOrphans = streaks.some((s) => !activeIds.includes(s.habitId));
     if (!hasOrphans) return;
     orphanCleanedRef.current = true;
-    deleteOrphanedStreaks(userId, activeIds).catch(console.error);
+    deleteOrphanedStreaks(userId, activeIds).catch(() => {});
   }, [userId, loading, habits, streaks]);
 
   const value = useMemo(() => ({

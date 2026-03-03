@@ -97,7 +97,7 @@ export function ChallengeCard() {
 
     const currentProgress = challenge.progress[userId] || 0;
     if (myCompleted !== currentProgress) {
-      updateChallengeProgress(challenge.id, userId, myCompleted).catch(console.error);
+      updateChallengeProgress(challenge.id, userId, myCompleted).catch(() => {});
     }
   }, [challenge, userId, habitLogs, weekStart]);
 
@@ -114,7 +114,7 @@ export function ChallengeCard() {
 
     const currentProgress = challenge.progress[userId] || 0;
     if (rounded !== currentProgress) {
-      updateChallengeProgress(challenge.id, userId, rounded).catch(console.error);
+      updateChallengeProgress(challenge.id, userId, rounded).catch(() => {});
     }
   }, [challenge, userId, runLogs, weekStart]);
 
@@ -127,7 +127,7 @@ export function ChallengeCard() {
       // Combined distance
       const total = Object.values(challenge.progress).reduce((s, v) => s + v, 0);
       if (total >= challenge.target) {
-        completeChallenge(challenge.id).catch(console.error);
+        completeChallenge(challenge.id).catch(() => {});
         setShowConfetti(true);
         toast.success('Reto completado! 🎉');
         setTimeout(() => setShowConfetti(false), 4000);
@@ -137,7 +137,7 @@ export function ChallengeCard() {
       const myProgress = challenge.progress[userId || ''] || 0;
       const partnerProgress = challenge.progress[partnerId || ''] || 0;
       if (myProgress >= challenge.target || partnerProgress >= challenge.target) {
-        completeChallenge(challenge.id).catch(console.error);
+        completeChallenge(challenge.id).catch(() => {});
         setShowConfetti(true);
         toast.success('Reto completado! 🎉');
         setTimeout(() => setShowConfetti(false), 4000);
@@ -155,7 +155,6 @@ export function ChallengeCard() {
       toast.success('Reto creado!');
       setShowCreate(false);
     } catch (error) {
-      console.error('Error creating challenge:', error);
       toast.error('No se pudo crear el reto');
     } finally {
       setCreating(false);

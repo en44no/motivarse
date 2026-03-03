@@ -28,7 +28,6 @@ export function subscribeToWishlist(
       callback(items);
     },
     (error) => {
-      console.error('Error subscribing to wishlist:', error);
       callback([]);
     },
   );

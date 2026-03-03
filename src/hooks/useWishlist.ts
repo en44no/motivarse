@@ -51,7 +51,6 @@ export function useWishlist() {
           ...(description ? { description } : {}),
         });
       } catch (error) {
-        console.error('Error adding wishlist item:', error);
         toast.error('No se pudo agregar el deseo.');
       }
     },
@@ -69,7 +68,6 @@ export function useWishlist() {
             : { completedBy: undefined, completedAt: undefined }),
         });
       } catch (error) {
-        console.error('Error toggling wishlist item:', error);
         toast.error('No se pudo actualizar el deseo.');
       }
     },
@@ -80,7 +78,6 @@ export function useWishlist() {
     try {
       await deleteWishlistItem(id);
     } catch (error) {
-      console.error('Error removing wishlist item:', error);
       toast.error('No se pudo eliminar el deseo.');
     }
   }, []);

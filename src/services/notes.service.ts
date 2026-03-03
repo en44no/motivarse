@@ -63,7 +63,6 @@ export function subscribeToNotes(
       callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as LoveNote)));
     },
     (error) => {
-      console.error('Error subscribing to love notes:', error);
       callback([]);
     },
   );

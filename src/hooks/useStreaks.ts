@@ -15,7 +15,7 @@ export function useStreaks() {
   useEffect(() => {
     if (!user?.uid || streaks.length === 0 || streaks.length === activeStreaks.length) return;
     const activeIds = Array.from(habitIds);
-    deleteOrphanedStreaks(user.uid, activeIds).catch(console.error);
+    deleteOrphanedStreaks(user.uid, activeIds).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [streaks.length, activeStreaks.length, user?.uid]);
 

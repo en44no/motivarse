@@ -47,7 +47,6 @@ export function useSharedTodos() {
         createdAt: Date.now(),
       });
     } catch (error) {
-      console.error('Error adding todo:', error);
       toast.error('No se pudo agregar el mandado.');
     }
   }
@@ -76,7 +75,6 @@ export function useSharedTodos() {
         notifyTaskCompleted({ coupleId, taskTitle: todo.title }).catch(() => {});
       }
     } catch (error) {
-      console.error('Error toggling todo:', error);
       toast.error('No se pudo actualizar el mandado.');
     }
   }
@@ -85,7 +83,6 @@ export function useSharedTodos() {
     try {
       await deleteTodo(id);
     } catch (error) {
-      console.error('Error removing todo:', error);
       toast.error('No se pudo eliminar el mandado.');
     }
   }

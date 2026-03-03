@@ -70,7 +70,6 @@ export function subscribeToReactions(
       callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Reaction)));
     },
     (error) => {
-      console.error('Error subscribing to reactions:', error);
       callback([]);
     },
   );

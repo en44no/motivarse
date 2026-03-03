@@ -27,7 +27,6 @@ export function subscribeToHabits(coupleId: string, callback: (habits: Habit[]) 
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     callback(habits);
   }, (error) => {
-    console.error('Error subscribing to habits:', error);
     callback([]);
   });
 }
@@ -51,7 +50,6 @@ export function subscribeToHabitLogs(
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as HabitLog)));
   }, (error) => {
-    console.error('Error subscribing to habit logs:', error);
     callback([]);
   });
 }
@@ -121,7 +119,6 @@ export function subscribeToStreaks(userId: string, callback: (streaks: HabitStre
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => d.data() as HabitStreak));
   }, (error) => {
-    console.error('Error subscribing to streaks:', error);
     callback([]);
   });
 }

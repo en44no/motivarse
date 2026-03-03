@@ -166,7 +166,6 @@ export function RunHistory({ logs, title = 'Historial', allowDelete = false, mem
     try {
       await deleteRunLog(logId);
     } catch (error) {
-      console.error('Error deleting run log:', error);
       toast.error('No se pudo eliminar la carrera.');
     }
   }, []);

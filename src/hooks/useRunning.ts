@@ -53,7 +53,7 @@ export function useRunning() {
       totalRuns: runLogs.length,
       totalDistanceKm: totalDistance,
       lastRunDate: latest.date,
-    }).catch(console.error);
+    }).catch(() => {});
   }, [loading, coupleId, progress, cacoLogs, runLogs]);
 
   // Clamp currentWeek to valid range
@@ -150,7 +150,6 @@ export function useRunning() {
 
       toast.success('Carrera registrada!');
     } catch (error) {
-      console.error('Error logging run:', error);
       toast.error('No se pudo registrar la carrera. Intenta de nuevo.');
     }
   }

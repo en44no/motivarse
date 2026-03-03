@@ -16,4 +16,4 @@ export const auth = getAuth(app);
 export const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
 
 // Ensure auth session persists across browser refreshes
-setPersistence(auth, browserLocalPersistence).catch(console.error);
+setPersistence(auth, browserLocalPersistence).catch(() => {});

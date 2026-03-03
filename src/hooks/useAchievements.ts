@@ -220,7 +220,7 @@ export function useAchievements() {
 
       // Unlock in Firestore (fire-and-forget)
       unlockAchievement(coupleId, def.id, userId, def.name, def.description, def.icon, def.type)
-        .catch(console.error);
+        .catch(() => {});
 
       // Show animation for the first new one found
       setNewAchievement(def);

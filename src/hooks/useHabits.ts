@@ -87,7 +87,6 @@ export function useHabits() {
         }
       }
     } catch (error) {
-      console.error('Error toggling habit:', error);
       toast.error('No se pudo actualizar el habito. Intenta de nuevo.');
     }
   }
@@ -123,7 +122,6 @@ export function useHabits() {
       });
       toast.success('Habito creado!');
     } catch (error) {
-      console.error('Error creating habit:', error);
       toast.error('No se pudo crear el habito. Intenta de nuevo.');
     }
   }
@@ -134,7 +132,6 @@ export function useHabits() {
       await deleteHabit(id, userId);
       toast.success('Hábito eliminado');
     } catch (error) {
-      console.error('Error deleting habit:', error);
       toast.error('No se pudo eliminar el hábito.');
     }
   }
@@ -143,7 +140,6 @@ export function useHabits() {
     try {
       await batchUpdateHabitOrder(orderedIds);
     } catch (error) {
-      console.error('Error reordering habits:', error);
       toast.error('No se pudo reordenar los hábitos.');
     }
   }
@@ -153,7 +149,6 @@ export function useHabits() {
       await updateHabit(id, data);
       toast.success('Habito actualizado!');
     } catch (error) {
-      console.error('Error editing habit:', error);
       toast.error('No se pudo actualizar el habito.');
     }
   }

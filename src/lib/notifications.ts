@@ -28,7 +28,6 @@ export async function requestPushPermission(userId: string): Promise<boolean> {
     }
     return false;
   } catch (error) {
-    console.error('Error requesting push permission:', error);
     return false;
   }
 }

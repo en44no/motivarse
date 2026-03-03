@@ -26,7 +26,6 @@ export function subscribeToAchievements(
       callback(achievements);
     },
     (error) => {
-      console.error('Error subscribing to achievements:', error);
       callback([]);
     }
   );

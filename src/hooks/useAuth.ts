@@ -46,7 +46,6 @@ export function useAuth() {
     try {
       await logoutUser();
     } catch (error) {
-      console.error('Error logging out:', error);
       toast.error('No se pudo cerrar sesion. Intenta de nuevo.');
     }
   }

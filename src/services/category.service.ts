@@ -28,7 +28,6 @@ export function subscribeToCategories(
       callback(categories);
     },
     (error) => {
-      console.error('Error subscribing to categories:', error);
       callback([]);
     }
   );

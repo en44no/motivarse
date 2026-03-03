@@ -51,7 +51,6 @@ export function subscribeToActiveChallenge(
       callback(docs[0]);
     },
     (error) => {
-      console.error('Error subscribing to challenges:', error);
       callback(null);
     },
   );

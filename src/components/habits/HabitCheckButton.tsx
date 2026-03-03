@@ -25,6 +25,9 @@ export function HabitCheckButton({ completed, color, onToggle, size = 'md' }: Ha
           : 'border-2 border-border hover:border-text-muted hover:ring-2 hover:ring-primary/20'
       )}
       style={completed ? { backgroundColor: color, boxShadow: `0 0 24px ${color}50` } : {}}
+      aria-label={completed ? "Desmarcar hábito" : "Completar hábito"}
+      role="checkbox"
+      aria-checked={completed}
     >
       {completed && (
         <motion.div

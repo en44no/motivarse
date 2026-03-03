@@ -65,7 +65,6 @@ export function PartnerStatus({ partnerName, completedCount, totalCount }: Partn
         await sendReaction(coupleId, userId, partnerId, type, 'habit', today);
         toast.success(`${type} enviado a ${partnerName}`);
       } catch (error) {
-        console.error('Error sending reaction:', error);
         toast.error('No se pudo enviar la reacción');
       } finally {
         setSending(false);

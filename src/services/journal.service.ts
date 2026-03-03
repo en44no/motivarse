@@ -33,7 +33,6 @@ export function subscribeToJournalEntries(
       callback(entries);
     },
     (error) => {
-      console.error('Error subscribing to journal entries:', error);
       callback([]);
     },
   );

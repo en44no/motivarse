@@ -81,7 +81,6 @@ export async function coachMessage(
     const { content } = result.data as { content: string };
     return content ?? '';
   } catch (err) {
-    console.error('[CoachMessage error]', err);
     return '';
   }
 }
@@ -99,7 +98,6 @@ export async function updateCoachMemory(
     const { memory } = result.data as { memory: string };
     return memory ?? '';
   } catch (err) {
-    console.error('[UpdateCoachMemory error]', err);
     return '';
   }
 }

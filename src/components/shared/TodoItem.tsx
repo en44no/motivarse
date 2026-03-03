@@ -83,6 +83,9 @@ export const TodoItem = memo(function TodoItem({ todo, onToggle, onDelete, curre
               ? 'bg-primary text-white'
               : 'border-2 border-border hover:border-primary/50'
           )}
+          aria-label={todo.completed ? "Desmarcar mandado" : "Completar mandado"}
+          role="checkbox"
+          aria-checked={todo.completed}
         >
           {todo.completed && <Check size={14} strokeWidth={3} />}
         </button>

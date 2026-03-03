@@ -23,7 +23,6 @@ export function subscribeToRunLogs(coupleId: string, callback: (logs: RunLog[]) 
       .sort((a, b) => (b.date > a.date ? 1 : -1));
     callback(logs);
   }, (error) => {
-    console.error('Error subscribing to run logs:', error);
     callback([]);
   });
 }
@@ -38,7 +37,6 @@ export function subscribeToRunProgress(coupleId: string, callback: (progress: Ru
   return onSnapshot(docRef, (snap) => {
     callback(snap.exists() ? (snap.data() as RunProgress) : null);
   }, (error) => {
-    console.error('Error subscribing to run progress:', error);
     callback(null);
   });
 }

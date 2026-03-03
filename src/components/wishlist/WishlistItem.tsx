@@ -72,6 +72,9 @@ export const WishlistItem = memo(function WishlistItem({
               ? 'bg-primary text-white'
               : 'border-2 border-border hover:border-primary/50',
           )}
+          aria-label={item.completed ? "Desmarcar deseo" : "Completar deseo"}
+          role="checkbox"
+          aria-checked={item.completed}
         >
           {item.completed && <Check size={14} strokeWidth={3} />}
         </button>

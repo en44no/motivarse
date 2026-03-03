@@ -25,7 +25,6 @@ export function subscribeToTodos(coupleId: string, callback: (todos: SharedTodo[
       .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
     callback(todos);
   }, (error) => {
-    console.error('Error subscribing to todos:', error);
     callback([]);
   });
 }
@@ -51,7 +50,6 @@ export function subscribeToAchievements(coupleId: string, callback: (achievement
       .sort((a, b) => (b.unlockedAt ?? 0) - (a.unlockedAt ?? 0));
     callback(achievements);
   }, (error) => {
-    console.error('Error subscribing to achievements:', error);
     callback([]);
   });
 }
@@ -74,7 +72,6 @@ export function subscribeToPurchaseHistory(
       callback(records);
     },
     (error) => {
-      console.error('Error subscribing to purchase history:', error);
       callback([]);
     }
   );

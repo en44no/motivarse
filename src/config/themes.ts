@@ -32,7 +32,7 @@ export const THEMES: ThemeDefinition[] = [
       '--color-danger-soft': 'rgba(239, 68, 68, 0.15)',
       '--color-text-primary': '#f1f5f9',
       '--color-text-secondary': '#94a3b8',
-      '--color-text-muted': '#64748b',
+      '--color-text-muted': '#8094ae',
       '--color-surface-elevated': '#1e293b',
       '--color-surface-alt': '#1e2a3b',
       '--shadow-sm': '0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.15)',

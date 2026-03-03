@@ -6,7 +6,6 @@ export function subscribeToUser(uid: string, callback: (user: UserProfile | null
   return onSnapshot(doc(db, 'users', uid), (snap) => {
     callback(snap.exists() ? (snap.data() as UserProfile) : null);
   }, (error) => {
-    console.error('Error subscribing to user:', error);
     callback(null);
   });
 }
@@ -15,7 +14,6 @@ export function subscribeToCouple(coupleId: string, callback: (couple: Couple | 
   return onSnapshot(doc(db, 'couples', coupleId), (snap) => {
     callback(snap.exists() ? (snap.data() as Couple) : null);
   }, (error) => {
-    console.error('Error subscribing to couple:', error);
     callback(null);
   });
 }
