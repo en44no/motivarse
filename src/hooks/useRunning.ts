@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
@@ -10,6 +11,7 @@ export function useRunning() {
   const { user, profile } = useAuthContext();
   const { couple } = useCoupleContext();
   const { runLogs, runProgress: progress, loading } = useDataContext();
+  const migratedRef = useRef(false);
 
   const coupleId = profile?.coupleId || couple?.coupleId || null;
   const userId = user?.uid;
@@ -23,6 +25,36 @@ export function useRunning() {
   // Legacy: all my logs (for backward compat)
   const myLogs = runLogs.filter((l) => l.userId === userId);
   const partnerLogs = runLogs.filter((l) => l.userId !== userId);
+
+  // One-time migration: compute progress from existing cacoLogs if no shared doc exists
+  useEffect(() => {
+    if (migratedRef.current || loading || !coupleId || progress || cacoLogs.length === 0) return;
+    migratedRef.current = true;
+
+    // Find the latest CaCo session to determine current progress
+    const sorted = [...cacoLogs].sort((a, b) => (b.date > a.date ? 1 : -1));
+    const latest = sorted[0];
+    const lastWeek = latest.cacoPlanWeek || 1;
+    const lastSession = latest.cacoPlanSession || 1;
+
+    // Advance one session from the last logged one
+    let nextWeek = lastWeek;
+    let nextSession = lastSession + 1;
+    if (nextSession > SESSIONS_PER_WEEK) {
+      nextSession = 1;
+      nextWeek = Math.min(lastWeek + 1, CACO_PLAN.length + 1);
+    }
+
+    const totalDistance = runLogs.reduce((sum, l) => sum + (l.distanceKm || 0), 0);
+
+    updateRunProgress(coupleId, {
+      currentWeek: nextWeek,
+      currentSession: nextSession,
+      totalRuns: runLogs.length,
+      totalDistanceKm: totalDistance,
+      lastRunDate: latest.date,
+    }).catch(console.error);
+  }, [loading, coupleId, progress, cacoLogs, runLogs]);
 
   // Clamp currentWeek to valid range
   const rawWeek = progress?.currentWeek || 1;
