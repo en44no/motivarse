@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, BarChart3, ChevronRight } from 'lucide-react';
 import { useHabits } from '../hooks/useHabits';
 import { useStreaks } from '../hooks/useStreaks';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -11,6 +11,8 @@ import { PartnerStatus } from '../components/dashboard/PartnerStatus';
 import { StreakHighlight } from '../components/dashboard/StreakHighlight';
 import { RunningProgress } from '../components/dashboard/RunningProgress';
 import { QuickActions } from '../components/dashboard/QuickActions';
+import { ChallengeCard } from '../components/dashboard/ChallengeCard';
+import { ReceivedReactions } from '../components/dashboard/ReceivedReactions';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { ROUTES } from '../config/routes';
 
@@ -44,6 +46,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-4 py-4">
+      <ReceivedReactions />
       <TodaySummary
         progress={todayProgress}
         completedCount={completedCount}
@@ -58,6 +61,8 @@ export function DashboardPage() {
           totalCount={todayHabits.length}
         />
       )}
+
+      <ChallengeCard />
 
       <StreakHighlight bestStreak={bestStreak} habits={myHabits} />
 
@@ -77,6 +82,19 @@ export function DashboardPage() {
           </div>
         </Link>
       )}
+
+      <Link to={ROUTES.INSIGHTS} className="block">
+        <div className="bg-surface rounded-2xl border border-border p-4 flex items-center gap-3 shadow-sm hover:bg-surface-hover transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <BarChart3 size={20} className="text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-text-primary">Resumen mensual</p>
+            <p className="text-xs text-text-muted">Estadísticas e insights del mes</p>
+          </div>
+          <ChevronRight size={18} className="text-text-muted shrink-0" />
+        </div>
+      </Link>
 
       <RunningProgress progress={progress} />
 

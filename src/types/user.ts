@@ -10,6 +10,7 @@ export interface UserProfile {
   settings: {
     notifications: boolean;
     soundEnabled?: boolean;
+    theme?: string;
   };
 }
 

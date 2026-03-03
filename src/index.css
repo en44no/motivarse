@@ -41,6 +41,10 @@
   --shadow-glow-accent: 0 0 20px rgba(139, 92, 246, 0.15);
 }
 
+:root {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 html, body, #root {
   height: 100%;
   margin: 0;

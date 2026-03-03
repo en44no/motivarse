@@ -1,20 +1,25 @@
-import { useState } from 'react';
-import { LogOut, Link, Download, User, Flame, Footprints, Trophy, Smartphone, Volume2, VolumeX, ChevronDown, Bell, BellOff, RefreshCw } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { LogOut, Link, Download, User, Flame, Footprints, Trophy, Smartphone, Volume2, VolumeX, ChevronDown, Bell, BellOff, RefreshCw, Palette, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useStreaks } from '../hooks/useStreaks';
 import { useRunning } from '../hooks/useRunning';
+import { useAchievements, getProgress } from '../hooks/useAchievements';
 import { useCoupleContext } from '../contexts/CoupleContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { usePWA } from '../hooks/usePWA';
 import { updateUserSettings } from '../services/user.service';
 import { requestPushPermission, disablePushNotifications } from '../lib/notifications';
 import { toast } from 'sonner';
+import { cn } from '../lib/utils';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { ACHIEVEMENT_DEFINITIONS } from '../config/constants';
+import { ACHIEVEMENT_DEFINITIONS, ACHIEVEMENT_CATEGORY_LABELS } from '../config/constants';
+import type { AchievementDef, AchievementCategory } from '../types/shared';
 
 export function ProfilePage() {
   const { profile, logout, linkPartner, error, isSubmitting } = useAuth();
@@ -24,8 +29,11 @@ export function ProfilePage() {
   const { couple, partnerName } = useCoupleContext();
   const { canInstall, install, isInstalled } = usePWA();
   const [partnerEmail, setPartnerEmail] = useState('');
+  const { unlockedAchievements, evalCtx } = useAchievements();
+  const { currentTheme, setTheme, themes } = useTheme();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [selectedAchievement, setSelectedAchievement] = useState<AchievementDef | null>(null);
   const soundEnabled = profile?.settings?.soundEnabled ?? true;
   const notificationsEnabled = profile?.notificationsEnabled ?? false;
 
@@ -177,6 +185,53 @@ export function ProfilePage() {
         </Card>
       )}
 
+      {/* Theme selector */}
+      <Card>
+        <div className="flex items-center gap-3 mb-4">
+          <Palette size={20} className="text-primary" />
+          <div>
+            <h3 className="text-sm font-bold text-text-primary">Tema</h3>
+            <p className="text-xs text-text-muted">Personalizá los colores de la app</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {themes.map((theme) => {
+            const isActive = currentTheme.id === theme.id;
+            const colors = theme.colors;
+            return (
+              <button
+                key={theme.id}
+                onClick={() => setTheme(theme.id)}
+                className={cn(
+                  'relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200',
+                  isActive
+                    ? 'border-primary bg-primary/10 scale-[1.02]'
+                    : 'border-border hover:border-primary/30 bg-surface-hover/50',
+                )}
+              >
+                {isActive && (
+                  <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                    <Check size={12} className="text-white" />
+                  </div>
+                )}
+                <div className="flex gap-1">
+                  {['--color-background', '--color-primary', '--color-secondary', '--color-accent'].map((key) => (
+                    <div
+                      key={key}
+                      className="w-5 h-5 rounded-full border border-white/10"
+                      style={{ backgroundColor: colors[key] }}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs font-medium text-text-primary">
+                  {theme.emoji} {theme.name}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
       {/* Sound toggle */}
       <Card variant="interactive" onClick={toggleSound}>
         <div className="flex items-center gap-3">
@@ -218,44 +273,14 @@ export function ProfilePage() {
       </Card>
 
       {/* Achievements — collapsible */}
-      <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
-        <button
-          onClick={() => setShowAchievements(!showAchievements)}
-          className="w-full flex items-center justify-between p-4 hover:bg-surface-hover transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <Trophy size={20} className="text-accent" />
-            <div className="text-left">
-              <p className="text-sm font-bold text-text-primary">Logros</p>
-              <p className="text-xs text-text-muted">{ACHIEVEMENT_DEFINITIONS.length} logros por desbloquear</p>
-            </div>
-          </div>
-          <ChevronDown
-            size={18}
-            className={`text-text-muted transition-transform duration-200 ${showAchievements ? 'rotate-180' : ''}`}
-          />
-        </button>
-
-        {showAchievements && (
-          <div className="border-t border-border divide-y divide-border/50">
-            {ACHIEVEMENT_DEFINITIONS.map((achievement) => (
-              <div key={achievement.id} className="flex items-center gap-3 px-4 py-3 opacity-50">
-                <span className="text-xl">{achievement.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-semibold text-text-primary">{achievement.name}</p>
-                    <Badge variant={achievement.type === 'couple' ? 'accent' : 'default'}>
-                      {achievement.type === 'couple' ? 'Pareja' : 'Individual'}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-text-muted mt-0.5">{achievement.description}</p>
-                </div>
-                <span className="text-base text-text-muted shrink-0">🔒</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <AchievementsSection
+        showAchievements={showAchievements}
+        setShowAchievements={setShowAchievements}
+        unlockedAchievements={unlockedAchievements}
+        evalCtx={evalCtx}
+        selectedAchievement={selectedAchievement}
+        setSelectedAchievement={setSelectedAchievement}
+      />
 
       {/* Force update */}
       <Button variant="ghost" className="w-full text-text-muted" onClick={forceUpdate}>
@@ -278,6 +303,189 @@ export function ProfilePage() {
         confirmLabel="Salir"
         variant="danger"
       />
+
+      {/* Achievement detail modal */}
+      <AnimatePresence>
+        {selectedAchievement && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedAchievement(null)}
+          >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <motion.div
+              className="relative bg-surface rounded-2xl border border-border shadow-xl p-6 max-w-[300px] w-full text-center"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {(() => {
+                const isUnlocked = unlockedAchievements.some(
+                  (a) => a.achievementId === selectedAchievement.id
+                );
+                const progress = getProgress(selectedAchievement.condition, evalCtx);
+                return (
+                  <>
+                    <span className={cn('text-5xl block mb-3', !isUnlocked && 'grayscale opacity-50')}>
+                      {isUnlocked ? selectedAchievement.icon : '?'}
+                    </span>
+                    <p className="text-lg font-bold text-text-primary mb-1">
+                      {selectedAchievement.name}
+                    </p>
+                    <Badge variant={selectedAchievement.type === 'couple' ? 'accent' : 'default'} className="mb-2">
+                      {selectedAchievement.type === 'couple' ? 'Pareja' : 'Individual'}
+                    </Badge>
+                    <p className="text-sm text-text-muted mb-3">
+                      {selectedAchievement.description}
+                    </p>
+                    {isUnlocked ? (
+                      <p className="text-xs text-primary font-semibold">Desbloqueado</p>
+                    ) : progress !== null ? (
+                      <div>
+                        <div className="w-full h-2 bg-surface-light rounded-full overflow-hidden mb-1">
+                          <div
+                            className="h-full bg-primary rounded-full transition-all duration-500"
+                            style={{ width: `${Math.round(progress * 100)}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-text-muted">
+                          {Math.round(progress * 100)}% completado
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-text-muted">Bloqueado</p>
+                    )}
+                  </>
+                );
+              })()}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// --- Achievements Section Component ---
+
+interface AchievementsSectionProps {
+  showAchievements: boolean;
+  setShowAchievements: (v: boolean) => void;
+  unlockedAchievements: import('../types/shared').Achievement[];
+  evalCtx: ReturnType<typeof import('../hooks/useAchievements').useAchievements>['evalCtx'];
+  selectedAchievement: AchievementDef | null;
+  setSelectedAchievement: (v: AchievementDef | null) => void;
+}
+
+function AchievementsSection({
+  showAchievements,
+  setShowAchievements,
+  unlockedAchievements,
+  evalCtx,
+  setSelectedAchievement,
+}: AchievementsSectionProps) {
+  const unlockedIds = useMemo(
+    () => new Set(unlockedAchievements.map((a) => a.achievementId)),
+    [unlockedAchievements]
+  );
+  const unlockedCount = unlockedIds.size;
+  const totalCount = ACHIEVEMENT_DEFINITIONS.length;
+
+  // Group by category
+  const grouped = useMemo(() => {
+    const map = new Map<AchievementCategory, AchievementDef[]>();
+    for (const def of ACHIEVEMENT_DEFINITIONS) {
+      const list = map.get(def.category) || [];
+      list.push(def);
+      map.set(def.category, list);
+    }
+    return map;
+  }, []);
+
+  return (
+    <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
+      <button
+        onClick={() => setShowAchievements(!showAchievements)}
+        className="w-full flex items-center justify-between p-4 hover:bg-surface-hover transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <Trophy size={20} className="text-accent" />
+          <div className="text-left">
+            <p className="text-sm font-bold text-text-primary">Logros</p>
+            <p className="text-xs text-text-muted">
+              {unlockedCount}/{totalCount} desbloqueados
+            </p>
+          </div>
+        </div>
+        <ChevronDown
+          size={18}
+          className={cn(
+            'text-text-muted transition-transform duration-200',
+            showAchievements && 'rotate-180'
+          )}
+        />
+      </button>
+
+      {showAchievements && (
+        <div className="border-t border-border px-4 py-3 space-y-4">
+          {/* Progress bar */}
+          <div>
+            <div className="w-full h-2 bg-surface-light rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${totalCount > 0 ? (unlockedCount / totalCount) * 100 : 0}%` }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
+              />
+            </div>
+          </div>
+
+          {/* Grid by category */}
+          {Array.from(grouped.entries()).map(([category, defs]) => (
+            <div key={category}>
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
+                {ACHIEVEMENT_CATEGORY_LABELS[category] || category}
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {defs.map((def) => {
+                  const isUnlocked = unlockedIds.has(def.id);
+                  const progress = getProgress(def.condition, evalCtx);
+                  return (
+                    <button
+                      key={def.id}
+                      onClick={() => setSelectedAchievement(def)}
+                      className={cn(
+                        'flex flex-col items-center gap-1 p-2 rounded-xl transition-all',
+                        isUnlocked
+                          ? 'bg-primary/5 hover:bg-primary/10'
+                          : 'bg-surface-light/50 hover:bg-surface-light opacity-60'
+                      )}
+                    >
+                      <span className={cn('text-2xl', !isUnlocked && 'grayscale')}>
+                        {isUnlocked ? def.icon : '?'}
+                      </span>
+                      <span className="text-[10px] font-medium text-text-primary leading-tight text-center line-clamp-2">
+                        {isUnlocked ? def.name : '???'}
+                      </span>
+                      {!isUnlocked && progress !== null && progress > 0 && (
+                        <div className="w-full h-1 bg-surface-light rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary/50 rounded-full"
+                            style={{ width: `${Math.round(progress * 100)}%` }}
+                          />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

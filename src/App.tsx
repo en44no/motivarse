@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { CoupleProvider } from './contexts/CoupleContext';
 import { DataProvider } from './contexts/DataContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthGuard } from './components/layout/AuthGuard';
 import { AppLayout } from './components/layout/AppLayout';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
@@ -17,6 +18,7 @@ const RunningPage = lazy(() => import('./pages/RunningPage').then((m) => ({ defa
 const SharedPage = lazy(() => import('./pages/SharedPage').then((m) => ({ default: m.SharedPage })));
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })));
 const JournalPage = lazy(() => import('./pages/JournalPage').then((m) => ({ default: m.JournalPage })));
+const MonthlyInsightsPage = lazy(() => import('./pages/MonthlyInsightsPage').then((m) => ({ default: m.MonthlyInsightsPage })));
 
 function PageSkeleton() {
   return (
@@ -32,6 +34,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ThemeProvider>
         <CoupleProvider>
         <DataProvider>
           <ErrorBoundary>
@@ -50,6 +53,7 @@ export default function App() {
               <Route path={ROUTES.SHARED} element={<Suspense fallback={<PageSkeleton />}><SharedPage /></Suspense>} />
               <Route path={ROUTES.PROFILE} element={<Suspense fallback={<PageSkeleton />}><ProfilePage /></Suspense>} />
               <Route path={ROUTES.JOURNAL} element={<Suspense fallback={<PageSkeleton />}><JournalPage /></Suspense>} />
+              <Route path={ROUTES.INSIGHTS} element={<Suspense fallback={<PageSkeleton />}><MonthlyInsightsPage /></Suspense>} />
             </Route>
             <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
           </Routes>
@@ -67,6 +71,7 @@ export default function App() {
           />
         </DataProvider>
         </CoupleProvider>
+        </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>
   );

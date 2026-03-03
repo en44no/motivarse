@@ -5,6 +5,8 @@ import { Header } from './Header';
 import { BottomNav } from './BottomNav';
 import { InstallBanner } from './InstallBanner';
 import { CoachChat } from '../ai/CoachChat';
+import { AchievementUnlock } from '../achievements/AchievementUnlock';
+import { useAchievements } from '../../hooks/useAchievements';
 import { warmUpAudio } from '../../lib/sound-utils';
 
 /**
@@ -20,6 +22,7 @@ function FrozenOutlet() {
 
 export function AppLayout() {
   const location = useLocation();
+  const { newAchievement, dismissNewAchievement } = useAchievements();
   const scrollPositions = useRef<Map<string, number>>(new Map());
   const mainRef = useRef<HTMLElement>(null);
 
@@ -66,6 +69,7 @@ export function AppLayout() {
       </main>
       <BottomNav />
       <CoachChat />
+      <AchievementUnlock achievement={newAchievement} onDismiss={dismissNewAchievement} />
     </div>
   );
 }

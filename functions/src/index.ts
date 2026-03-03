@@ -1,5 +1,6 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { defineSecret } from 'firebase-functions/params';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -277,6 +278,40 @@ export const notifyHabitCompleted = onCall(async (request) => {
   });
 
   return { sent: true };
+});
+
+// ── Notify reaction ─────────────────────────────────────────────────────────
+
+export const notifyReaction = onDocumentCreated('reactions/{reactionId}', async (event) => {
+  const data = event.data?.data();
+  if (!data) return;
+
+  const { fromUserId, toUserId, type } = data as {
+    fromUserId: string;
+    toUserId: string;
+    type: string;
+  };
+
+  const db = getFirestore();
+
+  // Get sender name
+  const senderDoc = await db.collection('users').doc(fromUserId).get();
+  const senderName = senderDoc.data()?.displayName || 'Tu pareja';
+
+  // Get receiver's FCM token
+  const receiverDoc = await db.collection('users').doc(toUserId).get();
+  if (!receiverDoc.exists) return;
+
+  const receiverData = receiverDoc.data()!;
+  if (!receiverData.notificationsEnabled || !receiverData.fcmToken) return;
+
+  await getMessaging().send({
+    token: receiverData.fcmToken,
+    notification: {
+      title: 'Motivarse 💪',
+      body: `${senderName} te envió ${type}`,
+    },
+  });
 });
 
 // ── AI Proxy ──────────────────────────────────────────────────────────────────

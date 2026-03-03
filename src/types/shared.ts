@@ -38,11 +38,14 @@ export interface Achievement {
   unlockedAt: number;
 }
 
+export type AchievementCategory = 'habits' | 'running' | 'journal' | 'couple' | 'general';
+
 export interface AchievementDef {
   id: string;
   name: string;
   description: string;
   icon: string;
   type: AchievementType;
+  category: AchievementCategory;
   condition: string;
 }
