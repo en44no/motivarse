@@ -1,7 +1,7 @@
-import { useState, useRef, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Clock, MapPin, Gauge, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import { formatDisplayDate } from '../../lib/date-utils';
 import { MOOD_OPTIONS } from '../../config/constants';
@@ -141,7 +141,6 @@ function SwipeableCard({
 }
 
 export function RunHistory({ logs, title = 'Historial', allowDelete = false, memberNames, showFilters = false }: RunHistoryProps) {
-  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
 
   const filteredLogs = useMemo(() => {
@@ -163,27 +162,13 @@ export function RunHistory({ logs, title = 'Historial', allowDelete = false, mem
     });
   }, [logs]);
 
-  const handleDelete = useCallback((logId: string) => {
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-
-    let cancelled = false;
-    toast('Carrera eliminada', {
-      action: {
-        label: 'Deshacer',
-        onClick: () => { cancelled = true; },
-      },
-      duration: 3000,
-    });
-
-    undoTimerRef.current = setTimeout(async () => {
-      if (cancelled) return;
-      try {
-        await deleteRunLog(logId);
-      } catch (error) {
-        console.error('Error deleting run log:', error);
-        toast.error('No se pudo eliminar la carrera.');
-      }
-    }, 3200);
+  const handleDelete = useCallback(async (logId: string) => {
+    try {
+      await deleteRunLog(logId);
+    } catch (error) {
+      console.error('Error deleting run log:', error);
+      toast.error('No se pudo eliminar la carrera.');
+    }
   }, []);
 
   if (logs.length === 0) return null;

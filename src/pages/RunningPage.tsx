@@ -74,6 +74,7 @@ export function RunningPage() {
               <CacoWeekDetail
                 currentWeek={currentWeek}
                 currentSession={currentSession}
+                weekSessionsFromLogs={cacoLogs.filter((l) => l.cacoPlanWeek === currentWeek).length}
                 onTimerComplete={handleTimerComplete}
               />
 

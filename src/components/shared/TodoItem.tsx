@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { Check, Trash2, Calendar } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatRelativeTime, getToday } from '../../lib/date-utils';
@@ -26,7 +26,6 @@ export const TodoItem = memo(function TodoItem({ todo, onToggle, onDelete, curre
   const completedByName = todo.completedBy ? memberNames[todo.completedBy] || 'Alguien' : '';
   const categoryDef = todo.category ? categories.find((c) => c.id === todo.category) : null;
 
-  // Due date color logic
   const today = getToday();
   let dueDateColor = 'text-text-muted';
   if (todo.dueDate && !todo.completed) {
@@ -34,8 +33,11 @@ export const TodoItem = memo(function TodoItem({ todo, onToggle, onDelete, curre
     else if (todo.dueDate === today) dueDateColor = 'text-secondary';
   }
 
-  // Silence unused variable warning
   void currentUserId;
+
+  const x = useMotionValue(0);
+  const deleteOpacity = useTransform(x, [-100, -60], [1, 0]);
+  const deleteScale = useTransform(x, [-100, -60], [1, 0.8]);
 
   return (
     <motion.div
@@ -43,57 +45,75 @@ export const TodoItem = memo(function TodoItem({ todo, onToggle, onDelete, curre
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 10 }}
-      className={cn(
-        'flex items-center gap-3 bg-surface rounded-xl border border-border p-3 border-l-[3px] shadow-sm',
-        priorityColors[todo.priority],
-        todo.completed && 'opacity-60'
-      )}
+      className="relative overflow-hidden rounded-xl"
     >
-      <button
-        onClick={() => onToggle(!todo.completed)}
+      {/* Delete background */}
+      <motion.div
+        className="absolute inset-0 bg-danger flex items-center justify-end pr-5 rounded-xl"
+        style={{ opacity: deleteOpacity }}
+      >
+        <motion.div style={{ scale: deleteScale }} className="flex items-center gap-1.5 text-white">
+          <Trash2 size={16} />
+          <span className="text-xs font-semibold">Eliminar</span>
+        </motion.div>
+      </motion.div>
+
+      {/* Card content */}
+      <motion.div
         className={cn(
-          'w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all',
-          todo.completed
-            ? 'bg-primary text-white'
-            : 'border-2 border-border hover:border-primary/50'
+          'flex items-center gap-3 bg-surface rounded-xl border border-border p-3 border-l-[3px] shadow-sm relative',
+          priorityColors[todo.priority],
+          todo.completed && 'opacity-60'
         )}
+        style={{ x }}
+        drag="x"
+        dragConstraints={{ left: -120, right: 0 }}
+        dragElastic={0.1}
+        onDragEnd={(_, info) => {
+          if (info.offset.x < -80) {
+            onDelete();
+          }
+        }}
       >
-        {todo.completed && <Check size={14} strokeWidth={3} />}
-      </button>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {categoryDef && (
-            <span className="text-sm">{categoryDef.emoji}</span>
+        <button
+          onClick={() => onToggle(!todo.completed)}
+          className={cn(
+            'w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all',
+            todo.completed
+              ? 'bg-primary text-white'
+              : 'border-2 border-border hover:border-primary/50'
           )}
-          <p className={cn(
-            'text-sm font-medium',
-            todo.completed ? 'text-text-muted line-through' : 'text-text-primary'
-          )}>
-            {todo.title}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          <p className="text-[10px] text-text-muted">
-            {todo.completed
-              ? `Completado por ${completedByName}${todo.completedAt ? ` · ${formatRelativeTime(todo.completedAt)}` : ''}`
-              : `Agregado por ${createdByName}`}
-          </p>
-          {todo.dueDate && (
-            <span className={cn('text-[10px] flex items-center gap-0.5', dueDateColor)}>
-              <Calendar size={9} />
-              {todo.dueDate}
-            </span>
-          )}
-        </div>
-      </div>
+        >
+          {todo.completed && <Check size={14} strokeWidth={3} />}
+        </button>
 
-      <button
-        onClick={onDelete}
-        className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-danger-soft transition-colors"
-      >
-        <Trash2 size={14} />
-      </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {categoryDef && (
+              <span className="text-sm">{categoryDef.emoji}</span>
+            )}
+            <p className={cn(
+              'text-sm font-medium',
+              todo.completed ? 'text-text-muted line-through' : 'text-text-primary'
+            )}>
+              {todo.title}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <p className="text-[10px] text-text-muted">
+              {todo.completed
+                ? `Completado por ${completedByName}${todo.completedAt ? ` · ${formatRelativeTime(todo.completedAt)}` : ''}`
+                : `Agregado por ${createdByName}`}
+            </p>
+            {todo.dueDate && (
+              <span className={cn('text-[10px] flex items-center gap-0.5', dueDateColor)}>
+                <Calendar size={9} />
+                {todo.dueDate}
+              </span>
+            )}
+          </div>
+        </div>
+      </motion.div>
     </motion.div>
   );
 });

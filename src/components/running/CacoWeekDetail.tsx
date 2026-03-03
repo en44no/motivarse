@@ -10,10 +10,11 @@ import { CacoTimer } from './CacoTimer';
 interface CacoWeekDetailProps {
   currentWeek: number;
   currentSession: number;
+  weekSessionsFromLogs?: number;
   onTimerComplete?: () => void;
 }
 
-export function CacoWeekDetail({ currentWeek, currentSession, onTimerComplete }: CacoWeekDetailProps) {
+export function CacoWeekDetail({ currentWeek, currentSession, weekSessionsFromLogs, onTimerComplete }: CacoWeekDetailProps) {
   const [showTimer, setShowTimer] = useState(false);
   const plan = CACO_PLAN[currentWeek - 1];
   if (!plan) return null;
@@ -66,30 +67,35 @@ export function CacoWeekDetail({ currentWeek, currentSession, onTimerComplete }:
         </Button>
 
         {/* Session progress */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium text-text-muted">Sesiones esta semana</span>
-            <span className="text-[11px] font-bold text-primary">{currentSession - 1} / {SESSIONS_PER_WEEK} completadas</span>
-          </div>
-          <div className="flex gap-2">
-            {Array.from({ length: SESSIONS_PER_WEEK }).map((_, i) => (
-              <div key={i} className="flex-1 space-y-1">
-                <div
-                  className={`h-2 rounded-full ${
-                    i < currentSession - 1
-                      ? 'bg-primary'
-                      : i === currentSession - 1
-                      ? 'bg-primary/40 animate-pulse'
-                      : 'bg-surface-light'
-                  }`}
-                />
-                <p className={`text-center text-[9px] font-medium ${i < currentSession - 1 ? 'text-primary' : 'text-text-muted'}`}>
-                  {i < currentSession - 1 ? '✓' : `Ses. ${i + 1}`}
-                </p>
+        {(() => {
+          const completed = weekSessionsFromLogs ?? (currentSession - 1);
+          return (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium text-text-muted">Sesiones esta semana</span>
+                <span className="text-[11px] font-bold text-primary">{completed} / {SESSIONS_PER_WEEK} completadas</span>
               </div>
-            ))}
-          </div>
-        </div>
+              <div className="flex gap-2">
+                {Array.from({ length: SESSIONS_PER_WEEK }).map((_, i) => (
+                  <div key={i} className="flex-1 space-y-1">
+                    <div
+                      className={`h-2 rounded-full ${
+                        i < completed
+                          ? 'bg-primary'
+                          : i === completed
+                          ? 'bg-primary/40 animate-pulse'
+                          : 'bg-surface-light'
+                      }`}
+                    />
+                    <p className={`text-center text-[9px] font-medium ${i < completed ? 'text-primary' : 'text-text-muted'}`}>
+                      {i < completed ? '✓' : `Ses. ${i + 1}`}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         <p className="text-xs text-text-muted mt-3 leading-relaxed">
           {plan.walkMinutes > 0
