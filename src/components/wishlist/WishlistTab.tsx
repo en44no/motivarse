@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Plus, Heart, Eye, EyeOff } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuthContext } from '../../contexts/AuthContext';
@@ -22,6 +22,7 @@ export function WishlistTab() {
   const [showDescription, setShowDescription] = useState(false);
   const [activeFilter, setActiveFilter] = useState<WishlistCategory | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   const memberNames = couple?.memberNames || {};
 
@@ -46,13 +47,18 @@ export function WishlistTab() {
     pending.some((i) => i.category === cat.value),
   );
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
-    add(title.trim(), category, description.trim() || undefined);
-    setTitle('');
-    setDescription('');
-    setShowDescription(false);
+    setAdding(true);
+    try {
+      await add(title.trim(), category, description.trim() || undefined);
+      setTitle('');
+      setDescription('');
+      setShowDescription(false);
+    } finally {
+      setAdding(false);
+    }
   }
 
   return (
@@ -75,10 +81,17 @@ export function WishlistTab() {
           />
           <button
             type="submit"
-            disabled={!title.trim()}
+            disabled={!title.trim() || adding}
             className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-hover transition-colors disabled:opacity-40 shrink-0"
           >
-            <Plus size={20} />
+            {adding ? (
+              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            ) : (
+              <Plus size={20} />
+            )}
           </button>
         </div>
 
@@ -165,14 +178,21 @@ export function WishlistTab() {
           </h3>
           <div className="space-y-2">
             <AnimatePresence>
-              {filteredPending.map((item) => (
-                <WishlistItem
+              {filteredPending.map((item, i) => (
+                <motion.div
                   key={item.id}
-                  item={item}
-                  onToggle={(completed) => toggle(item.id, completed)}
-                  onDelete={() => remove(item.id)}
-                  memberNames={memberNames}
-                />
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ delay: i * 0.03, duration: 0.3 }}
+                >
+                  <WishlistItem
+                    item={item}
+                    onToggle={(completed) => toggle(item.id, completed)}
+                    onDelete={() => remove(item.id)}
+                    memberNames={memberNames}
+                  />
+                </motion.div>
               ))}
             </AnimatePresence>
           </div>
@@ -192,14 +212,21 @@ export function WishlistTab() {
           {showCompleted && (
             <div className="space-y-2">
               <AnimatePresence>
-                {filteredCompleted.map((item) => (
-                  <WishlistItem
+                {filteredCompleted.map((item, i) => (
+                  <motion.div
                     key={item.id}
-                    item={item}
-                    onToggle={(completed) => toggle(item.id, completed)}
-                    onDelete={() => remove(item.id)}
-                    memberNames={memberNames}
-                  />
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    transition={{ delay: i * 0.03, duration: 0.3 }}
+                  >
+                    <WishlistItem
+                      item={item}
+                      onToggle={(completed) => toggle(item.id, completed)}
+                      onDelete={() => remove(item.id)}
+                      memberNames={memberNames}
+                    />
+                  </motion.div>
                 ))}
               </AnimatePresence>
             </div>
@@ -210,9 +237,10 @@ export function WishlistTab() {
       {/* Empty state */}
       {pending.length === 0 && completed.length === 0 && (
         <EmptyState
-          icon={<Heart size={40} />}
+          icon={<Heart size={48} />}
           title="Sin deseos"
           description="Agrega cosas que quieran hacer juntos: viajes, pelis, restaurantes..."
+          containerClassName="py-10"
         />
       )}
     </div>

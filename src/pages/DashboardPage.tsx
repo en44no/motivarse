@@ -14,6 +14,7 @@ import { QuickActions } from '../components/dashboard/QuickActions';
 import { ChallengeCard } from '../components/dashboard/ChallengeCard';
 import { ReceivedReactions } from '../components/dashboard/ReceivedReactions';
 import { FloatingLoveNotes } from '../components/dashboard/LoveNotesCard';
+import { Card } from '../components/ui/Card';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { ROUTES } from '../config/routes';
 
@@ -46,7 +47,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-4 py-4">
+    <div className="space-y-5 py-4">
       <ReceivedReactions />
       {partnerName && <FloatingLoveNotes />}
       <TodaySummary
@@ -68,7 +69,7 @@ export function DashboardPage() {
 
       {pendingTodos.length > 0 && (
         <Link to={ROUTES.SHARED} className="block">
-          <div className="bg-surface rounded-2xl border border-border p-4 flex items-center gap-3 shadow-sm hover:bg-surface-hover transition-colors">
+          <Card variant="interactive" className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-secondary-soft flex items-center justify-center shrink-0">
               <ShoppingCart size={20} className="text-secondary" />
             </div>
@@ -79,12 +80,12 @@ export function DashboardPage() {
               </p>
             </div>
             <span className="shrink-0 text-lg font-bold text-secondary">{pendingTodos.length}</span>
-          </div>
+          </Card>
         </Link>
       )}
 
       <Link to={ROUTES.INSIGHTS} className="block">
-        <div className="bg-surface rounded-2xl border border-border p-4 flex items-center gap-3 shadow-sm hover:bg-surface-hover transition-colors">
+        <Card variant="interactive" className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
             <BarChart3 size={20} className="text-primary" />
           </div>
@@ -93,7 +94,7 @@ export function DashboardPage() {
             <p className="text-xs text-text-muted">Estadísticas e insights del mes</p>
           </div>
           <ChevronRight size={18} className="text-text-muted shrink-0" />
-        </div>
+        </Card>
       </Link>
 
       <RunningProgress progress={progress} />

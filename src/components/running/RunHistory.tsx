@@ -202,14 +202,20 @@ export function RunHistory({ logs, title = 'Historial', allowDelete = false, mem
         <p className="text-xs text-text-muted text-center py-4">Sin carreras en esta categoría</p>
       ) : (
         <div className="space-y-1.5">
-          {filteredLogs.slice(0, 15).map((log) => (
-            <SwipeableCard
+          {filteredLogs.slice(0, 15).map((log, index) => (
+            <motion.div
               key={log.id}
-              log={log}
-              memberNames={memberNames}
-              allowDelete={allowDelete}
-              onDelete={handleDelete}
-            />
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.04, duration: 0.3 }}
+            >
+              <SwipeableCard
+                log={log}
+                memberNames={memberNames}
+                allowDelete={allowDelete}
+                onDelete={handleDelete}
+              />
+            </motion.div>
           ))}
         </div>
       )}

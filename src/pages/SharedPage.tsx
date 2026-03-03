@@ -1,17 +1,23 @@
 import { useState } from 'react';
-import { Trophy, ChevronDown, ShoppingCart, Heart, Eye, EyeOff } from 'lucide-react';
+import { ShoppingBag, ChevronDown, ShoppingCart, Heart, Eye, EyeOff } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useSharedTodos } from '../hooks/useSharedTodos';
 import { useCategories } from '../hooks/useCategories';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
+import { Tabs } from '../components/ui/Tabs';
 import { TodoList } from '../components/shared/TodoList';
 import { TodoForm } from '../components/shared/TodoForm';
 import { WishlistTab } from '../components/wishlist/WishlistTab';
 import { cn } from '../lib/utils';
 
 type Tab = 'lista' | 'deseos';
+
+const TABS = [
+  { id: 'lista', label: 'Lista' },
+  { id: 'deseos', label: 'Deseos' },
+];
 
 export function SharedPage() {
   const { user } = useAuthContext();
@@ -53,33 +59,7 @@ export function SharedPage() {
 
   return (
     <div className="space-y-4 py-4">
-      {/* Tab switcher */}
-      <div className="flex gap-1 bg-surface-hover rounded-xl p-1">
-        <button
-          onClick={() => setTab('lista')}
-          className={cn(
-            'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all',
-            tab === 'lista'
-              ? 'bg-surface text-text-primary shadow-sm'
-              : 'text-text-muted hover:text-text-secondary'
-          )}
-        >
-          <ShoppingCart size={14} />
-          Lista
-        </button>
-        <button
-          onClick={() => setTab('deseos')}
-          className={cn(
-            'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all',
-            tab === 'deseos'
-              ? 'bg-surface text-text-primary shadow-sm'
-              : 'text-text-muted hover:text-text-secondary'
-          )}
-        >
-          <Heart size={14} />
-          Deseos
-        </button>
-      </div>
+      <Tabs tabs={TABS} activeTab={tab} onChange={(id) => setTab(id as Tab)} />
 
       {tab === 'lista' && (
         <>
@@ -188,7 +168,7 @@ export function SharedPage() {
 
           {total === 0 && (
             <EmptyState
-              icon={<Trophy size={40} />}
+              icon={<ShoppingBag size={40} />}
               title="Sin mandados"
               description="Agregá mandados compartidos con tu pareja"
             />

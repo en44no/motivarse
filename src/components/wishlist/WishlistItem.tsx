@@ -42,10 +42,7 @@ export const WishlistItem = memo(function WishlistItem({
         className="absolute inset-0 bg-danger flex items-center justify-end pr-5 rounded-xl"
         style={{ opacity: deleteOpacity }}
       >
-        <motion.div
-          style={{ scale: deleteScale }}
-          className="flex items-center gap-1.5 text-white"
-        >
+        <motion.div style={{ scale: deleteScale }} className="flex items-center gap-1.5 text-white">
           <Trash2 size={16} />
           <span className="text-xs font-semibold">Eliminar</span>
         </motion.div>
