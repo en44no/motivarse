@@ -245,25 +245,28 @@ export function ProfilePage() {
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2">
-          {themes.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTheme(t.id)}
-              className={cn(
-                'flex items-center gap-2 p-2 rounded-xl border transition-all text-left',
-                currentTheme === t.id
-                  ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
-                  : 'border-border hover:bg-surface-hover'
-              )}
-            >
-              <span
-                className="w-5 h-5 rounded-full shrink-0 border border-white/20 shadow-sm"
-                style={{ background: t.preview }}
-              />
-              <span className="text-xs font-medium text-text-primary truncate">{t.name}</span>
-              {currentTheme === t.id && <Check size={14} className="text-primary ml-auto shrink-0" />}
-            </button>
-          ))}
+          {themes.map((t) => {
+            const isActive = currentTheme.id === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTheme(t.id)}
+                className={cn(
+                  'flex items-center gap-2 p-2 rounded-xl border transition-all text-left',
+                  isActive
+                    ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                    : 'border-border hover:bg-surface-hover'
+                )}
+              >
+                <span
+                  className="w-5 h-5 rounded-full shrink-0 border border-white/20 shadow-sm"
+                  style={{ background: t.colors['--color-primary'] }}
+                />
+                <span className="text-xs font-medium text-text-primary truncate">{t.name}</span>
+                {isActive && <Check size={14} className="text-primary ml-auto shrink-0" />}
+              </button>
+            );
+          })}
         </div>
       </Card>
 
