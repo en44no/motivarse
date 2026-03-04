@@ -1,13 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Users, MessageCircleHeart } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Users, MessageCircleHeart, Check, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Card } from '../ui/Card';
+import { Dialog } from '../ui/Dialog';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useCoupleContext } from '../../contexts/CoupleContext';
 import { sendReaction, subscribeToReactions, type Reaction, type ReactionType } from '../../services/reactions.service';
-import { getToday } from '../../lib/date-utils';
+import { subscribeToNotes, markNoteRead, deleteNote } from '../../services/notes.service';
+import { getToday, formatRelativeTime } from '../../lib/date-utils';
+import { cn } from '../../lib/utils';
 import { ComposeNoteDialog } from './LoveNotesCard';
+import type { LoveNote } from '../../types/notes';
 
 interface PartnerStatusProps {
   partnerName: string;
@@ -29,6 +33,8 @@ export function PartnerStatus({ partnerName, completedCount, totalCount }: Partn
   const [flyingEmoji, setFlyingEmoji] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [composingNote, setComposingNote] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [notes, setNotes] = useState<LoveNote[]>([]);
 
   const coupleId = couple?.coupleId || null;
   const userId = user?.uid || null;
@@ -40,6 +46,23 @@ export function PartnerStatus({ partnerName, completedCount, totalCount }: Partn
     const unsub = subscribeToReactions(coupleId, setReactions);
     return () => unsub();
   }, [coupleId]);
+
+  // Subscribe to notes
+  useEffect(() => {
+    if (!coupleId) return;
+    const unsub = subscribeToNotes(coupleId, setNotes);
+    return () => unsub();
+  }, [coupleId]);
+
+  // Received unread notes
+  const receivedNotes = useMemo(
+    () => notes.filter((n) => n.toUserId === userId),
+    [notes, userId],
+  );
+  const unreadCount = useMemo(
+    () => receivedNotes.filter((n) => !n.read).length,
+    [receivedNotes],
+  );
 
   // Which reactions have I already sent today?
   const sentToday = new Set(
@@ -73,6 +96,22 @@ export function PartnerStatus({ partnerName, completedCount, totalCount }: Partn
     },
     [coupleId, userId, partnerId, sending, sentToday, today, partnerName],
   );
+
+  const handleMarkRead = useCallback(async (noteId: string) => {
+    await markNoteRead(noteId).catch(() => {});
+  }, []);
+
+  const handleDeleteNote = useCallback(async (noteId: string) => {
+    await deleteNote(noteId).catch(() => {});
+  }, []);
+
+  function handleNotaClick() {
+    if (receivedNotes.length > 0) {
+      setShowNotes(true);
+    } else {
+      setComposingNote(true);
+    }
+  }
 
   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
@@ -167,19 +206,92 @@ export function PartnerStatus({ partnerName, completedCount, totalCount }: Partn
               })}
             </div>
 
-            {/* Note button */}
+            {/* Note button with badge */}
             <motion.button
-              onClick={() => setComposingNote(true)}
-              className="h-9 px-3 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 flex items-center gap-1.5 transition-colors"
+              onClick={handleNotaClick}
+              className="h-9 px-3 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 flex items-center gap-1.5 transition-colors relative"
               whileTap={{ scale: 0.9 }}
               aria-label="Enviar nota"
             >
               <MessageCircleHeart size={16} className="text-pink-400" />
               <span className="text-xs font-semibold text-pink-400">Nota</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-pink-500 text-white text-[10px] font-bold flex items-center justify-center px-1 shadow-sm">
+                  {unreadCount}
+                </span>
+              )}
             </motion.button>
           </div>
         )}
       </Card>
+
+      {/* Notes list dialog */}
+      <Dialog open={showNotes} onClose={() => setShowNotes(false)} title={`Notas de ${partnerName}`}>
+        <div className="space-y-3">
+          {receivedNotes.length === 0 ? (
+            <p className="text-sm text-text-muted text-center py-6">
+              No hay notas recibidas
+            </p>
+          ) : (
+            receivedNotes.map((note) => (
+              <div
+                key={note.id}
+                className={cn(
+                  'flex items-start gap-3 p-3 rounded-xl border transition-colors',
+                  note.read
+                    ? 'bg-surface border-border/50'
+                    : 'bg-primary/5 border-primary/20',
+                )}
+              >
+                {note.emoji && (
+                  <span className="text-lg shrink-0 mt-0.5">{note.emoji}</span>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-text-primary whitespace-pre-wrap break-words">
+                    {note.text}
+                  </p>
+                  <p className="text-[10px] text-text-muted mt-1">
+                    {formatRelativeTime(note.createdAt)}
+                    {!note.read && (
+                      <span className="ml-1.5 text-primary font-medium">Nueva</span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {!note.read && (
+                    <button
+                      onClick={() => handleMarkRead(note.id)}
+                      className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-colors"
+                      aria-label="Marcar como leída"
+                    >
+                      <Check size={14} strokeWidth={2.5} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDeleteNote(note.id)}
+                    className="w-7 h-7 rounded-lg bg-surface-hover text-text-muted flex items-center justify-center hover:bg-danger-soft hover:text-danger transition-colors"
+                    aria-label="Eliminar nota"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+
+          {/* Compose button */}
+          <button
+            onClick={() => {
+              setShowNotes(false);
+              setTimeout(() => setComposingNote(true), 200);
+            }}
+            className="w-full py-2.5 rounded-xl bg-pink-500/15 text-pink-400 text-sm font-semibold hover:bg-pink-500/25 transition-colors flex items-center justify-center gap-2"
+          >
+            <MessageCircleHeart size={16} />
+            Escribir nota
+          </button>
+        </div>
+      </Dialog>
 
       <ComposeNoteDialog open={composingNote} onClose={() => setComposingNote(false)} />
     </>

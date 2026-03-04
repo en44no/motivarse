@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Trophy, BookOpen, Flame, Footprints, Sparkles, Calendar } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell,
+  BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip,
   LineChart, Line, CartesianGrid,
 } from 'recharts';
 import { format } from 'date-fns';
@@ -143,7 +143,7 @@ export function MonthlyInsightsPage() {
             />
           </motion.div>
 
-          {/* Habit Consistency Chart */}
+          {/* Habit Consistency List */}
           {insights.habitConsistency.length > 0 && (
             <motion.div
               custom={2}
@@ -153,81 +153,56 @@ export function MonthlyInsightsPage() {
             >
               <Card>
                 <h3 className="text-sm font-bold text-text-secondary mb-3">
-                  Consistencia por habito
+                  Consistencia por hábito
                 </h3>
-                <div className="h-52">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={insights.habitConsistency}
-                      barCategoryGap="20%"
-                      layout="vertical"
-                    >
-                      <XAxis
-                        type="number"
-                        domain={[0, 100]}
-                        tick={{ fontSize: 10, fill: '#64748b' }}
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={(v) => `${v}%`}
-                      />
-                      <YAxis
-                        type="category"
-                        dataKey="name"
-                        tick={{ fontSize: 11, fill: '#94a3b8' }}
-                        axisLine={false}
-                        tickLine={false}
-                        width={80}
-                        tickFormatter={(name: string) => {
-                          const habit = insights.habitConsistency.find((h) => h.name === name);
-                          return habit ? `${habit.icon} ${name.length > 8 ? name.slice(0, 8) + '..' : name}` : name;
-                        }}
-                      />
-                      <Tooltip
-                        contentStyle={tooltipStyle}
-                        formatter={(value: number, name: string) => [
-                          `${value}%`,
-                          name === 'myPercent' ? 'Yo' : partnerName || 'Pareja',
-                        ]}
-                        cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-                      />
-                      <Bar dataKey="myPercent" name="myPercent" radius={[0, 4, 4, 0]} maxBarSize={16}>
-                        {insights.habitConsistency.map((entry, index) => (
-                          <Cell key={index} fill={getBarColor(entry.myPercent)} fillOpacity={0.85} />
-                        ))}
-                      </Bar>
-                      {partnerName && (
-                        <Bar dataKey="partnerPercent" name="partnerPercent" radius={[0, 4, 4, 0]} maxBarSize={16} fillOpacity={0.4}>
-                          {insights.habitConsistency.map((entry, index) => (
-                            <Cell key={index} fill={getBarColor(entry.partnerPercent)} fillOpacity={0.4} />
-                          ))}
-                        </Bar>
-                      )}
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="flex items-center justify-center gap-4 mt-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-primary" />
-                    <span className="text-[10px] text-text-muted">&ge;80%</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-amber-500" />
-                    <span className="text-[10px] text-text-muted">&ge;50%</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-danger" />
-                    <span className="text-[10px] text-text-muted">&lt;50%</span>
-                  </div>
-                  {partnerName && (
-                    <>
-                      <span className="text-[10px] text-text-muted">|</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-sm bg-text-muted/30" />
-                        <span className="text-[10px] text-text-muted">{partnerName}</span>
+                <div className="space-y-3">
+                  {insights.habitConsistency.map((habit) => (
+                    <div key={habit.name}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm text-text-primary truncate mr-2">
+                          {habit.icon} {habit.name}
+                        </span>
+                        <span className="text-xs font-semibold text-text-secondary shrink-0">
+                          {habit.myPercent}%
+                        </span>
                       </div>
-                    </>
-                  )}
+                      <div className="h-2 bg-surface-hover rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${habit.myPercent}%`,
+                            backgroundColor: getBarColor(habit.myPercent),
+                            opacity: 0.85,
+                          }}
+                        />
+                      </div>
+                      {partnerName && habit.partnerPercent > 0 && (
+                        <div className="h-1.5 bg-surface-hover rounded-full overflow-hidden mt-1">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${habit.partnerPercent}%`,
+                              backgroundColor: getBarColor(habit.partnerPercent),
+                              opacity: 0.4,
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
+                {partnerName && (
+                  <div className="flex items-center gap-3 mt-3 pt-2 border-t border-border/50">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-1.5 rounded-full bg-primary" />
+                      <span className="text-[10px] text-text-muted">Yo</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-1 rounded-full bg-text-muted/40" />
+                      <span className="text-[10px] text-text-muted">{partnerName}</span>
+                    </div>
+                  </div>
+                )}
               </Card>
             </motion.div>
           )}
@@ -264,11 +239,11 @@ export function MonthlyInsightsPage() {
                       <YAxis
                         domain={[1, 5]}
                         ticks={[1, 2, 3, 4, 5]}
-                        tick={{ fontSize: 10, fill: '#64748b' }}
+                        tick={{ fontSize: 16, fill: '#64748b' }}
                         axisLine={false}
                         tickLine={false}
                         tickFormatter={(v) => MOOD_OPTIONS.find((m) => m.value === v)?.emoji || ''}
-                        width={28}
+                        width={36}
                       />
                       <Tooltip
                         contentStyle={tooltipStyle}
@@ -362,7 +337,7 @@ export function MonthlyInsightsPage() {
                       <YAxis hide />
                       <Tooltip
                         contentStyle={tooltipStyle}
-                        formatter={(value: number) => [`${value}`, 'Habitos']}
+                        formatter={(value: number) => [`${value}`, 'Hábitos']}
                         cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                       />
                       <Bar dataKey="completed" radius={[6, 6, 0, 0]} maxBarSize={36} fill="#22c55e" fillOpacity={0.75} />

@@ -3,11 +3,12 @@ import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { Check, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatRelativeTime } from '../../lib/date-utils';
-import { WISHLIST_CATEGORIES } from '../../types/wishlist';
 import type { WishlistItem as WishlistItemType } from '../../types/wishlist';
+import type { CoupleCategory } from '../../types/category';
 
 interface WishlistItemProps {
   item: WishlistItemType;
+  categories: CoupleCategory[];
   onToggle: (completed: boolean) => void;
   onDelete: () => void;
   memberNames: Record<string, string>;
@@ -15,11 +16,12 @@ interface WishlistItemProps {
 
 export const WishlistItem = memo(function WishlistItem({
   item,
+  categories,
   onToggle,
   onDelete,
   memberNames,
 }: WishlistItemProps) {
-  const categoryDef = WISHLIST_CATEGORIES.find((c) => c.value === item.category);
+  const categoryDef = item.category ? categories.find((c) => c.id === item.category) : undefined;
   const createdByName = memberNames[item.createdBy] || 'Alguien';
   const completedByName = item.completedBy
     ? memberNames[item.completedBy] || 'Alguien'

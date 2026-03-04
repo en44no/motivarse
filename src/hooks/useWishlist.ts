@@ -8,7 +8,7 @@ import {
   updateWishlistItem,
   deleteWishlistItem,
 } from '../services/wishlist.service';
-import type { WishlistItem, WishlistCategory } from '../types/wishlist';
+import type { WishlistItem } from '../types/wishlist';
 
 export function useWishlist() {
   const { user } = useAuthContext();
@@ -38,13 +38,13 @@ export function useWishlist() {
   const completed = items.filter((i) => i.completed);
 
   const add = useCallback(
-    async (title: string, category: WishlistCategory, description?: string) => {
+    async (title: string, category?: string, description?: string) => {
       if (!user || !coupleId) return;
       try {
         await addWishlistItem({
           coupleId,
           title,
-          category,
+          ...(category ? { category } : {}),
           completed: false,
           createdBy: user.uid,
           createdAt: Date.now(),
