@@ -64,7 +64,7 @@ function ReorderableItem({
       dragListener={false}
       dragControls={dragControls}
       onDragEnd={onDragEnd}
-      className="touch-none"
+      className={draggingId ? 'touch-none' : ''}
     >
       <div
         onPointerDown={longPress.onPointerDown}
