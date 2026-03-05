@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,7 +19,7 @@ import { UnifiedCalendar } from '../components/habits/UnifiedCalendar';
 import { HabitForm } from '../components/habits/HabitForm';
 import { HabitGenerator } from '../components/habits/HabitGenerator';
 import { HabitStats } from '../components/habits/HabitStats';
-import { HabitTrendChart } from '../components/habits/HabitTrendChart';
+const HabitTrendChart = lazy(() => import('../components/habits/HabitTrendChart'));
 import { PartnerComparison } from '../components/habits/PartnerComparison';
 import { StreakHistory } from '../components/habits/StreakHistory';
 import { isHabitScheduledForDate } from '../lib/date-utils';
@@ -301,7 +301,9 @@ export function HabitsPage() {
                   longestStreak,
                 }}
               />
-              <HabitTrendChart data={statsData.dailyData} />
+              <Suspense fallback={<CardSkeleton />}>
+                <HabitTrendChart data={statsData.dailyData} />
+              </Suspense>
               <PartnerComparison
                 myPercent={statsData.weeklyPercent}
                 partnerPercent={partnerWeeklyPercent}
@@ -321,7 +323,7 @@ export function HabitsPage() {
       {createPortal(
         <button
           onClick={() => setShowForm(true)}
-          className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-emerald-600 text-white shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:from-primary-hover hover:to-emerald-700 transition-colors active:scale-90"
+          className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-primary-hover text-white shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:from-primary-hover hover:to-primary transition-colors active:scale-90"
         >
           <Plus size={24} />
         </button>,

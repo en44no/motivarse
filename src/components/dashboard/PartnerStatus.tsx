@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Users, MessageCircleHeart, Check, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -26,7 +26,7 @@ const REACTION_EMOJIS: { type: ReactionType; label: string }[] = [
   { type: '💪', label: 'Fuerza' },
 ];
 
-export function PartnerStatus({ partnerName, completedCount, totalCount }: PartnerStatusProps) {
+export const PartnerStatus = memo(function PartnerStatus({ partnerName, completedCount, totalCount }: PartnerStatusProps) {
   const { user } = useAuthContext();
   const { couple, partnerId } = useCoupleContext();
   const [reactions, setReactions] = useState<Reaction[]>([]);
@@ -296,4 +296,4 @@ export function PartnerStatus({ partnerName, completedCount, totalCount }: Partn
       <ComposeNoteDialog open={composingNote} onClose={() => setComposingNote(false)} />
     </>
   );
-}
+});

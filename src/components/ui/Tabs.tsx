@@ -30,7 +30,7 @@ export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
           {activeTab === tab.id && (
             <motion.div
               layoutId="tab-indicator"
-              className="absolute inset-0 rounded-lg bg-gradient-to-b from-primary to-emerald-600 shadow-[0_2px_8px_rgba(34,197,94,0.3)]"
+              className="absolute inset-0 rounded-lg bg-gradient-to-b from-primary to-primary-hover shadow-[var(--shadow-glow-primary)]"
               transition={{ type: 'spring', stiffness: 380, damping: 28 }}
             />
           )}

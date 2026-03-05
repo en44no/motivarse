@@ -24,7 +24,7 @@ export function HabitStats({ stats }: { stats: StatsData }) {
         <div
           className="absolute inset-0 opacity-[0.07]"
           style={{
-            background: `linear-gradient(135deg, #22c55e ${stats.weeklyPercent}%, transparent ${stats.weeklyPercent}%)`,
+            background: `linear-gradient(135deg, var(--color-primary) ${stats.weeklyPercent}%, transparent ${stats.weeklyPercent}%)`,
           }}
         />
         <div className="relative flex items-center justify-between">
@@ -43,7 +43,7 @@ export function HabitStats({ stats }: { stats: StatsData }) {
         {/* Progress bar */}
         <div className="relative mt-3 h-2 rounded-full bg-surface-light overflow-hidden">
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-emerald-400 transition-all duration-700 ease-out"
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-primary-hover transition-all duration-700 ease-out"
             style={{ width: `${stats.weeklyPercent}%` }}
           />
         </div>
@@ -84,7 +84,7 @@ export function HabitStats({ stats }: { stats: StatsData }) {
             </div>
             <div>
               <p className="text-[10px] font-medium text-text-muted uppercase tracking-wider">Racha actual</p>
-              <p className="text-sm font-bold text-text-primary mt-0.5">{stats.currentStreak} dias</p>
+              <p className="text-sm font-bold text-text-primary mt-0.5">{stats.currentStreak} días</p>
             </div>
           </div>
         </Card>
@@ -96,7 +96,7 @@ export function HabitStats({ stats }: { stats: StatsData }) {
             </div>
             <div>
               <p className="text-[10px] font-medium text-text-muted uppercase tracking-wider">Mejor racha</p>
-              <p className="text-sm font-bold text-text-primary mt-0.5">{stats.longestStreak} dias</p>
+              <p className="text-sm font-bold text-text-primary mt-0.5">{stats.longestStreak} días</p>
             </div>
           </div>
         </Card>

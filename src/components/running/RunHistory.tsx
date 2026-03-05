@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { Clock, MapPin, Gauge, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
@@ -140,7 +140,7 @@ function SwipeableCard({
   );
 }
 
-export function RunHistory({ logs, title = 'Historial', allowDelete = false, memberNames, showFilters = false }: RunHistoryProps) {
+export const RunHistory = memo(function RunHistory({ logs, title = 'Historial', allowDelete = false, memberNames, showFilters = false }: RunHistoryProps) {
   const [filter, setFilter] = useState<FilterType>('all');
 
   const filteredLogs = useMemo(() => {
@@ -220,4 +220,4 @@ export function RunHistory({ logs, title = 'Historial', allowDelete = false, mem
       )}
     </div>
   );
-}
+});

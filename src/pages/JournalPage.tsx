@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, ChevronLeft, ChevronRight, Trash2, Lock, Check, Plus, Save,
+  ArrowLeft, Trash2, Lock, Plus,
   CalendarDays, Flame, BookOpen,
 } from 'lucide-react';
 import { subDays, addDays, isToday as isTodayFn, format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns';
@@ -10,9 +10,10 @@ import { es } from 'date-fns/locale';
 import { cn } from '../lib/utils';
 import { formatDate, formatDisplayDate, getToday } from '../lib/date-utils';
 import { useJournal } from '../hooks/useJournal';
+import { useJournalStats } from '../hooks/useJournalStats';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { CardSkeleton } from '../components/ui/Skeleton';
-import { MOOD_OPTIONS } from '../config/constants';
+import { JournalWriteView } from '../components/journal/JournalWriteView';
 import type { JournalEntry } from '../types/journal';
 
 type ViewMode = 'list' | 'write';
@@ -28,8 +29,6 @@ export function JournalPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [deleteTarget, setDeleteTarget] = useState<JournalEntry | null>(null);
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const dateStr = formatDate(writeDate);
   const isToday = isTodayFn(writeDate);
@@ -53,21 +52,6 @@ export function JournalPage() {
     }
     setSaveStatus('idle');
   }, [dateStr, currentEntry?.id]);
-
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-    }
-  }, [content]);
-
-  // Focus textarea when entering write mode
-  useEffect(() => {
-    if (viewMode === 'write' && textareaRef.current) {
-      setTimeout(() => textareaRef.current?.focus(), 300);
-    }
-  }, [viewMode]);
 
   const handleSave = useCallback(async () => {
     if (!content.trim() && !mood) return;
@@ -104,43 +88,7 @@ export function JournalPage() {
   // No cleanup needed — manual save only
 
   // --- Stats ---
-  const stats = useMemo(() => {
-    if (entries.length === 0) return null;
-
-    const totalEntries = entries.length;
-
-    // Writing streak: consecutive days with entries ending today or yesterday
-    const today = getToday();
-    let streak = 0;
-    let checkDate = today;
-    for (let i = 0; i < 60; i++) {
-      if (entries.some((e) => e.date === checkDate)) {
-        streak++;
-        checkDate = formatDate(subDays(parseISO(checkDate), 1));
-      } else if (i === 0) {
-        // Today might not have an entry yet, check yesterday
-        checkDate = formatDate(subDays(parseISO(checkDate), 1));
-        continue;
-      } else {
-        break;
-      }
-    }
-
-    // Mood distribution
-    const moodCounts: Record<string, number> = {};
-    entries.forEach((e) => {
-      if (e.mood) {
-        moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1;
-      }
-    });
-    const topMood = Object.entries(moodCounts).sort(([, a], [, b]) => b - a)[0];
-
-    // Days with entries this month
-    const thisMonth = format(new Date(), 'yyyy-MM');
-    const thisMonthEntries = entries.filter((e) => e.date.startsWith(thisMonth)).length;
-
-    return { totalEntries, streak, topMood, thisMonthEntries };
-  }, [entries]);
+  const stats = useJournalStats(entries);
 
   // --- Mini calendar for current month ---
   const calendarData = useMemo(() => {
@@ -376,103 +324,19 @@ export function JournalPage() {
           </motion.div>
         ) : (
           /* Write mode */
-          <motion.div
-            key="write"
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 10 }}
-            className="space-y-4"
-          >
-            {/* Date navigation */}
-            <div className="flex items-center justify-between bg-surface rounded-2xl border border-border p-2">
-              <button
-                onClick={goToPrevDay}
-                className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <span className="text-sm font-semibold text-text-primary">
-                {formatDisplayDate(writeDate)}
-              </span>
-              <button
-                onClick={goToNextDay}
-                disabled={isToday}
-                className={cn(
-                  'p-2 rounded-xl transition-colors',
-                  isToday
-                    ? 'text-text-muted/30 cursor-not-allowed'
-                    : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
-                )}
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
-
-            {/* Mood selector */}
-            <div>
-              <p className="text-xs text-text-muted mb-2 px-1">¿Cómo te sentís?</p>
-              <div className="flex gap-2">
-                {MOOD_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.emoji}
-                    onClick={() => handleMoodSelect(opt.emoji)}
-                    className={cn(
-                      'flex-1 flex flex-col items-center gap-0.5 py-2.5 rounded-xl transition-all',
-                      mood === opt.emoji
-                        ? 'bg-primary/10 ring-2 ring-primary/40 scale-105'
-                        : 'bg-surface border border-border hover:bg-surface-hover',
-                    )}
-                  >
-                    <span className="text-xl">{opt.emoji}</span>
-                    <span className="text-[9px] text-text-muted">{opt.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Textarea */}
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="¿Cómo fue tu día?"
-              className={cn(
-                'w-full min-h-[200px] max-h-[400px] resize-none rounded-2xl',
-                'bg-surface border border-border p-4 text-sm text-text-primary leading-relaxed',
-                'placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30',
-                'transition-all',
-              )}
-              rows={6}
-            />
-
-            {/* Save button */}
-            <button
-              onClick={handleSave}
-              disabled={saveStatus === 'saving' || (!hasChanges && saveStatus !== 'saved')}
-              className={cn(
-                'w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold transition-all',
-                saveStatus === 'saved'
-                  ? 'bg-green-500/15 text-green-600'
-                  : hasChanges
-                    ? 'bg-primary text-white shadow-sm shadow-primary/25 active:scale-[0.98]'
-                    : 'bg-surface-hover text-text-muted cursor-not-allowed',
-              )}
-            >
-              {saveStatus === 'saving' ? (
-                <>Guardando...</>
-              ) : saveStatus === 'saved' ? (
-                <>
-                  <Check size={16} />
-                  Guardado
-                </>
-              ) : (
-                <>
-                  <Save size={16} />
-                  Guardar
-                </>
-              )}
-            </button>
-          </motion.div>
+          <JournalWriteView
+            writeDate={writeDate}
+            isToday={isToday}
+            content={content}
+            mood={mood}
+            saveStatus={saveStatus}
+            hasChanges={hasChanges}
+            onContentChange={setContent}
+            onMoodSelect={handleMoodSelect}
+            onSave={handleSave}
+            onPrevDay={goToPrevDay}
+            onNextDay={goToNextDay}
+          />
         )}
       </AnimatePresence>
 

@@ -13,9 +13,10 @@ interface TodoItemProps {
   currentUserId: string;
   memberNames: Record<string, string>;
   categories?: CoupleCategory[];
+  index?: number;
 }
 
-export const TodoItem = memo(function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames, categories = [] }: TodoItemProps) {
+export const TodoItem = memo(function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames, categories = [], index = 0 }: TodoItemProps) {
   const priorityColors = {
     low: 'border-l-text-muted',
     medium: 'border-l-secondary',
@@ -45,6 +46,7 @@ export const TodoItem = memo(function TodoItem({ todo, onToggle, onDelete, curre
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 10 }}
+      transition={{ delay: index * 0.04 }}
       className="relative overflow-hidden rounded-xl"
     >
       {/* Delete background */}

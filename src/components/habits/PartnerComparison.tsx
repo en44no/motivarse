@@ -32,7 +32,7 @@ export function PartnerComparison({ myPercent, partnerPercent, partnerName }: Pa
           </div>
           <div className="h-3 rounded-full bg-surface-light overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-400 transition-all duration-700 ease-out"
+              className="h-full rounded-full bg-gradient-to-r from-primary to-primary-hover transition-all duration-700 ease-out"
               style={{ width: `${myPercent}%` }}
             />
           </div>

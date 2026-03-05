@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { HabitCard } from './HabitCard';
+import { WaterCard } from './WaterCard';
 import { useLongPress } from '../../hooks/useLongPress';
 import type { Habit, HabitLog, HabitStreak } from '../../types/habit';
 
@@ -71,26 +72,42 @@ function ReorderableItem({
         onPointerCancel={longPress.onPointerCancel}
         onPointerMove={longPress.onPointerMove}
       >
-        <HabitCard
-          habit={habit}
-          log={log}
-          streak={streak}
-          onToggle={(completed, value, metGoal) =>
-            onToggle(habit.id, completed, value, metGoal)
-          }
-          partnerLog={partnerLog}
-          partnerName={habit.scope === 'shared' ? partnerName : undefined}
-          onEdit={onEdit ? () => onEdit(habit.id) : undefined}
-          onDelete={onDelete ? () => onDelete(habit.id) : undefined}
-          soundEnabled={soundEnabled}
-          isDragging={draggingId === habit.id}
-        />
+        {habit.type === 'water' ? (
+          <WaterCard
+            habit={habit}
+            log={log}
+            streak={streak}
+            partnerLog={partnerLog}
+            partnerName={habit.scope === 'shared' ? partnerName : undefined}
+            onEdit={onEdit ? () => onEdit(habit.id) : undefined}
+            onDelete={onDelete ? () => onDelete(habit.id) : undefined}
+            soundEnabled={soundEnabled}
+            isDragging={draggingId === habit.id}
+            reorderable
+          />
+        ) : (
+          <HabitCard
+            habit={habit}
+            log={log}
+            streak={streak}
+            onToggle={(completed, value, metGoal) =>
+              onToggle(habit.id, completed, value, metGoal)
+            }
+            partnerLog={partnerLog}
+            partnerName={habit.scope === 'shared' ? partnerName : undefined}
+            onEdit={onEdit ? () => onEdit(habit.id) : undefined}
+            onDelete={onDelete ? () => onDelete(habit.id) : undefined}
+            soundEnabled={soundEnabled}
+            isDragging={draggingId === habit.id}
+            reorderable
+          />
+        )}
       </div>
     </Reorder.Item>
   );
 }
 
-export function HabitList({
+export const HabitList = memo(function HabitList({
   habits,
   logs,
   streaks,
@@ -131,6 +148,30 @@ export function HabitList({
     setDraggingId(id);
   }, []);
 
+  // Pre-compute lookup maps to avoid .find() inside .map()
+  const logMap = useMemo(() => {
+    const map = new Map<string, HabitLog>();
+    for (const l of logs) {
+      if (l.userId === currentUserId) map.set(l.habitId, l);
+    }
+    return map;
+  }, [logs, currentUserId]);
+
+  const streakMap = useMemo(() => {
+    const map = new Map<string, HabitStreak>();
+    for (const s of streaks) map.set(s.habitId, s);
+    return map;
+  }, [streaks]);
+
+  const partnerLogMap = useMemo(() => {
+    if (!partnerLogs) return new Map<string, HabitLog>();
+    const map = new Map<string, HabitLog>();
+    for (const l of partnerLogs) {
+      if (l.completed) map.set(l.habitId, l);
+    }
+    return map;
+  }, [partnerLogs]);
+
   if (habits.length === 0) return null;
 
   if (reorderable) {
@@ -148,33 +189,23 @@ export function HabitList({
           onReorder={handleReorder}
           className="space-y-3"
         >
-          {orderedHabits.map((habit) => {
-            const log = logs.find(
-              (l) => l.habitId === habit.id && l.userId === currentUserId
-            );
-            const streak = streaks.find((s) => s.habitId === habit.id);
-            const partnerLog = habit.scope === 'shared'
-              ? partnerLogs?.find((l) => l.habitId === habit.id && l.completed)
-              : undefined;
-
-            return (
-              <ReorderableItem
-                key={habit.id}
-                habit={habit}
-                log={log}
-                streak={streak}
-                partnerLog={partnerLog}
-                partnerName={partnerName}
-                onToggle={onToggle}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                soundEnabled={soundEnabled}
-                draggingId={draggingId}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-              />
-            );
-          })}
+          {orderedHabits.map((habit) => (
+            <ReorderableItem
+              key={habit.id}
+              habit={habit}
+              log={logMap.get(habit.id)}
+              streak={streakMap.get(habit.id)}
+              partnerLog={habit.scope === 'shared' ? partnerLogMap.get(habit.id) : undefined}
+              partnerName={partnerName}
+              onToggle={onToggle}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              soundEnabled={soundEnabled}
+              draggingId={draggingId}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            />
+          ))}
         </Reorder.Group>
       </div>
     );
@@ -188,33 +219,37 @@ export function HabitList({
         </h2>
       )}
       <AnimatePresence>
-      {habits.map((habit) => {
-        const log = logs.find(
-          (l) => l.habitId === habit.id && l.userId === currentUserId
-        );
-        const streak = streaks.find((s) => s.habitId === habit.id);
-        const partnerLog = habit.scope === 'shared'
-          ? partnerLogs?.find((l) => l.habitId === habit.id && l.completed)
-          : undefined;
-
-        return (
-          <HabitCard
+      {habits.map((habit) => (
+        habit.type === 'water' ? (
+          <WaterCard
             key={habit.id}
             habit={habit}
-            log={log}
-            streak={streak}
-            onToggle={(completed, value, metGoal) =>
-              onToggle(habit.id, completed, value, metGoal)
-            }
-            partnerLog={partnerLog}
+            log={logMap.get(habit.id)}
+            streak={streakMap.get(habit.id)}
+            partnerLog={habit.scope === 'shared' ? partnerLogMap.get(habit.id) : undefined}
             partnerName={habit.scope === 'shared' ? partnerName : undefined}
             onEdit={onEdit ? () => onEdit(habit.id) : undefined}
             onDelete={onDelete ? () => onDelete(habit.id) : undefined}
             soundEnabled={soundEnabled}
           />
-        );
-      })}
+        ) : (
+          <HabitCard
+            key={habit.id}
+            habit={habit}
+            log={logMap.get(habit.id)}
+            streak={streakMap.get(habit.id)}
+            onToggle={(completed, value, metGoal) =>
+              onToggle(habit.id, completed, value, metGoal)
+            }
+            partnerLog={habit.scope === 'shared' ? partnerLogMap.get(habit.id) : undefined}
+            partnerName={habit.scope === 'shared' ? partnerName : undefined}
+            onEdit={onEdit ? () => onEdit(habit.id) : undefined}
+            onDelete={onDelete ? () => onDelete(habit.id) : undefined}
+            soundEnabled={soundEnabled}
+          />
+        )
+      ))}
       </AnimatePresence>
     </div>
   );
-}
+});

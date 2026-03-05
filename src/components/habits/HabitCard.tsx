@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { Sun, PhoneOff, AlarmClock, Footprints, Target, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Sun, PhoneOff, AlarmClock, Footprints, Target, MoreVertical, Pencil, Trash2, GripVertical } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '../../lib/utils';
 import { Card } from '../ui/Card';
@@ -27,9 +27,10 @@ interface HabitCardProps {
   onDelete?: () => void;
   soundEnabled?: boolean;
   isDragging?: boolean;
+  reorderable?: boolean;
 }
 
-export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerName, onEdit, onDelete, soundEnabled = true, isDragging = false }: HabitCardProps) {
+export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerName, onEdit, onDelete, soundEnabled = true, isDragging = false, reorderable = false }: HabitCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -156,6 +157,13 @@ export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle,
               </div>
             )}
           </div>
+
+          {/* Drag handle */}
+          {reorderable && (
+            <div className="shrink-0 text-text-muted/40 touch-none">
+              <GripVertical size={16} />
+            </div>
+          )}
 
           {/* 3-dot menu */}
           {(onEdit || onDelete) && (

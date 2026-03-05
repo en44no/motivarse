@@ -8,17 +8,17 @@ interface DailyData {
 }
 
 function getBarColor(percent: number) {
-  if (percent >= 80) return '#22c55e';
+  if (percent >= 80) return 'var(--color-primary)';
   if (percent >= 50) return '#f59e0b';
   return '#ef4444';
 }
 
-export function HabitTrendChart({ data }: { data: DailyData[] }) {
+export default function HabitTrendChart({ data }: { data: DailyData[] }) {
   if (data.length < 2) return null;
 
   return (
     <Card>
-      <h3 className="text-sm font-bold text-text-secondary mb-3">Tendencia — ultimos 14 dias</h3>
+      <h3 className="text-sm font-bold text-text-secondary mb-3">Tendencia — últimos 14 días</h3>
       <div className="h-44">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} barCategoryGap="20%">

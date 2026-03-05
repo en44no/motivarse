@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import {
   startOfMonth,
   endOfMonth,
@@ -28,7 +28,7 @@ interface UnifiedCalendarProps {
 
 const DAY_LABELS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'];
 
-export function UnifiedCalendar({
+export const UnifiedCalendar = memo(function UnifiedCalendar({
   habits,
   habitLogs,
   runLogs,
@@ -236,7 +236,7 @@ export function UnifiedCalendar({
                       <div
                         className={cn(
                           'w-[5px] h-[5px] rounded-full',
-                          allDone && 'bg-emerald-500',
+                          allDone && 'bg-primary',
                           someDone && 'bg-amber-500',
                           !allDone && !someDone && 'bg-border',
                         )}
@@ -406,4 +406,4 @@ export function UnifiedCalendar({
       </AnimatePresence>
     </div>
   );
-}
+});

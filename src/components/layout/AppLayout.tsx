@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { useLocation, useOutlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from './Header';
 import { BottomNav } from './BottomNav';
 import { InstallBanner } from './InstallBanner';
-import { CoachChat } from '../ai/CoachChat';
+const CoachChat = lazy(() => import('../ai/CoachChat'));
 import { AchievementUnlock } from '../achievements/AchievementUnlock';
 import { useAchievements } from '../../hooks/useAchievements';
 import { warmUpAudio } from '../../lib/sound-utils';
@@ -68,7 +68,7 @@ export function AppLayout() {
         </AnimatePresence>
       </main>
       <BottomNav />
-      <CoachChat />
+      <Suspense fallback={null}><CoachChat /></Suspense>
       <AchievementUnlock achievement={newAchievement} onDismiss={dismissNewAchievement} />
     </div>
   );

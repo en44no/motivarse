@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { ShoppingCart } from 'lucide-react';
 import { TodoItem } from './TodoItem';
@@ -14,7 +15,7 @@ interface TodoListProps {
   categories?: CoupleCategory[];
 }
 
-export function TodoList({ todos, onToggle, onDelete, currentUserId, memberNames, categories = [] }: TodoListProps) {
+export const TodoList = memo(function TodoList({ todos, onToggle, onDelete, currentUserId, memberNames, categories = [] }: TodoListProps) {
   if (todos.length === 0) {
     return (
       <EmptyState
@@ -28,7 +29,7 @@ export function TodoList({ todos, onToggle, onDelete, currentUserId, memberNames
   return (
     <div className="space-y-2">
       <AnimatePresence>
-        {todos.map((todo) => (
+        {todos.map((todo, index) => (
           <TodoItem
             key={todo.id}
             todo={todo}
@@ -37,9 +38,10 @@ export function TodoList({ todos, onToggle, onDelete, currentUserId, memberNames
             currentUserId={currentUserId}
             memberNames={memberNames}
             categories={categories}
+            index={index}
           />
         ))}
       </AnimatePresence>
     </div>
   );
-}
+});

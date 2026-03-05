@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { LogOut, Link, Download, User, Flame, Footprints, Trophy, Smartphone, Volume2, VolumeX, ChevronDown, Bell, BellOff, RefreshCw, Palette, Check } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { LogOut, Link, Download, User, Flame, Footprints, Trophy, Smartphone, Volume2, VolumeX, ChevronDown, Bell, BellOff, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -18,6 +18,8 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { SettingToggle } from '../components/ui/SettingToggle';
+import { ThemeSelector } from '../components/profile/ThemeSelector';
 import { ACHIEVEMENT_DEFINITIONS, ACHIEVEMENT_CATEGORY_LABELS } from '../config/constants';
 import type { AchievementDef, AchievementCategory } from '../types/shared';
 
@@ -102,21 +104,24 @@ export function ProfilePage() {
 
       {/* Stats grid */}
       <div className="grid grid-cols-3 gap-2">
-        <Card className="text-center bg-gradient-to-b from-secondary/5 to-transparent">
-          <Flame size={20} className="mx-auto text-secondary mb-1" />
-          <p className="text-lg font-bold font-mono text-text-primary">{bestStreak}</p>
-          <p className="text-[10px] text-text-muted">Mejor racha</p>
-        </Card>
-        <Card className="text-center bg-gradient-to-b from-primary/5 to-transparent">
-          <Footprints size={20} className="mx-auto text-primary mb-1" />
-          <p className="text-lg font-bold font-mono text-text-primary">{progress?.totalRuns || 0}</p>
-          <p className="text-[10px] text-text-muted">Carreras</p>
-        </Card>
-        <Card className="text-center bg-gradient-to-b from-accent/5 to-transparent">
-          <Trophy size={20} className="mx-auto text-accent mb-1" />
-          <p className="text-lg font-bold font-mono text-text-primary">{totalStreaks}</p>
-          <p className="text-[10px] text-text-muted">Racha total</p>
-        </Card>
+        {[
+          { icon: <Flame size={20} className="mx-auto text-secondary mb-1" />, value: bestStreak, label: 'Mejor racha', bg: 'from-secondary/5' },
+          { icon: <Footprints size={20} className="mx-auto text-primary mb-1" />, value: progress?.totalRuns || 0, label: 'Carreras', bg: 'from-primary/5' },
+          { icon: <Trophy size={20} className="mx-auto text-accent mb-1" />, value: totalStreaks, label: 'Racha total', bg: 'from-accent/5' },
+        ].map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.07, duration: 0.3 }}
+          >
+            <Card className={`text-center bg-gradient-to-b ${stat.bg} to-transparent`}>
+              {stat.icon}
+              <p className="text-lg font-bold font-mono text-text-primary">{stat.value}</p>
+              <p className="text-[10px] text-text-muted">{stat.label}</p>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
       {/* Partner linking — only show "vincular" when profile loaded and no couple */}
@@ -186,44 +191,24 @@ export function ProfilePage() {
       )}
 
       {/* Sound toggle */}
-      <Card variant="interactive" onClick={toggleSound}>
-        <div className="flex items-center gap-3">
-          {soundEnabled ? (
-            <Volume2 size={20} className="text-primary" />
-          ) : (
-            <VolumeX size={20} className="text-text-muted" />
-          )}
-          <div className="flex-1">
-            <h3 className="text-sm font-bold text-text-primary">Sonidos</h3>
-            <p className="text-xs text-text-muted">
-              {soundEnabled ? 'Activados' : 'Desactivados'}
-            </p>
-          </div>
-          <div className={`w-10 h-6 rounded-full transition-colors ${soundEnabled ? 'bg-primary' : 'bg-surface-light'}`}>
-            <div className={`w-5 h-5 rounded-full bg-white shadow-sm mt-0.5 transition-transform ${soundEnabled ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
-          </div>
-        </div>
-      </Card>
+      <SettingToggle
+        icon={<Volume2 size={20} className="text-primary" />}
+        iconOff={<VolumeX size={20} className="text-text-muted" />}
+        title="Sonidos"
+        description={soundEnabled ? 'Activados' : 'Desactivados'}
+        enabled={soundEnabled}
+        onToggle={toggleSound}
+      />
 
       {/* Notifications toggle */}
-      <Card variant="interactive" onClick={toggleNotifications}>
-        <div className="flex items-center gap-3">
-          {notificationsEnabled ? (
-            <Bell size={20} className="text-primary" />
-          ) : (
-            <BellOff size={20} className="text-text-muted" />
-          )}
-          <div className="flex-1">
-            <h3 className="text-sm font-bold text-text-primary">Notificaciones</h3>
-            <p className="text-xs text-text-muted">
-              {notificationsEnabled ? 'Activadas — recordatorio diario a las 22:00' : 'Desactivadas'}
-            </p>
-          </div>
-          <div className={`w-10 h-6 rounded-full transition-colors ${notificationsEnabled ? 'bg-primary' : 'bg-surface-light'}`}>
-            <div className={`w-5 h-5 rounded-full bg-white shadow-sm mt-0.5 transition-transform ${notificationsEnabled ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
-          </div>
-        </div>
-      </Card>
+      <SettingToggle
+        icon={<Bell size={20} className="text-primary" />}
+        iconOff={<BellOff size={20} className="text-text-muted" />}
+        title="Notificaciones"
+        description={notificationsEnabled ? 'Activadas — recordatorio diario a las 22:00' : 'Desactivadas'}
+        enabled={notificationsEnabled}
+        onToggle={toggleNotifications}
+      />
 
       {/* Achievements — collapsible */}
       <AchievementsSection
@@ -236,39 +221,7 @@ export function ProfilePage() {
       />
 
       {/* Theme selector */}
-      <Card>
-        <div className="flex items-center gap-3 mb-3">
-          <Palette size={20} className="text-primary" />
-          <div>
-            <h3 className="text-sm font-bold text-text-primary">Tema</h3>
-            <p className="text-xs text-text-muted">Personalizá los colores</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {themes.map((t) => {
-            const isActive = currentTheme.id === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTheme(t.id)}
-                className={cn(
-                  'flex items-center gap-2 p-2 rounded-xl border transition-all text-left',
-                  isActive
-                    ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
-                    : 'border-border hover:bg-surface-hover'
-                )}
-              >
-                <span
-                  className="w-5 h-5 rounded-full shrink-0 border border-white/20 shadow-sm"
-                  style={{ background: t.colors['--color-primary'] }}
-                />
-                <span className="text-xs font-medium text-text-primary truncate">{t.name}</span>
-                {isActive && <Check size={14} className="text-primary ml-auto shrink-0" />}
-              </button>
-            );
-          })}
-        </div>
-      </Card>
+      <ThemeSelector currentTheme={currentTheme} themes={themes} setTheme={setTheme} />
 
       {/* Force update */}
       <Button variant="ghost" className="w-full text-text-muted" onClick={forceUpdate}>
@@ -293,66 +246,12 @@ export function ProfilePage() {
       />
 
       {/* Achievement detail modal */}
-      <AnimatePresence>
-        {selectedAchievement && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSelectedAchievement(null)}
-          >
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-            <motion.div
-              className="relative bg-surface rounded-2xl border border-border shadow-xl p-6 max-w-[300px] w-full text-center"
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {(() => {
-                const isUnlocked = unlockedAchievements.some(
-                  (a) => a.achievementId === selectedAchievement.id
-                );
-                const progress = getProgress(selectedAchievement.condition, evalCtx);
-                return (
-                  <>
-                    <span className={cn('text-5xl block mb-3', !isUnlocked && 'grayscale opacity-50')}>
-                      {isUnlocked ? selectedAchievement.icon : '?'}
-                    </span>
-                    <p className="text-lg font-bold text-text-primary mb-1">
-                      {selectedAchievement.name}
-                    </p>
-                    <Badge variant={selectedAchievement.type === 'couple' ? 'accent' : 'default'} className="mb-2">
-                      {selectedAchievement.type === 'couple' ? 'Pareja' : 'Individual'}
-                    </Badge>
-                    <p className="text-sm text-text-muted mb-3">
-                      {selectedAchievement.description}
-                    </p>
-                    {isUnlocked ? (
-                      <p className="text-xs text-primary font-semibold">Desbloqueado</p>
-                    ) : progress !== null ? (
-                      <div>
-                        <div className="w-full h-2 bg-surface-light rounded-full overflow-hidden mb-1">
-                          <div
-                            className="h-full bg-primary rounded-full transition-all duration-500"
-                            style={{ width: `${Math.round(progress * 100)}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-text-muted">
-                          {Math.round(progress * 100)}% completado
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-text-muted">Bloqueado</p>
-                    )}
-                  </>
-                );
-              })()}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <AchievementModal
+        selectedAchievement={selectedAchievement}
+        unlockedAchievements={unlockedAchievements}
+        evalCtx={evalCtx}
+        onClose={() => setSelectedAchievement(null)}
+      />
     </div>
   );
 }
@@ -394,7 +293,7 @@ function AchievementsSection({
   }, []);
 
   return (
-    <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
+    <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden" role="region" aria-label="Logros">
       <button
         onClick={() => setShowAchievements(!showAchievements)}
         className="w-full flex items-center justify-between p-4 hover:bg-surface-hover transition-colors"
@@ -475,5 +374,95 @@ function AchievementsSection({
         </div>
       )}
     </div>
+  );
+}
+
+// --- Achievement Detail Modal ---
+
+function AchievementModal({
+  selectedAchievement,
+  unlockedAchievements,
+  evalCtx,
+  onClose,
+}: {
+  selectedAchievement: AchievementDef | null;
+  unlockedAchievements: import('../types/shared').Achievement[];
+  evalCtx: ReturnType<typeof import('../hooks/useAchievements').useAchievements>['evalCtx'];
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!selectedAchievement) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedAchievement, onClose]);
+
+  return (
+    <AnimatePresence>
+      {selectedAchievement && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="achievement-title"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        >
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <motion.div
+            className="relative bg-surface rounded-2xl border border-border shadow-xl p-6 max-w-[300px] w-full text-center"
+            initial={{ scale: 0.9, y: 20, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.9, y: 20, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(() => {
+              const isUnlocked = unlockedAchievements.some(
+                (a) => a.achievementId === selectedAchievement.id
+              );
+              const progress = getProgress(selectedAchievement.condition, evalCtx);
+              return (
+                <>
+                  <span className={cn('text-5xl block mb-3', !isUnlocked && 'grayscale opacity-50')}>
+                    {isUnlocked ? selectedAchievement.icon : '?'}
+                  </span>
+                  <p id="achievement-title" className="text-lg font-bold text-text-primary mb-1">
+                    {selectedAchievement.name}
+                  </p>
+                  <Badge variant={selectedAchievement.type === 'couple' ? 'accent' : 'default'} className="mb-2">
+                    {selectedAchievement.type === 'couple' ? 'Pareja' : 'Individual'}
+                  </Badge>
+                  <p className="text-sm text-text-muted mb-3">
+                    {selectedAchievement.description}
+                  </p>
+                  {isUnlocked ? (
+                    <p className="text-xs text-primary font-semibold">Desbloqueado</p>
+                  ) : progress !== null ? (
+                    <div>
+                      <div className="w-full h-2 bg-surface-light rounded-full overflow-hidden mb-1">
+                        <div
+                          className="h-full bg-primary rounded-full transition-all duration-500"
+                          style={{ width: `${Math.round(progress * 100)}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-text-muted">
+                        {Math.round(progress * 100)}% completado
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-text-muted">Bloqueado</p>
+                  )}
+                </>
+              );
+            })()}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

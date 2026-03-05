@@ -27,8 +27,8 @@ export function RunProgressChart({ logs }: RunProgressChartProps) {
           <AreaChart data={data}>
             <defs>
               <linearGradient id="colorDuration" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis
@@ -51,7 +51,7 @@ export function RunProgressChart({ logs }: RunProgressChartProps) {
             <Area
               type="monotone"
               dataKey="duration"
-              stroke="#22c55e"
+              stroke="var(--color-primary)"
               strokeWidth={2}
               fill="url(#colorDuration)"
             />

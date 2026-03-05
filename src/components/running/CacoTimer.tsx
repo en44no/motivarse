@@ -4,6 +4,7 @@ import { Play, Pause, Square, X, SkipForward } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Confetti } from '../ui/Confetti';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { ProgressRing } from './ProgressRing';
 import { playTimerRun, playTimerWalk, playTimerBeep, playTimerComplete } from '../../lib/sound-utils';
 import { useAuthContext } from '../../contexts/AuthContext';
 
@@ -17,12 +18,6 @@ interface CacoTimerProps {
 
 type TimerState = 'idle' | 'running' | 'paused' | 'phase_switch' | 'completed';
 type Phase = 'run' | 'walk';
-
-function formatTime(totalSeconds: number): string {
-  const mins = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
 
 export function CacoTimer({
   runMinutes,
@@ -49,11 +44,6 @@ export function CacoTimer({
   const progress = totalPhaseSeconds > 0
     ? ((totalPhaseSeconds - secondsLeft) / totalPhaseSeconds) * 100
     : 0;
-
-  // SVG progress ring params
-  const radius = 120;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   const isActive = state === 'running' || state === 'paused' || state === 'phase_switch';
 
@@ -194,7 +184,7 @@ export function CacoTimer({
   }
 
   const isRunPhase = phase === 'run';
-  const phaseColor = isRunPhase ? '#22c55e' : '#3b82f6';
+  const phaseColor = isRunPhase ? 'var(--color-primary)' : '#3b82f6';
   const phaseBgClass = isRunPhase ? 'from-primary/20' : 'from-blue-500/20';
 
   return (
@@ -224,7 +214,7 @@ export function CacoTimer({
             className="absolute inset-0 z-50 flex items-center justify-center"
             style={{
               backgroundColor: phaseLabel === 'CORRER!'
-                ? 'rgba(34, 197, 94, 0.3)'
+                ? 'var(--color-primary-soft)'
                 : 'rgba(59, 130, 246, 0.3)',
             }}
             initial={{ opacity: 0 }}
@@ -319,59 +309,15 @@ export function CacoTimer({
           </motion.div>
 
           {/* Progress ring + timer */}
-          <div className="relative w-72 h-72 sm:w-80 sm:h-80">
-            <svg
-              className="w-full h-full -rotate-90"
-              viewBox="0 0 280 280"
-            >
-              {/* Background circle */}
-              <circle
-                cx="140"
-                cy="140"
-                r={radius}
-                fill="none"
-                stroke="var(--color-surface-light)"
-                strokeWidth="10"
-              />
-              {/* Progress circle */}
-              <motion.circle
-                cx="140"
-                cy="140"
-                r={radius}
-                fill="none"
-                stroke={phaseColor}
-                strokeWidth="10"
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                animate={{ strokeDashoffset }}
-                transition={{ duration: 0.5, ease: 'linear' }}
-              />
-            </svg>
-
-            {/* Timer text inside ring */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <motion.span
-                className="text-6xl sm:text-7xl font-extrabold font-mono text-text-primary tracking-tight"
-                key={secondsLeft}
-                initial={false}
-                animate={
-                  secondsLeft <= 5 && state === 'running'
-                    ? { scale: [1, 1.05, 1] }
-                    : {}
-                }
-                transition={{ duration: 0.3 }}
-              >
-                {formatTime(secondsLeft)}
-              </motion.span>
-              <span className="text-sm text-text-muted mt-2 font-medium">
-                {state === 'idle'
-                  ? 'Listo para empezar'
-                  : state === 'paused'
-                  ? 'En pausa'
-                  : `${isRunPhase ? runMinutes : walkMinutes} min`}
-              </span>
-            </div>
-          </div>
+          <ProgressRing
+            progress={progress}
+            secondsLeft={secondsLeft}
+            state={state}
+            phaseColor={phaseColor}
+            isRunPhase={isRunPhase}
+            runMinutes={runMinutes}
+            walkMinutes={walkMinutes}
+          />
 
           {/* Repetition indicator */}
           <div className="text-center">

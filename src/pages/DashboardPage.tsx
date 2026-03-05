@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, BarChart3, ChevronRight } from 'lucide-react';
 import { useHabits } from '../hooks/useHabits';
@@ -26,12 +27,13 @@ export function DashboardPage() {
   const { todos } = useDataContext();
   const soundEnabled = profile?.settings?.soundEnabled ?? true;
 
-  const pendingTodos = todos.filter((t) => !t.completed);
+  const pendingTodos = useMemo(() => todos.filter((t) => !t.completed), [todos]);
 
   // Count unique habits completed by partner today
-  const partnerCompletedToday = new Set(
-    partnerTodayLogs.filter((l) => l.completed).map((l) => l.habitId)
-  ).size;
+  const partnerCompletedToday = useMemo(
+    () => new Set(partnerTodayLogs.filter((l) => l.completed).map((l) => l.habitId)).size,
+    [partnerTodayLogs],
+  );
 
   const completedCount = Math.round((todayProgress / 100) * todayHabits.length);
 

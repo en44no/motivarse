@@ -23,7 +23,7 @@ const sectionVariants = {
 };
 
 function getBarColor(percent: number) {
-  if (percent >= 80) return '#22c55e';
+  if (percent >= 80) return 'var(--color-primary)';
   if (percent >= 50) return '#f59e0b';
   return '#ef4444';
 }
@@ -139,7 +139,7 @@ export function MonthlyInsightsPage() {
               iconBg="bg-amber-500/10 text-amber-500"
               label="Mejor racha"
               value={`${insights.bestStreak}`}
-              subValue={insights.bestStreak > 0 ? 'dias' : undefined}
+              subValue={insights.bestStreak > 0 ? 'días' : undefined}
             />
           </motion.div>
 
@@ -340,7 +340,7 @@ export function MonthlyInsightsPage() {
                         formatter={(value: number) => [`${value}`, 'Hábitos']}
                         cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                       />
-                      <Bar dataKey="completed" radius={[6, 6, 0, 0]} maxBarSize={36} fill="#22c55e" fillOpacity={0.75} />
+                      <Bar dataKey="completed" radius={[6, 6, 0, 0]} maxBarSize={36} fill="var(--color-primary)" fillOpacity={0.75} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

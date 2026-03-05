@@ -1,7 +1,11 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { getThemeColor } from '../../lib/utils';
 
-const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#f43f5e'];
+function getColors(): string[] {
+  const primary = getThemeColor('--color-primary') || '#22c55e';
+  return [primary, '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#f43f5e'];
+}
 const PARTICLE_COUNT = 10;
 
 function randomBetween(min: number, max: number) {
@@ -17,9 +21,10 @@ interface Particle {
 }
 
 function generateParticles(): Particle[] {
+  const colors = getColors();
   return Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
     id: i,
-    color: COLORS[i % COLORS.length],
+    color: colors[i % colors.length],
     x: randomBetween(-28, 28),
     y: randomBetween(-32, -8),
     scale: randomBetween(0.6, 1.2),

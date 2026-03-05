@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import { Confetti } from '../ui/Confetti';
@@ -12,7 +12,7 @@ interface TodaySummaryProps {
   soundEnabled?: boolean;
 }
 
-export function TodaySummary({ progress, completedCount, totalCount, soundEnabled = true }: TodaySummaryProps) {
+export const TodaySummary = memo(function TodaySummary({ progress, completedCount, totalCount, soundEnabled = true }: TodaySummaryProps) {
   const [showConfetti, setShowConfetti] = useState(false);
   const prevProgressRef = useRef(progress);
 
@@ -52,7 +52,7 @@ export function TodaySummary({ progress, completedCount, totalCount, soundEnable
             initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset }}
             transition={{ duration: 1, ease: 'easeOut' }}
-            style={progress >= 100 ? { filter: 'drop-shadow(0 0 6px rgba(34, 197, 94, 0.5))' } : {}}
+            style={progress >= 100 ? { filter: 'drop-shadow(0 0 6px var(--color-primary-soft))' } : {}}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -73,4 +73,4 @@ export function TodaySummary({ progress, completedCount, totalCount, soundEnable
     </div>
     </>
   );
-}
+});

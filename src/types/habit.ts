@@ -1,4 +1,4 @@
-export type HabitType = 'boolean' | 'time';
+export type HabitType = 'boolean' | 'time' | 'water';
 export type HabitFrequency = 'daily' | 'weekdays' | 'weekends' | 'custom';
 export type HabitCategory = 'sleep' | 'health' | 'productivity' | 'fitness' | 'custom';
 

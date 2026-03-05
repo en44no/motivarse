@@ -61,7 +61,7 @@ export function HabitMonthCombined({ habits, getLogsForHabit, userId }: HabitMon
           <h3 className="text-sm font-semibold text-text-secondary">
             {start.toLocaleDateString('es', { month: 'long', year: 'numeric' })}
           </h3>
-          <span className="text-xs text-text-muted">{perfectDays} dias perfectos</span>
+          <span className="text-xs text-text-muted">{perfectDays} días perfectos</span>
         </div>
 
         <div className="grid grid-cols-7 gap-1">

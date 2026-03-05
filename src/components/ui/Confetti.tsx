@@ -1,9 +1,14 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { getThemeColor } from '../../lib/utils';
 
-const COLORS = ['#22c55e', '#3b82f6', '#f97316', '#8b5cf6', '#ef4444', '#eab308'];
+function getColors(): string[] {
+  const primary = getThemeColor('--color-primary') || '#22c55e';
+  return [primary, '#3b82f6', '#f97316', '#8b5cf6', '#ef4444', '#eab308'];
+}
 
-function ConfettiParticle({ delay, x }: { delay: number; x: number }) {
-  const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+function ConfettiParticle({ delay, x, colors }: { delay: number; x: number; colors: string[] }) {
+  const color = colors[Math.floor(Math.random() * colors.length)];
   const size = 6 + Math.random() * 6;
 
   return (
@@ -37,6 +42,7 @@ interface ConfettiProps {
 }
 
 export function Confetti({ count = 40 }: ConfettiProps) {
+  const [colors] = useState(getColors);
   const particles = Array.from({ length: count }, (_, i) => ({
     delay: Math.random() * 0.8,
     x: Math.random() * 100,
@@ -46,7 +52,7 @@ export function Confetti({ count = 40 }: ConfettiProps) {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-[200]">
       {particles.map((p) => (
-        <ConfettiParticle key={p.key} delay={p.delay} x={p.x} />
+        <ConfettiParticle key={p.key} delay={p.delay} x={p.x} colors={colors} />
       ))}
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Plus, Target, BookOpen, Footprints, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
@@ -57,7 +57,7 @@ function getChallengeConfig(type: ChallengeType) {
   return CHALLENGE_TYPES.find((c) => c.type === type) || CHALLENGE_TYPES[0];
 }
 
-export function ChallengeCard() {
+export const ChallengeCard = memo(function ChallengeCard() {
   const { user, profile } = useAuthContext();
   const { couple, partnerId, partnerName } = useCoupleContext();
   const { habitLogs, runLogs } = useDataContext();
@@ -421,4 +421,4 @@ export function ChallengeCard() {
       </motion.div>
     </>
   );
-}
+});

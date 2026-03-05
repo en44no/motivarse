@@ -4,11 +4,13 @@ import { useCoupleContext } from './CoupleContext';
 import { subscribeToHabits, subscribeToHabitLogs, subscribeToStreaks, deleteOrphanedStreaks } from '../services/habits.service';
 import { subscribeToRunLogs, subscribeToRunProgress } from '../services/running.service';
 import { subscribeToTodos, subscribeToPurchaseHistory } from '../services/shared.service';
+import { subscribeToWaterLogs } from '../services/water.service';
 import { getToday, formatDate } from '../lib/date-utils';
 import { subDays } from 'date-fns';
 import type { Habit, HabitLog, HabitStreak } from '../types/habit';
 import type { RunLog, RunProgress } from '../types/running';
 import type { SharedTodo, PurchaseRecord } from '../types/shared';
+import type { WaterLog } from '../types/water';
 
 interface DataContextType {
   habits: Habit[];
@@ -18,6 +20,7 @@ interface DataContextType {
   runProgress: RunProgress | null;
   todos: SharedTodo[];
   purchaseHistory: PurchaseRecord[];
+  waterLogs: WaterLog[];
   loading: boolean;
   error: string | null;
 }
@@ -30,6 +33,7 @@ const DataContext = createContext<DataContextType>({
   runProgress: null,
   todos: [],
   purchaseHistory: [],
+  waterLogs: [],
   loading: true,
   error: null,
 });
@@ -42,6 +46,7 @@ function clearAllData(
   setRunProgress: (v: RunProgress | null) => void,
   setTodos: (v: SharedTodo[]) => void,
   setPurchaseHistory: (v: PurchaseRecord[]) => void,
+  setWaterLogs: (v: WaterLog[]) => void,
 ) {
   setHabits([]);
   setHabitLogs([]);
@@ -50,6 +55,7 @@ function clearAllData(
   setRunProgress(null);
   setTodos([]);
   setPurchaseHistory([]);
+  setWaterLogs([]);
 }
 
 export function DataProvider({ children }: { children: ReactNode }) {
@@ -63,6 +69,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [runProgress, setRunProgress] = useState<RunProgress | null>(null);
   const [todos, setTodos] = useState<SharedTodo[]>([]);
   const [purchaseHistory, setPurchaseHistory] = useState<PurchaseRecord[]>([]);
+  const [waterLogs, setWaterLogs] = useState<WaterLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,7 +90,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // No user = logged out → clear everything
     if (!user) {
-      clearAllData(setHabits, setHabitLogs, setStreaks, setRunLogs, setRunProgress, setTodos, setPurchaseHistory);
+      clearAllData(setHabits, setHabitLogs, setStreaks, setRunLogs, setRunProgress, setTodos, setPurchaseHistory, setWaterLogs);
       hasLoadedRef.current = false;
       setLoading(false);
       return;
@@ -91,7 +98,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     if (!coupleId) {
       if (profile && !profile.coupleId) {
-        clearAllData(setHabits, setHabitLogs, setStreaks, setRunLogs, setRunProgress, setTodos, setPurchaseHistory);
+        clearAllData(setHabits, setHabitLogs, setStreaks, setRunLogs, setRunProgress, setTodos, setPurchaseHistory, setWaterLogs);
         hasLoadedRef.current = false;
         setLoading(false);
         return;
@@ -105,7 +112,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // We have a coupleId → subscribe to all data
     let cancelled = false;
     respondedRef.current = 0;
-    expectedRef.current = userId ? 7 : 6;
+    expectedRef.current = userId ? 8 : 7;
     setError(null);
     // Only show loading on first load; on re-subscriptions keep showing existing data
     if (!hasLoadedRef.current) setLoading(true);
@@ -168,6 +175,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (progressFirst) { progressFirst = false; onResponse(); }
     }));
 
+    let waterFirst = true;
+    unsubs.push(subscribeToWaterLogs(coupleId, getToday(), (logs) => {
+      if (cancelled) return;
+      setWaterLogs(logs);
+      if (waterFirst) { waterFirst = false; onResponse(); }
+    }));
+
     // User-scoped subscriptions
     if (userId) {
       let streaksFirst = true;
@@ -196,8 +210,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [userId, loading, habits, streaks]);
 
   const value = useMemo(() => ({
-    habits, habitLogs, streaks, runLogs, runProgress, todos, purchaseHistory, loading, error,
-  }), [habits, habitLogs, streaks, runLogs, runProgress, todos, purchaseHistory, loading, error]);
+    habits, habitLogs, streaks, runLogs, runProgress, todos, purchaseHistory, waterLogs, loading, error,
+  }), [habits, habitLogs, streaks, runLogs, runProgress, todos, purchaseHistory, waterLogs, loading, error]);
 
   return (
     <DataContext.Provider value={value}>

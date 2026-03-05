@@ -31,7 +31,7 @@ function TypingDots() {
   );
 }
 
-export function CoachChat() {
+export default function CoachChat() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<CoachMessage[]>([]);
   const [input, setInput] = useState('');

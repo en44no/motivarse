@@ -40,7 +40,7 @@ export function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-10"
       >
-        <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-emerald-400 mb-4 shadow-lg shadow-primary/25 shadow-[0_0_40px_rgba(34,197,94,0.2)]">
+        <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-primary-hover mb-4 shadow-lg shadow-primary/25 shadow-[var(--shadow-glow-primary)]">
           <Flame size={44} className="text-white" />
         </div>
         <h1 className="text-3xl font-extrabold text-text-primary tracking-tight">

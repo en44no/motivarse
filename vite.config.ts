@@ -6,6 +6,19 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   build: {
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/functions'],
+          'vendor-firebase-fcm': ['firebase/messaging'],
+          'vendor-animations': ['framer-motion'],
+          'vendor-dates': ['date-fns'],
+          'vendor-router': ['react-router-dom'],
+          // recharts y react-markdown NO van aquí — solo se usan en lazy chunks
+          // y Vite los agrupa automáticamente sin preloadearlos
+        },
+      },
+    },
   },
   plugins: [
     react(),
