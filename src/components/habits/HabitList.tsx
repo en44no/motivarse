@@ -77,7 +77,6 @@ function ReorderableItem({
             habit={habit}
             log={log}
             streak={streak}
-            partnerLog={partnerLog}
             partnerName={habit.scope === 'shared' ? partnerName : undefined}
             onEdit={onEdit ? () => onEdit(habit.id) : undefined}
             onDelete={onDelete ? () => onDelete(habit.id) : undefined}
@@ -226,7 +225,6 @@ export const HabitList = memo(function HabitList({
             habit={habit}
             log={logMap.get(habit.id)}
             streak={streakMap.get(habit.id)}
-            partnerLog={habit.scope === 'shared' ? partnerLogMap.get(habit.id) : undefined}
             partnerName={habit.scope === 'shared' ? partnerName : undefined}
             onEdit={onEdit ? () => onEdit(habit.id) : undefined}
             onDelete={onDelete ? () => onDelete(habit.id) : undefined}

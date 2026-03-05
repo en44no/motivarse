@@ -7,7 +7,8 @@ import { Dialog } from '../ui/Dialog';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useCoupleContext } from '../../contexts/CoupleContext';
 import { sendReaction, subscribeToReactions, type Reaction, type ReactionType } from '../../services/reactions.service';
-import { subscribeToNotes, markNoteRead, deleteNote } from '../../services/notes.service';
+import { markNoteRead, deleteNote } from '../../services/notes.service';
+import { useNotes } from '../../hooks/useNotes';
 import { getToday, formatRelativeTime } from '../../lib/date-utils';
 import { cn } from '../../lib/utils';
 import { ComposeNoteDialog } from './LoveNotesCard';
@@ -34,7 +35,7 @@ export const PartnerStatus = memo(function PartnerStatus({ partnerName, complete
   const [sending, setSending] = useState(false);
   const [composingNote, setComposingNote] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
-  const [notes, setNotes] = useState<LoveNote[]>([]);
+  const notes = useNotes();
 
   const coupleId = couple?.coupleId || null;
   const userId = user?.uid || null;
@@ -47,21 +48,16 @@ export const PartnerStatus = memo(function PartnerStatus({ partnerName, complete
     return () => unsub();
   }, [coupleId]);
 
-  // Subscribe to notes
-  useEffect(() => {
-    if (!coupleId) return;
-    const unsub = subscribeToNotes(coupleId, setNotes);
-    return () => unsub();
-  }, [coupleId]);
-
-  // Received unread notes
+  // Received notes (for dialog)
   const receivedNotes = useMemo(
     () => notes.filter((n) => n.toUserId === userId),
     [notes, userId],
   );
-  const unreadCount = useMemo(
-    () => receivedNotes.filter((n) => !n.read).length,
-    [receivedNotes],
+
+  // Sent notes that partner hasn't read yet (badge for sender)
+  const sentUnreadCount = useMemo(
+    () => notes.filter((n) => n.fromUserId === userId && !n.read).length,
+    [notes, userId],
   );
 
   // Which reactions have I already sent today?
@@ -215,9 +211,9 @@ export const PartnerStatus = memo(function PartnerStatus({ partnerName, complete
             >
               <MessageCircleHeart size={16} className="text-pink-400" />
               <span className="text-xs font-semibold text-pink-400">Nota</span>
-              {unreadCount > 0 && (
+              {sentUnreadCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-pink-500 text-white text-[10px] font-bold flex items-center justify-center px-1 shadow-sm">
-                  {unreadCount}
+                  {sentUnreadCount}
                 </span>
               )}
             </motion.button>

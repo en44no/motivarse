@@ -1,5 +1,5 @@
 import { motion, useSpring, useTransform } from 'framer-motion';
-import { useEffect, useId, useMemo } from 'react';
+import { memo, useEffect, useId } from 'react';
 
 interface WaterDropProps {
   fillPercent: number; // 0-1
@@ -26,7 +26,7 @@ function getWaterColor(percent: number): { fill: string; glow: string } {
 // Teardrop SVG path — wider belly, pointed top
 const DROP_PATH = 'M50 4 C50 4, 14 52, 14 68 C14 88, 30 100, 50 100 C70 100, 86 88, 86 68 C86 52, 50 4, 50 4 Z';
 
-export function WaterDrop({ fillPercent, totalMl, goalMl }: WaterDropProps) {
+export const WaterDrop = memo(function WaterDrop({ fillPercent, totalMl, goalMl }: WaterDropProps) {
   const clipId = useId();
   const gradientId = useId();
   const glowId = useId();
@@ -44,27 +44,29 @@ export function WaterDrop({ fillPercent, totalMl, goalMl }: WaterDropProps) {
     springFill.set(clamped);
   }, [clamped, springFill]);
 
-  // Generate wave path points for the animated surface
-  const waveOffset = useMemo(() => Math.random() * 100, []);
+  // Use CSS animations for waves instead of framer-motion to avoid JS overhead
 
   return (
     <div className="relative flex flex-col items-center">
-      {/* Glow ring behind the drop when complete */}
+      {/* Glow ring behind the drop when complete — CSS animation */}
       {isComplete && (
-        <motion.div
+        <div
           className="absolute inset-0 rounded-full"
           style={{
             background: `radial-gradient(ellipse at 50% 60%, ${glow}, transparent 70%)`,
+            animation: 'glowPulse 2.5s ease-in-out infinite',
           }}
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
         />
       )}
 
       <svg
         viewBox="0 0 100 106"
         className="w-[100px] h-[120px] drop-shadow-sm"
-        style={{ filter: isComplete ? `drop-shadow(0 0 12px ${glow})` : undefined }}
+        style={{
+          filter: isComplete ? `drop-shadow(0 0 12px ${glow})` : undefined,
+          containIntrinsicSize: '100px 120px',
+          contain: 'layout style paint',
+        }}
       >
         <defs>
           {/* Teardrop clip */}
@@ -117,31 +119,19 @@ export function WaterDrop({ fillPercent, totalMl, goalMl }: WaterDropProps) {
             fill={`url(#${gradientId})`}
           />
 
-          {/* Animated wave on water surface */}
+          {/* Animated wave on water surface — CSS animation for performance */}
           <motion.g style={{ y: waterY }}>
-            <motion.path
-              d="M0,4 C15,0 25,8 40,4 C55,0 65,8 80,4 C90,1 95,6 100,4 L100,0 L0,0 Z"
+            <path
+              d="M-10,4 C5,0 15,8 30,4 C45,0 55,8 70,4 C80,1 85,6 100,4 C115,0 125,8 140,4 L140,0 L-10,0 Z"
               fill={fill}
               opacity={0.6}
-              animate={{ x: [-10, 10, -10] }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: 'easeInOut',
-                delay: waveOffset * 0.01,
-              }}
+              style={{ animation: 'waveShift 3s ease-in-out infinite' }}
             />
-            <motion.path
-              d="M0,3 C20,7 30,0 50,3 C70,6 80,0 100,3 L100,0 L0,0 Z"
+            <path
+              d="M-10,3 C10,7 20,0 40,3 C60,6 70,0 90,3 C110,6 120,0 140,3 L140,0 L-10,0 Z"
               fill={fill}
               opacity={0.35}
-              animate={{ x: [8, -12, 8] }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: 'easeInOut',
-                delay: waveOffset * 0.01 + 0.5,
-              }}
+              style={{ animation: 'waveShift 4s ease-in-out infinite reverse' }}
             />
           </motion.g>
 
@@ -180,6 +170,7 @@ export function WaterDrop({ fillPercent, totalMl, goalMl }: WaterDropProps) {
           {percent}%
         </text>
       </svg>
+      {/* CSS keyframes injected once globally */}
     </div>
   );
-}
+});

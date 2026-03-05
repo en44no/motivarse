@@ -54,7 +54,7 @@ export function AppLayout() {
     <div className="min-h-screen bg-background flex flex-col max-w-lg mx-auto">
       <Header />
       <InstallBanner />
-      <main ref={mainRef} onScroll={handleScroll} className="flex-1 px-4 pb-36 overflow-y-auto">
+      <main ref={mainRef} onScroll={handleScroll} className="flex-1 px-4 pb-52 overflow-y-auto">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}

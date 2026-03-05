@@ -93,3 +93,13 @@ input, textarea, select {
 .safe-bottom {
   padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
 }
+
+/* Water drop wave animations — declared globally to avoid per-instance <style> tags */
+@keyframes waveShift {
+  0%, 100% { transform: translateX(-10px); }
+  50% { transform: translateX(10px); }
+}
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}

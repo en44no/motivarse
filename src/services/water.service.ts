@@ -25,8 +25,6 @@ export function subscribeToWaterLogs(
   );
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as WaterLog)));
-  }, () => {
-    callback([]);
   });
 }
 

@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
@@ -57,6 +57,22 @@ export function useWater(habitId: string) {
     });
   }, [logs, habitId, userId, today]);
 
+  // Auto-complete habit when goal is met (reactive, no race condition)
+  const autoCompletingRef = useRef(false);
+  useEffect(() => {
+    if (isGoalMet && !isHabitCompleted && !autoCompletingRef.current) {
+      autoCompletingRef.current = true;
+      (async () => {
+        try {
+          await toggleHabitLog(habitId, userId, coupleId, today, true);
+          await recalcStreak(true);
+        } finally {
+          autoCompletingRef.current = false;
+        }
+      })();
+    }
+  }, [isGoalMet, isHabitCompleted, habitId, userId, coupleId, today, recalcStreak]);
+
   const addIntake = useCallback(async (amount: number) => {
     if (!userId || !coupleId) return;
     try {
@@ -67,16 +83,10 @@ export function useWater(habitId: string) {
         amount,
         timestamp: Date.now(),
       });
-
-      const newTotal = myTotal + amount;
-      if (newTotal >= WATER_GOAL_ML && !isHabitCompleted) {
-        await toggleHabitLog(habitId, userId, coupleId, today, true);
-        await recalcStreak(true);
-      }
     } catch {
       toast.error('No se pudo registrar el agua.');
     }
-  }, [userId, coupleId, today, myTotal, isHabitCompleted, habitId, recalcStreak]);
+  }, [userId, coupleId, today]);
 
   const resetDay = useCallback(async () => {
     if (!userId || !coupleId) return;

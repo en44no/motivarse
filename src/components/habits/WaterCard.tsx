@@ -17,7 +17,6 @@ interface WaterCardProps {
   habit: Habit;
   log?: HabitLog;
   streak?: HabitStreak;
-  partnerLog?: HabitLog;
   partnerName?: string;
   onEdit?: () => void;
   onDelete?: () => void;

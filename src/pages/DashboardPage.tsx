@@ -14,6 +14,7 @@ import { RunningProgress } from '../components/dashboard/RunningProgress';
 import { QuickActions } from '../components/dashboard/QuickActions';
 import { ChallengeCard } from '../components/dashboard/ChallengeCard';
 import { ReceivedReactions } from '../components/dashboard/ReceivedReactions';
+import { FloatingLoveNotes } from '../components/dashboard/FloatingLoveNotes';
 import { Card } from '../components/ui/Card';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { ROUTES } from '../config/routes';
@@ -49,6 +50,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-5 py-4">
+      <FloatingLoveNotes />
       <ReceivedReactions />
       <TodaySummary
         progress={todayProgress}
