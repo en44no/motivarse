@@ -10,7 +10,7 @@ export interface WaterLog {
 export const WATER_GOAL_ML = 2000;
 
 export const WATER_QUICK_AMOUNTS = [
-  { label: 'Vaso', amount: 250 },
+  { label: 'Vaso (250ml)', amount: 250 },
   { label: '500ml', amount: 500 },
   { label: '1L', amount: 1000 },
   { label: '1.2L', amount: 1200 },
