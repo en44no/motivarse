@@ -31,7 +31,7 @@
   --color-surface-alt: #1e2a3b;
 
   --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-mono: ui-monospace, Menlo, Monaco, Consolas, 'Courier New', monospace;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.15);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -92,6 +92,16 @@ input, textarea, select {
 
 .safe-bottom {
   padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+
+/* Focus-visible for interactive elements */
+button:focus-visible,
+[role="tab"]:focus-visible,
+[role="switch"]:focus-visible,
+[role="button"]:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 /* Water drop wave animations — declared globally to avoid per-instance <style> tags */

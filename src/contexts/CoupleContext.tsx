@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from 'react';
 import { useAuthContext } from './AuthContext';
 import { subscribeToCouple } from '../services/user.service';
 import type { Couple } from '../types/user';
@@ -87,8 +87,10 @@ export function CoupleProvider({ children }: { children: ReactNode }) {
     ? couple.memberNames[partnerId || ''] || 'Pareja'
     : '';
 
+  const value = useMemo(() => ({ couple, partnerId, partnerName, loading }), [couple, partnerId, partnerName, loading]);
+
   return (
-    <CoupleContext.Provider value={{ couple, partnerId, partnerName, loading }}>
+    <CoupleContext.Provider value={value}>
       {children}
     </CoupleContext.Provider>
   );

@@ -160,6 +160,7 @@ export const WaterCard = memo(function WaterCard({
             <div className="relative shrink-0" ref={menuRef}>
               <button
                 onClick={() => setShowMenu(!showMenu)}
+                aria-label="Opciones"
                 className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
               >
                 <MoreVertical size={16} />
@@ -256,6 +257,7 @@ export const WaterCard = memo(function WaterCard({
                 ref={customInputRef}
                 type="number"
                 inputMode="numeric"
+                aria-label="Cantidad de agua en mililitros"
                 value={customAmount}
                 onChange={(e) => setCustomAmount(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleCustomAdd()}
@@ -268,6 +270,7 @@ export const WaterCard = memo(function WaterCard({
               whileTap={{ scale: 0.9 }}
               onClick={handleCustomAdd}
               disabled={!customAmount || parseInt(customAmount, 10) <= 0}
+              aria-label="Agregar cantidad personalizada"
               className={cn(
                 'p-2 rounded-xl transition-colors',
                 customAmount && parseInt(customAmount, 10) > 0

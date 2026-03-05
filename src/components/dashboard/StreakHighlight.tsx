@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Flame } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Card } from '../ui/Card';
@@ -9,7 +10,7 @@ interface StreakHighlightProps {
   habits: Habit[];
 }
 
-export function StreakHighlight({ bestStreak, habits }: StreakHighlightProps) {
+export const StreakHighlight = memo(function StreakHighlight({ bestStreak, habits }: StreakHighlightProps) {
   if (!bestStreak || bestStreak.currentStreak === 0) return null;
 
   const habit = habits.find((h) => h.id === bestStreak.habitId);
@@ -37,4 +38,4 @@ export function StreakHighlight({ bestStreak, habits }: StreakHighlightProps) {
       </div>
     </Card>
   );
-}
+});

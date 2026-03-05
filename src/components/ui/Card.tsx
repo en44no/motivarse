@@ -1,11 +1,22 @@
-import type { HTMLAttributes } from 'react';
+import type { HTMLAttributes, KeyboardEvent } from 'react';
 import { cn } from '../../lib/utils';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'interactive' | 'highlighted';
 }
 
-export function Card({ className, variant = 'default', children, ...props }: CardProps) {
+export function Card({ className, variant = 'default', children, onClick, ...props }: CardProps) {
+  const isClickable = variant === 'interactive' && !!onClick;
+
+  const handleKeyDown = isClickable
+    ? (e: KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick?.(e as any);
+        }
+      }
+    : undefined;
+
   return (
     <div
       className={cn(
@@ -14,6 +25,8 @@ export function Card({ className, variant = 'default', children, ...props }: Car
         variant === 'highlighted' && 'border-primary/30 bg-primary-soft shadow-[var(--shadow-glow-primary)]',
         className
       )}
+      onClick={onClick}
+      {...(isClickable ? { tabIndex: 0, role: 'button', onKeyDown: handleKeyDown } : {})}
       {...props}
     >
       {children}

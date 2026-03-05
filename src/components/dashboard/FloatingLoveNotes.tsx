@@ -67,6 +67,7 @@ export function FloatingLoveNotes() {
               {/* Dismiss button */}
               <button
                 onClick={() => handleDismiss(note.id)}
+                aria-label="Cerrar nota"
                 className="absolute top-1 right-7 w-6 h-6 rounded-full flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity"
               >
                 <X size={14} className={colors.text} />

@@ -13,10 +13,11 @@ export function useAuth() {
     setIsSubmitting(true);
     try {
       await loginUser(email, password);
-    } catch (e: any) {
-      const msg = e.code === 'auth/invalid-credential'
+    } catch (e: unknown) {
+      const code = e instanceof Error ? (e as any).code : undefined;
+      const msg = code === 'auth/invalid-credential'
         ? 'Email o contraseña incorrectos'
-        : e.code === 'auth/too-many-requests'
+        : code === 'auth/too-many-requests'
         ? 'Demasiados intentos. Esperá un momento.'
         : 'Error al iniciar sesión';
       setError(msg);
@@ -30,10 +31,11 @@ export function useAuth() {
     setIsSubmitting(true);
     try {
       await registerUser(email, password, displayName);
-    } catch (e: any) {
-      const msg = e.code === 'auth/email-already-in-use'
+    } catch (e: unknown) {
+      const code = e instanceof Error ? (e as any).code : undefined;
+      const msg = code === 'auth/email-already-in-use'
         ? 'Este email ya está en uso'
-        : e.code === 'auth/weak-password'
+        : code === 'auth/weak-password'
         ? 'La contraseña debe tener al menos 6 caracteres'
         : 'Error al registrarse';
       setError(msg);
@@ -56,8 +58,9 @@ export function useAuth() {
     setIsSubmitting(true);
     try {
       await linkPartner(user.uid, partnerEmail);
-    } catch (e: any) {
-      setError(e.message || 'Error al vincular pareja');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Error desconocido';
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }

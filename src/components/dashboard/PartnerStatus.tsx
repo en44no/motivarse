@@ -61,10 +61,13 @@ export const PartnerStatus = memo(function PartnerStatus({ partnerName, complete
   );
 
   // Which reactions have I already sent today?
-  const sentToday = new Set(
-    reactions
-      .filter((r) => r.fromUserId === userId && r.targetDate === today)
-      .map((r) => r.type),
+  const sentToday = useMemo(
+    () => new Set(
+      reactions
+        .filter((r) => r.fromUserId === userId && r.targetDate === today)
+        .map((r) => r.type),
+    ),
+    [reactions, userId, today],
   );
 
   // Reactions received from partner today

@@ -30,14 +30,18 @@ export function useHabits() {
   const userId = user?.uid;
 
   // My active habits: habits I created + shared habits (active only)
-  const myHabits = habits.filter((h) => h.isActive && (h.userId === userId || h.scope === 'shared'));
+  const myHabits = useMemo(
+    () => habits.filter((h) => h.isActive && (h.userId === userId || h.scope === 'shared')),
+    [habits, userId],
+  );
 
   // Filter habits scheduled for today (respects frequency: daily/weekdays/weekends/custom)
-  const todayHabits = myHabits.filter((h) => isHabitScheduledForDate(h));
+  const todayHabits = useMemo(() => myHabits.filter((h) => isHabitScheduledForDate(h)), [myHabits]);
 
-  const todayLogs = logs.filter((l) => l.date === getToday());
-  const myTodayLogs = todayLogs.filter((l) => l.userId === userId);
-  const partnerTodayLogs = todayLogs.filter((l) => l.userId !== userId);
+  const today = useMemo(() => getToday(), []);
+  const todayLogs = useMemo(() => logs.filter((l) => l.date === today), [logs, today]);
+  const myTodayLogs = useMemo(() => todayLogs.filter((l) => l.userId === userId), [todayLogs, userId]);
+  const partnerTodayLogs = useMemo(() => todayLogs.filter((l) => l.userId !== userId), [todayLogs, userId]);
 
   const getPartnerLog = useCallback(
     (habitId: string) =>

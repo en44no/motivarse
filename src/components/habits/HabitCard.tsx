@@ -82,7 +82,7 @@ export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle,
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ layout: { duration: 0.2 } }}
@@ -170,6 +170,7 @@ export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle,
             <div className="relative shrink-0" ref={menuRef}>
               <button
                 onClick={() => setShowMenu(!showMenu)}
+                aria-label="Opciones"
                 className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
               >
                 <MoreVertical size={16} />

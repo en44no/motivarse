@@ -56,6 +56,7 @@ export function ComposeNoteDialog({
     <Dialog open={open} onClose={onClose} title="Nota de amor 💌">
       <div className="space-y-4">
         <textarea
+          aria-label="Escribe una nota de amor"
           className="w-full rounded-xl bg-surface-light border border-border p-3.5 text-sm text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
           placeholder={`Escribile algo lindo a ${partnerName}...`}
           rows={3}
@@ -95,6 +96,7 @@ export function ComposeNoteDialog({
             <span className="text-[11px] text-text-muted">o escribí uno:</span>
             <input
               type="text"
+              aria-label="Seleccionar emoji"
               value={customEmoji}
               onChange={(e) => {
                 setCustomEmoji(e.target.value.slice(0, 2));

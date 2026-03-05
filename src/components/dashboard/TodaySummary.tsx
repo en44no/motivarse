@@ -40,7 +40,7 @@ export const TodaySummary = memo(function TodaySummary({ progress, completedCoun
       progress >= 100 ? 'border-t-2 border-t-primary' : progress > 50 ? 'border-t-2 border-t-secondary' : 'border-t-2 border-t-border'
     )}>
       <div className="relative w-28 h-28 shrink-0">
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120" role="img" aria-label="Progreso del día">
           <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--color-surface-light)" strokeWidth="8" />
           <motion.circle
             cx="60" cy="60" r={radius}

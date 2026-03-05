@@ -52,6 +52,7 @@ export function HabitTimeInput({ value, goalTime, comparison, onSubmit, complete
     <div className="flex items-center gap-2">
       <input
         type="time"
+        aria-label="Tiempo en minutos"
         value={time}
         onChange={(e) => setTime(e.target.value)}
         className="bg-surface-hover border border-border rounded-xl px-3 py-1.5 text-sm font-mono text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
