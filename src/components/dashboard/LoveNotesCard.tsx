@@ -76,6 +76,7 @@ export function ComposeNoteDialog({
               <button
                 key={e}
                 type="button"
+                aria-label={`Emoji ${e}`}
                 onClick={() => {
                   setEmoji(emoji === e ? undefined : e);
                   setCustomEmoji('');

@@ -104,7 +104,7 @@ export function getProgress(condition: string, ctx: AchievementEvalContext): num
 export function useAchievements() {
   const { user, profile } = useAuthContext();
   const { couple, partnerId } = useCoupleContext();
-  const { habitLogs, streaks, runLogs, runProgress, todos } = useDataContext();
+  const { habits, habitLogs, streaks, runLogs, runProgress, todos } = useDataContext();
 
   const [unlockedAchievements, setUnlockedAchievements] = useState<Achievement[]>([]);
   const [newAchievement, setNewAchievement] = useState<AchievementDef | null>(null);
@@ -157,17 +157,20 @@ export function useAchievements() {
 
     const completedTodos = todos.filter((t) => t.completed).length;
 
-    // Couple habit sync: check if both users completed all habits today
+    // Couple habit sync: check if both users completed ALL their habits today
     let coupleHabitSync = false;
     if (partnerId) {
       const today = new Date().toISOString().slice(0, 10);
-      const todayMyLogs = habitLogs.filter(
-        (l) => l.date === today && l.userId === userId && l.completed
+      const todayScheduled = habits.filter((h) => h.isActive && (h.userId === userId || h.scope === 'shared'));
+      const myCompletedIds = new Set(
+        habitLogs.filter((l) => l.date === today && l.userId === userId && l.completed).map((l) => l.habitId)
       );
-      const todayPartnerLogs = habitLogs.filter(
-        (l) => l.date === today && l.userId === partnerId && l.completed
+      const partnerCompletedIds = new Set(
+        habitLogs.filter((l) => l.date === today && l.userId === partnerId && l.completed).map((l) => l.habitId)
       );
-      coupleHabitSync = todayMyLogs.length > 0 && todayPartnerLogs.length > 0;
+      const myAllDone = todayScheduled.length > 0 && todayScheduled.every((h) => myCompletedIds.has(h.id));
+      const partnerAllDone = todayScheduled.length > 0 && todayScheduled.every((h) => partnerCompletedIds.has(h.id));
+      coupleHabitSync = myAllDone && partnerAllDone;
     }
 
     // Couple run sync: both ran on same day
@@ -199,7 +202,7 @@ export function useAchievements() {
       coupleRunSync,
       hasUsedAllSections,
     };
-  }, [habitLogs, streaks, runLogs, runProgress, todos, journalCount, userId, partnerId]);
+  }, [habits, habitLogs, streaks, runLogs, runProgress, todos, journalCount, userId, partnerId]);
 
   // Evaluate and unlock achievements
   const checkAndUnlock = useCallback(() => {

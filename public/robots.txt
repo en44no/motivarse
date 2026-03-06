@@ -1,4 +1,2 @@
 User-agent: *
 Allow: /
-
-Sitemap: https://motivarse-b5cf8.web.app/sitemap.xml

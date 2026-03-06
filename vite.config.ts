@@ -61,6 +61,19 @@ export default defineConfig({
         clientsClaim: true,
         // NO runtime caching for Firestore — it uses its own protocol
         // Caching Firestore responses was serving stale/empty data
+        runtimeCaching: [
+          {
+            urlPattern: /\.js$/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'js-chunks',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 7 * 24 * 60 * 60,
+              },
+            },
+          },
+        ],
       },
     }),
   ],

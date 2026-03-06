@@ -59,6 +59,7 @@ export function SharedPage() {
 
   return (
     <div className="space-y-4 py-4">
+      <h1 className="sr-only">Compartido</h1>
       <Tabs tabs={TABS} activeTab={tab} onChange={(id) => setTab(id as Tab)} />
 
       {tab === 'lista' && (

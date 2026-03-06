@@ -60,6 +60,7 @@ export function RunningPage() {
 
   return (
     <div className="space-y-4 py-4">
+      <h1 className="sr-only">Correr</h1>
       <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
 
       {activeTab === 'plan' && (

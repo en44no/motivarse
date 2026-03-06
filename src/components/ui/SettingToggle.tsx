@@ -29,6 +29,7 @@ export function SettingToggle({ icon, iconOff, title, description, enabled, onTo
         <div
           role="switch"
           aria-checked={enabled}
+          aria-label={title}
           tabIndex={0}
           onKeyDown={handleKeyDown}
           className={`w-10 h-6 rounded-full transition-colors ${enabled ? 'bg-primary' : 'bg-surface-light'}`}

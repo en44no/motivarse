@@ -36,6 +36,24 @@ export function CacoTimer({
   const [phaseLabel, setPhaseLabel] = useState('');
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+  // Keep screen awake while timer is running
+  useEffect(() => {
+    if (state !== 'running' && state !== 'phase_switch') {
+      wakeLockRef.current?.release().catch(() => {});
+      wakeLockRef.current = null;
+      return;
+    }
+    if (wakeLockRef.current) return;
+    navigator.wakeLock?.request('screen')
+      .then((lock) => { wakeLockRef.current = lock; })
+      .catch(() => {});
+    return () => {
+      wakeLockRef.current?.release().catch(() => {});
+      wakeLockRef.current = null;
+    };
+  }, [state]);
 
   const totalPhaseSeconds = Math.round(
     (phase === 'run' ? runMinutes : walkMinutes) * 60
@@ -297,6 +315,8 @@ export function CacoTimer({
             className="text-center"
           >
             <span
+              role="status"
+              aria-live="polite"
               className={cn(
                 'inline-block px-6 py-2 rounded-full text-lg font-bold',
                 isRunPhase
@@ -317,6 +337,7 @@ export function CacoTimer({
             isRunPhase={isRunPhase}
             runMinutes={runMinutes}
             walkMinutes={walkMinutes}
+            aria-label={`${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')}`}
           />
 
           {/* Repetition indicator */}

@@ -113,6 +113,7 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
                 key={c}
                 type="button"
                 onClick={() => setColor(c)}
+                aria-label={`Color ${c}`}
                 className="w-8 h-8 rounded-full transition-transform"
                 style={{
                   backgroundColor: c,
@@ -161,6 +162,7 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
                   key={day.value}
                   type="button"
                   onClick={() => toggleDay(day.value)}
+                  aria-label={day.label}
                   className={cn(
                     'w-9 h-9 rounded-full text-xs font-bold transition-all',
                     customDays.includes(day.value)

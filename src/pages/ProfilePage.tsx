@@ -89,6 +89,7 @@ export function ProfilePage() {
 
   return (
     <div className="space-y-4 py-4">
+      <h1 className="sr-only">Perfil</h1>
       {/* Profile header */}
       <Card>
         <div className="flex items-center gap-4">

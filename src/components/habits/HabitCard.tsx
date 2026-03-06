@@ -35,7 +35,7 @@ export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle,
   const [showConfetti, setShowConfetti] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close menu on outside click
+  // Close menu on outside click or Escape
   useEffect(() => {
     if (!showMenu) return;
     function handleClick(e: MouseEvent) {
@@ -43,8 +43,15 @@ export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle,
         setShowMenu(false);
       }
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setShowMenu(false);
+    }
     document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [showMenu]);
 
   function handleToggle(completed: boolean, value?: string, metGoal?: boolean) {

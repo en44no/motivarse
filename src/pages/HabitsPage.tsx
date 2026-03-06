@@ -183,6 +183,7 @@ export function HabitsPage() {
 
   return (
     <div className="space-y-4 py-4">
+      <h1 className="sr-only">Hábitos</h1>
       <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
 
       <AnimatePresence mode="wait">
@@ -232,6 +233,8 @@ export function HabitsPage() {
               soundEnabled={soundEnabled}
               reorderable={isToday}
               onReorder={isToday ? handleReorder : undefined}
+              selectedDate={selectedDate}
+              isPastDate={!isToday}
             />
           </motion.div>
         )}

@@ -19,9 +19,11 @@ interface HabitListProps {
   soundEnabled?: boolean;
   reorderable?: boolean;
   onReorder?: (orderedIds: string[]) => void;
+  selectedDate?: string;
+  isPastDate?: boolean;
 }
 
-function ReorderableItem({
+const ReorderableItem = memo(function ReorderableItem({
   habit,
   log,
   streak,
@@ -34,6 +36,8 @@ function ReorderableItem({
   draggingId,
   onDragStart,
   onDragEnd,
+  selectedDate,
+  isPastDate,
 }: {
   habit: Habit;
   log?: HabitLog;
@@ -47,6 +51,8 @@ function ReorderableItem({
   draggingId: string | null;
   onDragStart: (id: string) => void;
   onDragEnd: () => void;
+  selectedDate?: string;
+  isPastDate?: boolean;
 }) {
   const dragControls = useDragControls();
 
@@ -83,6 +89,8 @@ function ReorderableItem({
             soundEnabled={soundEnabled}
             isDragging={draggingId === habit.id}
             reorderable
+            selectedDate={selectedDate}
+            isPastDate={isPastDate}
           />
         ) : (
           <HabitCard
@@ -104,7 +112,7 @@ function ReorderableItem({
       </div>
     </Reorder.Item>
   );
-}
+});
 
 export const HabitList = memo(function HabitList({
   habits,
@@ -120,6 +128,8 @@ export const HabitList = memo(function HabitList({
   soundEnabled,
   reorderable,
   onReorder,
+  selectedDate,
+  isPastDate,
 }: HabitListProps) {
   const [orderedHabits, setOrderedHabits] = useState<Habit[]>(habits);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -203,6 +213,8 @@ export const HabitList = memo(function HabitList({
               draggingId={draggingId}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
+              selectedDate={selectedDate}
+              isPastDate={isPastDate}
             />
           ))}
         </Reorder.Group>
@@ -229,6 +241,8 @@ export const HabitList = memo(function HabitList({
             onEdit={onEdit ? () => onEdit(habit.id) : undefined}
             onDelete={onDelete ? () => onDelete(habit.id) : undefined}
             soundEnabled={soundEnabled}
+            selectedDate={selectedDate}
+            isPastDate={isPastDate}
           />
         ) : (
           <HabitCard

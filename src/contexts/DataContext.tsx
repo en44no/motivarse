@@ -176,7 +176,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }));
 
     let waterFirst = true;
-    unsubs.push(subscribeToWaterLogs(coupleId, getToday(), (logs) => {
+    unsubs.push(subscribeToWaterLogs(coupleId, (logs) => {
       if (cancelled) return;
       setWaterLogs(logs);
       if (waterFirst) { waterFirst = false; onResponse(); }

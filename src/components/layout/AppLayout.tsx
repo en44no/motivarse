@@ -8,6 +8,8 @@ const CoachChat = lazy(() => import('../ai/CoachChat'));
 import { AchievementUnlock } from '../achievements/AchievementUnlock';
 import { useAchievements } from '../../hooks/useAchievements';
 import { warmUpAudio } from '../../lib/sound-utils';
+import { refreshFcmTokenIfNeeded } from '../../lib/notifications';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 /**
  * Freezes the outlet content per animation instance so the exiting page
@@ -22,15 +24,35 @@ function FrozenOutlet() {
 
 export function AppLayout() {
   const location = useLocation();
+  const { user } = useAuthContext();
   const { newAchievement, dismissNewAchievement } = useAchievements();
   const scrollPositions = useRef<Map<string, number>>(new Map());
   const mainRef = useRef<HTMLElement>(null);
+  const rafRef = useRef<number>(0);
+
+  // Auto-refresh FCM token on app start (handles token rotation)
+  useEffect(() => {
+    if (user?.uid) {
+      refreshFcmTokenIfNeeded(user.uid);
+    }
+  }, [user?.uid]);
 
   const handleScroll = useCallback(() => {
-    if (mainRef.current) {
-      scrollPositions.current.set(location.pathname, mainRef.current.scrollTop);
-    }
+    if (rafRef.current) return;
+    rafRef.current = requestAnimationFrame(() => {
+      if (mainRef.current) {
+        scrollPositions.current.set(location.pathname, mainRef.current.scrollTop);
+      }
+      rafRef.current = 0;
+    });
   }, [location.pathname]);
+
+  // Cancel pending rAF on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
 
   // Restore scroll position when pathname changes
   useEffect(() => {

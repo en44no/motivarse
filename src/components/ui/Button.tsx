@@ -11,7 +11,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-gradient-to-b from-primary to-primary-hover text-[#052e16] hover:from-primary-hover hover:to-primary active:scale-[0.97] shadow-[var(--shadow-glow-primary)]',
+  primary: 'bg-gradient-to-b from-primary to-primary-hover text-primary-contrast hover:from-primary-hover hover:to-primary active:scale-[0.97] shadow-[var(--shadow-glow-primary)]',
   secondary: 'bg-gradient-to-b from-secondary to-orange-600 text-white hover:from-secondary-hover hover:to-orange-700 active:scale-[0.97] shadow-[0_2px_8px_rgba(249,115,22,0.3)]',
   ghost: 'bg-transparent text-text-secondary hover:bg-surface-hover hover:text-text-primary',
   danger: 'bg-gradient-to-b from-danger to-red-600 text-white hover:from-red-600 hover:to-red-700 active:scale-[0.97] shadow-[0_2px_8px_rgba(239,68,68,0.3)]',

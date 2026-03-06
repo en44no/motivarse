@@ -24,6 +24,7 @@ interface WaterCardProps {
   isDragging?: boolean;
   reorderable?: boolean;
   isPastDate?: boolean;
+  selectedDate?: string;
 }
 
 export const WaterCard = memo(function WaterCard({
@@ -37,8 +38,9 @@ export const WaterCard = memo(function WaterCard({
   isDragging = false,
   reorderable = false,
   isPastDate = false,
+  selectedDate,
 }: WaterCardProps) {
-  const { myTotal, partnerTotal, isGoalMet, addIntake, resetDay } = useWater(habit.id);
+  const { myTotal, partnerTotal, isGoalMet, addIntake, resetDay } = useWater(habit.id, selectedDate);
   const [showMenu, setShowMenu] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
@@ -114,7 +116,10 @@ export const WaterCard = memo(function WaterCard({
                 {streak && <HabitStreakBadge streak={streak.currentStreak} />}
               </div>
               <p className="text-xs text-text-muted mt-0.5">
-                {completed ? 'Meta cumplida' : 'No completado'}
+                {myTotal > 0
+                  ? `${myTotal >= 1000 ? `${(myTotal / 1000).toFixed(1)}L` : `${myTotal}ml`} / ${WATER_GOAL_ML / 1000}L${completed ? ' — Meta cumplida' : ''}`
+                  : completed ? 'Meta cumplida' : 'No completado'
+                }
               </p>
             </div>
           </div>

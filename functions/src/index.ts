@@ -55,7 +55,11 @@ export const dailyHabitReminder = onSchedule(
       }));
 
     if (messages.length > 0) {
-      await getMessaging().sendEach(messages);
+      try {
+        await getMessaging().sendEach(messages);
+      } catch (err) {
+        console.error('dailyHabitReminder sendEach error:', err);
+      }
     }
   }
 );
@@ -177,7 +181,11 @@ export const weeklySummary = onSchedule(
     }
 
     if (messages.length > 0) {
-      await getMessaging().sendEach(messages);
+      try {
+        await getMessaging().sendEach(messages);
+      } catch (err) {
+        console.error('weeklySummary sendEach error:', err);
+      }
     }
   }
 );
@@ -220,15 +228,19 @@ export const notifyTaskCompleted = onCall(async (request) => {
     return { sent: false };
   }
 
-  await getMessaging().send({
-    token: partnerData.fcmToken,
-    notification: {
-      title: 'Motivarse 💪',
-      body: `${completedByName} completó: ${taskTitle}`,
-    },
-  });
-
-  return { sent: true };
+  try {
+    await getMessaging().send({
+      token: partnerData.fcmToken,
+      notification: {
+        title: 'Motivarse 💪',
+        body: `${completedByName} completó: ${taskTitle}`,
+      },
+    });
+    return { sent: true };
+  } catch (err) {
+    console.error('notifyTaskCompleted FCM error:', err);
+    return { sent: false };
+  }
 });
 
 // ── Notify habit completed ───────────────────────────────────────────────────
@@ -269,15 +281,19 @@ export const notifyHabitCompleted = onCall(async (request) => {
     return { sent: false };
   }
 
-  await getMessaging().send({
-    token: partnerData.fcmToken,
-    notification: {
-      title: 'Motivarse 💪',
-      body: `${completedByName} completó: ${habitName} ✅`,
-    },
-  });
-
-  return { sent: true };
+  try {
+    await getMessaging().send({
+      token: partnerData.fcmToken,
+      notification: {
+        title: 'Motivarse 💪',
+        body: `${completedByName} completó: ${habitName} ✅`,
+      },
+    });
+    return { sent: true };
+  } catch (err) {
+    console.error('notifyHabitCompleted FCM error:', err);
+    return { sent: false };
+  }
 });
 
 // ── Notify reaction ─────────────────────────────────────────────────────────
@@ -305,13 +321,17 @@ export const notifyReaction = onDocumentCreated('reactions/{reactionId}', async 
   const receiverData = receiverDoc.data()!;
   if (!receiverData.notificationsEnabled || !receiverData.fcmToken) return;
 
-  await getMessaging().send({
-    token: receiverData.fcmToken,
-    notification: {
-      title: 'Motivarse 💪',
-      body: `${senderName} te envió ${type}`,
-    },
-  });
+  try {
+    await getMessaging().send({
+      token: receiverData.fcmToken,
+      notification: {
+        title: 'Motivarse 💪',
+        body: `${senderName} te envió ${type}`,
+      },
+    });
+  } catch (err) {
+    console.error('notifyReaction FCM error:', err);
+  }
 });
 
 // ── AI Proxy ──────────────────────────────────────────────────────────────────

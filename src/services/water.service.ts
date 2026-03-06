@@ -15,16 +15,16 @@ const waterLogsCol = collection(db, 'waterLogs');
 
 export function subscribeToWaterLogs(
   coupleId: string,
-  date: string,
   callback: (logs: WaterLog[]) => void
 ): Unsubscribe {
   const q = query(
     waterLogsCol,
-    where('coupleId', '==', coupleId),
-    where('date', '==', date)
+    where('coupleId', '==', coupleId)
   );
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as WaterLog)));
+  }, () => {
+    callback([]);
   });
 }
 

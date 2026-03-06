@@ -61,6 +61,8 @@ export const WaterDrop = memo(function WaterDrop({ fillPercent, totalMl, goalMl 
 
       <svg
         viewBox="0 0 100 106"
+        role="img"
+        aria-label={`Progreso de agua: ${totalMl >= 1000 ? (totalMl / 1000).toFixed(1) + 'L' : totalMl + 'ml'} de ${goalMl / 1000}L`}
         className="w-[100px] h-[120px] drop-shadow-sm"
         style={{
           filter: isComplete ? `drop-shadow(0 0 12px ${glow})` : undefined,

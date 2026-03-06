@@ -50,6 +50,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-5 py-4">
+      <h1 className="sr-only">Dashboard</h1>
       <FloatingLoveNotes />
       <ReceivedReactions />
       <TodaySummary

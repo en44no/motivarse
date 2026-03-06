@@ -11,6 +11,7 @@
   --color-primary: #22c55e;
   --color-primary-hover: #16a34a;
   --color-primary-soft: rgba(34, 197, 94, 0.15);
+  --color-primary-contrast: #052e16;
 
   --color-secondary: #f97316;
   --color-secondary-hover: #ea580c;
@@ -25,7 +26,7 @@
 
   --color-text-primary: #f1f5f9;
   --color-text-secondary: #94a3b8;
-  --color-text-muted: #8094ae;
+  --color-text-muted: #8fa5be;
 
   --color-surface-elevated: #1e293b;
   --color-surface-alt: #1e2a3b;
@@ -39,10 +40,6 @@
   --shadow-glow-primary: 0 0 20px rgba(34, 197, 94, 0.15);
   --shadow-glow-secondary: 0 0 20px rgba(249, 115, 22, 0.15);
   --shadow-glow-accent: 0 0 20px rgba(139, 92, 246, 0.15);
-}
-
-:root {
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 html, body, #root {
@@ -59,6 +56,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   letter-spacing: -0.01em;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -112,4 +110,13 @@ a:focus-visible {
 @keyframes glowPulse {
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

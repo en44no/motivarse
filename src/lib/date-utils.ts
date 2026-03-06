@@ -64,7 +64,7 @@ export function isHabitScheduledForDate(habit: Habit, date: Date = new Date()): 
     case 'weekends':
       return dayOfWeek === 0 || dayOfWeek === 6;
     case 'custom':
-      return habit.customDays?.includes(dayOfWeek) ?? true;
+      return habit.customDays?.includes(dayOfWeek) ?? false;
     default:
       return true;
   }
