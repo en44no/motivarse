@@ -127,7 +127,10 @@ export function HabitsPage() {
 
   function handleFormSubmit(data: Parameters<typeof addCustomHabit>[0]) {
     if (editingHabit) {
-      editHabit(editingHabit.id, data);
+      editHabit(editingHabit.id, {
+        ...data,
+        reminder: data.reminder ?? { enabled: false, time: '09:00' },
+      });
     } else {
       addCustomHabit(data);
     }

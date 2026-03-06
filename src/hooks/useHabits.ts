@@ -110,6 +110,7 @@ export function useHabits() {
     goal?: Habit['goal'];
     scope?: Habit['scope'];
     completionMode?: Habit['completionMode'];
+    reminder?: Habit['reminder'];
   }) {
     if (!userId || !coupleId) return;
     try {
@@ -117,6 +118,7 @@ export function useHabits() {
         ...data,
         scope: data.scope || 'individual',
         completionMode: data.scope === 'shared' ? (data.completionMode || 'both') : undefined,
+        ...(data.reminder ? { reminder: data.reminder } : {}),
         userId,
         coupleId,
         isPreset: false,

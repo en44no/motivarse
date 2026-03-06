@@ -24,6 +24,7 @@ export interface Habit {
   scope: HabitScope;
   completionMode?: HabitCompletionMode; // only for shared habits
   isActive: boolean;
+  reminder?: { enabled: boolean; time: string }; // time in "HH:mm"
   order: number;
   createdAt: number;
 }

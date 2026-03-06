@@ -1,18 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.aiProxy = exports.notifyHabitCompleted = exports.notifyTaskCompleted = exports.weeklySummary = exports.dailyHabitReminder = void 0;
+exports.aiProxy = exports.notifyReaction = exports.notifyHabitCompleted = exports.notifyTaskCompleted = exports.habitReminders = exports.weeklySummary = exports.dailyHabitReminder = void 0;
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const https_1 = require("firebase-functions/v2/https");
+const firestore_1 = require("firebase-functions/v2/firestore");
 const params_1 = require("firebase-functions/params");
 const app_1 = require("firebase-admin/app");
-const firestore_1 = require("firebase-admin/firestore");
+const firestore_2 = require("firebase-admin/firestore");
 const messaging_1 = require("firebase-admin/messaging");
 const sdk_1 = require("@anthropic-ai/sdk");
 (0, app_1.initializeApp)();
 const anthropicKey = (0, params_1.defineSecret)('ANTHROPIC_API_KEY');
 // ── Scheduled function ────────────────────────────────────────────────────────
 exports.dailyHabitReminder = (0, scheduler_1.onSchedule)({ schedule: '0 22 * * *', timeZone: 'America/Montevideo' }, async () => {
-    const snap = await (0, firestore_1.getFirestore)()
+    const snap = await (0, firestore_2.getFirestore)()
         .collection('users')
         .where('notificationsEnabled', '==', true)
         .get();
@@ -26,12 +27,17 @@ exports.dailyHabitReminder = (0, scheduler_1.onSchedule)({ schedule: '0 22 * * *
         },
     }));
     if (messages.length > 0) {
-        await (0, messaging_1.getMessaging)().sendEach(messages);
+        try {
+            await (0, messaging_1.getMessaging)().sendEach(messages);
+        }
+        catch (err) {
+            console.error('dailyHabitReminder sendEach error:', err);
+        }
     }
 });
 // ── Weekly Summary (Sundays 21:00 UY) ─────────────────────────────────────────
 exports.weeklySummary = (0, scheduler_1.onSchedule)({ schedule: '0 21 * * 0', timeZone: 'America/Montevideo' }, async () => {
-    const db = (0, firestore_1.getFirestore)();
+    const db = (0, firestore_2.getFirestore)();
     // Calculate Monday–Sunday range for this week (ISO week)
     const now = new Date();
     const dayOfWeek = now.getUTCDay(); // 0=Sun
@@ -124,7 +130,103 @@ exports.weeklySummary = (0, scheduler_1.onSchedule)({ schedule: '0 21 * * 0', ti
         }
     }
     if (messages.length > 0) {
-        await (0, messaging_1.getMessaging)().sendEach(messages);
+        try {
+            await (0, messaging_1.getMessaging)().sendEach(messages);
+        }
+        catch (err) {
+            console.error('weeklySummary sendEach error:', err);
+        }
+    }
+});
+// ── Habit Reminders (per-habit push notifications) ───────────────────────────
+exports.habitReminders = (0, scheduler_1.onSchedule)({ schedule: '* * * * *', timeZone: 'America/Montevideo' }, async () => {
+    var _a;
+    const db = (0, firestore_2.getFirestore)();
+    // Current time in Montevideo (HH:mm)
+    const nowMvd = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Montevideo' }));
+    const currentHHmm = `${String(nowMvd.getHours()).padStart(2, '0')}:${String(nowMvd.getMinutes()).padStart(2, '0')}`;
+    const todayStr = `${nowMvd.getFullYear()}-${String(nowMvd.getMonth() + 1).padStart(2, '0')}-${String(nowMvd.getDate()).padStart(2, '0')}`;
+    const dayOfWeek = nowMvd.getDay(); // 0=Sun, 1=Mon...6=Sat
+    // Query habits with reminder at this exact time
+    const habitsSnap = await db
+        .collection('habits')
+        .where('reminder.enabled', '==', true)
+        .where('reminder.time', '==', currentHHmm)
+        .where('isActive', '==', true)
+        .get();
+    if (habitsSnap.empty)
+        return;
+    // Helper: check if habit is scheduled for today
+    function isScheduledToday(habit) {
+        switch (habit.frequency) {
+            case 'daily':
+                return true;
+            case 'weekdays':
+                return dayOfWeek >= 1 && dayOfWeek <= 5;
+            case 'weekends':
+                return dayOfWeek === 0 || dayOfWeek === 6;
+            case 'custom':
+                return Array.isArray(habit.customDays) && habit.customDays.includes(dayOfWeek);
+            default:
+                return true;
+        }
+    }
+    const messages = [];
+    for (const habitDoc of habitsSnap.docs) {
+        try {
+            const habit = habitDoc.data();
+            if (!isScheduledToday(habit))
+                continue;
+            // Determine which users to notify
+            const userIds = [];
+            if (habit.scope === 'shared' && habit.coupleId) {
+                const coupleDoc = await db.collection('couples').doc(habit.coupleId).get();
+                if (coupleDoc.exists) {
+                    const members = ((_a = coupleDoc.data()) === null || _a === void 0 ? void 0 : _a.members) || [];
+                    userIds.push(...members);
+                }
+            }
+            else {
+                userIds.push(habit.userId);
+            }
+            // For each user, check if already completed today
+            for (const uid of userIds) {
+                const logSnap = await db
+                    .collection('habitLogs')
+                    .where('habitId', '==', habitDoc.id)
+                    .where('userId', '==', uid)
+                    .where('date', '==', todayStr)
+                    .where('completed', '==', true)
+                    .limit(1)
+                    .get();
+                if (!logSnap.empty)
+                    continue; // already completed
+                const userDoc = await db.collection('users').doc(uid).get();
+                if (!userDoc.exists)
+                    continue;
+                const userData = userDoc.data();
+                if (!userData.notificationsEnabled || !userData.fcmToken)
+                    continue;
+                messages.push({
+                    token: userData.fcmToken,
+                    notification: {
+                        title: 'Recordatorio',
+                        body: habit.name,
+                    },
+                });
+            }
+        }
+        catch (err) {
+            console.error(`habitReminders error for habit ${habitDoc.id}:`, err);
+        }
+    }
+    if (messages.length > 0) {
+        try {
+            await (0, messaging_1.getMessaging)().sendEach(messages);
+        }
+        catch (err) {
+            console.error('habitReminders sendEach error:', err);
+        }
     }
 });
 // ── Notify task completed ─────────────────────────────────────────────────────
@@ -135,7 +237,7 @@ exports.notifyTaskCompleted = (0, https_1.onCall)(async (request) => {
     }
     const { coupleId, taskTitle } = request.data;
     const completedByUid = request.auth.uid;
-    const db = (0, firestore_1.getFirestore)();
+    const db = (0, firestore_2.getFirestore)();
     // Get couple doc to find members
     const coupleDoc = await db.collection('couples').doc(coupleId).get();
     if (!coupleDoc.exists)
@@ -156,14 +258,20 @@ exports.notifyTaskCompleted = (0, https_1.onCall)(async (request) => {
     if (!partnerData.notificationsEnabled || !partnerData.fcmToken) {
         return { sent: false };
     }
-    await (0, messaging_1.getMessaging)().send({
-        token: partnerData.fcmToken,
-        notification: {
-            title: 'Motivarse 💪',
-            body: `${completedByName} completó: ${taskTitle}`,
-        },
-    });
-    return { sent: true };
+    try {
+        await (0, messaging_1.getMessaging)().send({
+            token: partnerData.fcmToken,
+            notification: {
+                title: 'Motivarse 💪',
+                body: `${completedByName} completó: ${taskTitle}`,
+            },
+        });
+        return { sent: true };
+    }
+    catch (err) {
+        console.error('notifyTaskCompleted FCM error:', err);
+        return { sent: false };
+    }
 });
 // ── Notify habit completed ───────────────────────────────────────────────────
 exports.notifyHabitCompleted = (0, https_1.onCall)(async (request) => {
@@ -173,7 +281,7 @@ exports.notifyHabitCompleted = (0, https_1.onCall)(async (request) => {
     }
     const { coupleId, habitName } = request.data;
     const completedByUid = request.auth.uid;
-    const db = (0, firestore_1.getFirestore)();
+    const db = (0, firestore_2.getFirestore)();
     // Get couple doc to find members
     const coupleDoc = await db.collection('couples').doc(coupleId).get();
     if (!coupleDoc.exists)
@@ -194,14 +302,51 @@ exports.notifyHabitCompleted = (0, https_1.onCall)(async (request) => {
     if (!partnerData.notificationsEnabled || !partnerData.fcmToken) {
         return { sent: false };
     }
-    await (0, messaging_1.getMessaging)().send({
-        token: partnerData.fcmToken,
-        notification: {
-            title: 'Motivarse 💪',
-            body: `${completedByName} completó: ${habitName} ✅`,
-        },
-    });
-    return { sent: true };
+    try {
+        await (0, messaging_1.getMessaging)().send({
+            token: partnerData.fcmToken,
+            notification: {
+                title: 'Motivarse 💪',
+                body: `${completedByName} completó: ${habitName} ✅`,
+            },
+        });
+        return { sent: true };
+    }
+    catch (err) {
+        console.error('notifyHabitCompleted FCM error:', err);
+        return { sent: false };
+    }
+});
+// ── Notify reaction ─────────────────────────────────────────────────────────
+exports.notifyReaction = (0, firestore_1.onDocumentCreated)('reactions/{reactionId}', async (event) => {
+    var _a, _b;
+    const data = (_a = event.data) === null || _a === void 0 ? void 0 : _a.data();
+    if (!data)
+        return;
+    const { fromUserId, toUserId, type } = data;
+    const db = (0, firestore_2.getFirestore)();
+    // Get sender name
+    const senderDoc = await db.collection('users').doc(fromUserId).get();
+    const senderName = ((_b = senderDoc.data()) === null || _b === void 0 ? void 0 : _b.displayName) || 'Tu pareja';
+    // Get receiver's FCM token
+    const receiverDoc = await db.collection('users').doc(toUserId).get();
+    if (!receiverDoc.exists)
+        return;
+    const receiverData = receiverDoc.data();
+    if (!receiverData.notificationsEnabled || !receiverData.fcmToken)
+        return;
+    try {
+        await (0, messaging_1.getMessaging)().send({
+            token: receiverData.fcmToken,
+            notification: {
+                title: 'Motivarse 💪',
+                body: `${senderName} te envió ${type}`,
+            },
+        });
+    }
+    catch (err) {
+        console.error('notifyReaction FCM error:', err);
+    }
 });
 // ── AI Proxy ──────────────────────────────────────────────────────────────────
 exports.aiProxy = (0, https_1.onCall)({ secrets: [anthropicKey] }, async (request) => {

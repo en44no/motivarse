@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { Plus, Save } from 'lucide-react';
+import { Plus, Save, Bell } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -31,6 +31,7 @@ interface HabitFormProps {
     customDays?: number[];
     scope: Habit['scope'];
     completionMode?: Habit['completionMode'];
+    reminder?: Habit['reminder'];
   }) => void;
   editingHabit?: Habit;
 }
@@ -42,6 +43,8 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
   const [completionMode, setCompletionMode] = useState<Habit['completionMode']>('both');
   const [frequency, setFrequency] = useState<Habit['frequency']>('daily');
   const [customDays, setCustomDays] = useState<number[]>([]);
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderTime, setReminderTime] = useState('09:00');
 
   const isEditing = !!editingHabit;
 
@@ -54,6 +57,8 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
       setCompletionMode(editingHabit.completionMode || 'both');
       setFrequency(editingHabit.frequency);
       setCustomDays(editingHabit.customDays || []);
+      setReminderEnabled(editingHabit.reminder?.enabled ?? false);
+      setReminderTime(editingHabit.reminder?.time ?? '09:00');
     } else if (open && !editingHabit) {
       setName('');
       setColor(COLORS[0]);
@@ -61,6 +66,8 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
       setCompletionMode('both');
       setFrequency('daily');
       setCustomDays([]);
+      setReminderEnabled(false);
+      setReminderTime('09:00');
     }
   }, [open, editingHabit]);
 
@@ -85,12 +92,15 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
       customDays: frequency === 'custom' ? customDays : undefined,
       scope,
       completionMode: scope === 'shared' ? completionMode : undefined,
+      reminder: reminderEnabled ? { enabled: true, time: reminderTime } : undefined,
     });
     setName('');
     setScope('individual');
     setCompletionMode('both');
     setFrequency('daily');
     setCustomDays([]);
+    setReminderEnabled(false);
+    setReminderTime('09:00');
     onClose();
   }
 
@@ -244,6 +254,39 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
             </div>
           </div>
         )}
+
+        {/* Reminder toggle */}
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+              <Bell size={16} />
+              Recordatorio
+            </label>
+            <button
+              type="button"
+              onClick={() => setReminderEnabled(!reminderEnabled)}
+              className={cn(
+                'relative w-11 h-6 rounded-full transition-colors',
+                reminderEnabled ? 'bg-primary' : 'bg-surface-alt'
+              )}
+            >
+              <span
+                className={cn(
+                  'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform shadow-sm',
+                  reminderEnabled && 'translate-x-5'
+                )}
+              />
+            </button>
+          </div>
+          {reminderEnabled && (
+            <input
+              type="time"
+              value={reminderTime}
+              onChange={(e) => setReminderTime(e.target.value)}
+              className="mt-2 w-full rounded-lg bg-surface-alt border border-border px-3 py-2 text-sm text-text-primary"
+            />
+          )}
+        </div>
 
         <Button type="submit" className="w-full" size="lg">
           {isEditing ? <Save size={18} /> : <Plus size={18} />}

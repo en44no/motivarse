@@ -190,6 +190,108 @@ export const weeklySummary = onSchedule(
   }
 );
 
+// ── Habit Reminders (per-habit push notifications) ───────────────────────────
+
+export const habitReminders = onSchedule(
+  { schedule: '* * * * *', timeZone: 'America/Montevideo' },
+  async () => {
+    const db = getFirestore();
+
+    // Current time in Montevideo (HH:mm)
+    const nowMvd = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Montevideo' })
+    );
+    const currentHHmm = `${String(nowMvd.getHours()).padStart(2, '0')}:${String(nowMvd.getMinutes()).padStart(2, '0')}`;
+    const todayStr = `${nowMvd.getFullYear()}-${String(nowMvd.getMonth() + 1).padStart(2, '0')}-${String(nowMvd.getDate()).padStart(2, '0')}`;
+    const dayOfWeek = nowMvd.getDay(); // 0=Sun, 1=Mon...6=Sat
+
+    // Query habits with reminder at this exact time
+    const habitsSnap = await db
+      .collection('habits')
+      .where('reminder.enabled', '==', true)
+      .where('reminder.time', '==', currentHHmm)
+      .where('isActive', '==', true)
+      .get();
+
+    if (habitsSnap.empty) return;
+
+    // Helper: check if habit is scheduled for today
+    function isScheduledToday(habit: FirebaseFirestore.DocumentData): boolean {
+      switch (habit.frequency) {
+        case 'daily':
+          return true;
+        case 'weekdays':
+          return dayOfWeek >= 1 && dayOfWeek <= 5;
+        case 'weekends':
+          return dayOfWeek === 0 || dayOfWeek === 6;
+        case 'custom':
+          return Array.isArray(habit.customDays) && habit.customDays.includes(dayOfWeek);
+        default:
+          return true;
+      }
+    }
+
+    const messages: { token: string; notification: { title: string; body: string } }[] = [];
+
+    for (const habitDoc of habitsSnap.docs) {
+      try {
+        const habit = habitDoc.data();
+        if (!isScheduledToday(habit)) continue;
+
+        // Determine which users to notify
+        const userIds: string[] = [];
+        if (habit.scope === 'shared' && habit.coupleId) {
+          const coupleDoc = await db.collection('couples').doc(habit.coupleId).get();
+          if (coupleDoc.exists) {
+            const members: string[] = coupleDoc.data()?.members || [];
+            userIds.push(...members);
+          }
+        } else {
+          userIds.push(habit.userId);
+        }
+
+        // For each user, check if already completed today
+        for (const uid of userIds) {
+          const logSnap = await db
+            .collection('habitLogs')
+            .where('habitId', '==', habitDoc.id)
+            .where('userId', '==', uid)
+            .where('date', '==', todayStr)
+            .where('completed', '==', true)
+            .limit(1)
+            .get();
+
+          if (!logSnap.empty) continue; // already completed
+
+          const userDoc = await db.collection('users').doc(uid).get();
+          if (!userDoc.exists) continue;
+
+          const userData = userDoc.data()!;
+          if (!userData.notificationsEnabled || !userData.fcmToken) continue;
+
+          messages.push({
+            token: userData.fcmToken,
+            notification: {
+              title: 'Recordatorio',
+              body: habit.name,
+            },
+          });
+        }
+      } catch (err) {
+        console.error(`habitReminders error for habit ${habitDoc.id}:`, err);
+      }
+    }
+
+    if (messages.length > 0) {
+      try {
+        await getMessaging().sendEach(messages);
+      } catch (err) {
+        console.error('habitReminders sendEach error:', err);
+      }
+    }
+  }
+);
+
 // ── Notify task completed ─────────────────────────────────────────────────────
 
 export const notifyTaskCompleted = onCall(async (request) => {
