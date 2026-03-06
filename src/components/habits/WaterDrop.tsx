@@ -37,8 +37,8 @@ export const WaterDrop = memo(function WaterDrop({ fillPercent, totalMl, goalMl 
 
   // Spring-animated fill height for smooth transitions
   const springFill = useSpring(clamped, { stiffness: 60, damping: 18, mass: 0.8 });
-  // Map 0-1 to SVG y coordinates: bottom of drop (100) to top of water area (~20)
-  const waterY = useTransform(springFill, [0, 1], [100, 16]);
+  // Map 0-1 to SVG y coordinates: bottom of drop (100) to tip of drop (4)
+  const waterY = useTransform(springFill, [0, 1], [100, 4]);
 
   useEffect(() => {
     springFill.set(clamped);
