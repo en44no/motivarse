@@ -3,14 +3,19 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
 
-// Auto-reload when returning to the app if a new SW is waiting
+// Auto-reload when a new SW takes control (after skipWaiting activates it)
+let refreshing = false;
+navigator.serviceWorker?.addEventListener('controllerchange', () => {
+  if (refreshing) return;
+  refreshing = true;
+  window.location.reload();
+});
+
+// When user returns to the app, check for SW updates immediately
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
   navigator.serviceWorker?.getRegistration().then((reg) => {
-    if (reg?.waiting) {
-      reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-      window.location.reload();
-    }
+    reg?.update();
   });
 });
 
