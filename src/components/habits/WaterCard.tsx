@@ -91,43 +91,6 @@ export const WaterCard = memo(function WaterCard({
     setShowCustom(false);
   }
 
-  // Past date: read-only card
-  if (isPastDate) {
-    return (
-      <motion.div
-        layout
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ layout: { duration: 0.2 } }}
-      >
-        <Card className={cn(
-          'transition-all duration-300 opacity-60',
-          completed && 'bg-gradient-to-r from-sky-500/8 to-transparent border-sky-500/20 border-l-2',
-        )}
-        style={completed ? { borderLeftColor: '#38bdf8' } : {}}
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-text-secondary truncate">
-                  {habit.name}
-                </h3>
-                {streak && <HabitStreakBadge streak={streak.currentStreak} />}
-              </div>
-              <p className="text-xs text-text-muted mt-0.5">
-                {myTotal > 0
-                  ? `${myTotal >= 1000 ? `${(myTotal / 1000).toFixed(1)}L` : `${myTotal}ml`} / ${WATER_GOAL_ML / 1000}L${completed ? ' — Meta cumplida' : ''}`
-                  : completed ? 'Meta cumplida' : 'No completado'
-                }
-              </p>
-            </div>
-          </div>
-        </Card>
-      </motion.div>
-    );
-  }
-
   return (
     <motion.div
       layout
