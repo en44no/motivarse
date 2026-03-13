@@ -1,6 +1,5 @@
 import { Flame } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { getStreakEmoji } from '../../lib/streak-utils';
 
 interface HabitStreakBadgeProps {
   streak: number;
@@ -13,14 +12,14 @@ export function HabitStreakBadge({ streak, className }: HabitStreakBadgeProps) {
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold',
+        'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold',
         streak >= 7
           ? 'bg-secondary-soft text-secondary'
           : 'bg-surface-light text-text-secondary',
         className
       )}
     >
-      {streak >= 7 ? <Flame size={12} className="text-secondary" /> : <span>{getStreakEmoji(streak)}</span>}
+      <Flame size={12} className={streak >= 7 ? 'text-secondary' : 'text-text-muted'} />
       <span className="font-mono">{streak}</span>
     </div>
   );

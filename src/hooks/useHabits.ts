@@ -70,13 +70,14 @@ export function useHabits() {
     try {
       await toggleHabitLog(habitId, userId, coupleId, targetDate, completed, value, metGoal);
 
-      // Recalculate streak
+      // Recalculate streak (schedule-aware)
+      const habit = habits.find((h) => h.id === habitId);
       const habitLogs = logs
         .filter((l) => l.habitId === habitId && l.userId === userId && l.completed)
         .map((l) => l.date);
       if (completed) habitLogs.push(targetDate);
       const uniqueDates = [...new Set(habitLogs)];
-      const { current, longest } = calculateStreak(uniqueDates);
+      const { current, longest } = calculateStreak(uniqueDates, habit ?? undefined);
       await updateStreak(habitId, userId, {
         currentStreak: current,
         longestStreak: longest,
@@ -84,11 +85,8 @@ export function useHabits() {
       });
 
       // Fire-and-forget push notification to partner for shared habits
-      if (completed && coupleId) {
-        const habit = habits.find((h) => h.id === habitId);
-        if (habit?.scope === 'shared') {
-          notifyHabitCompleted({ coupleId, habitName: habit.name }).catch(() => {});
-        }
+      if (completed && coupleId && habit?.scope === 'shared') {
+        notifyHabitCompleted({ coupleId, habitName: habit.name }).catch(() => {});
       }
     } catch (error) {
       toast.error('No se pudo actualizar el habito. Intenta de nuevo.');

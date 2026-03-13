@@ -345,6 +345,59 @@ export const notifyTaskCompleted = onCall(async (request) => {
   }
 });
 
+// ── Notify todo added ───────────────────────────────────────────────────────
+
+export const notifyTodoAdded = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Debes estar autenticado.');
+  }
+
+  const { coupleId, titles } = request.data as {
+    coupleId: string;
+    titles: string[];
+  };
+
+  const addedByUid = request.auth.uid;
+  const db = getFirestore();
+
+  const coupleDoc = await db.collection('couples').doc(coupleId).get();
+  if (!coupleDoc.exists) return { sent: false };
+
+  const members: string[] = coupleDoc.data()!.members || [];
+
+  const senderDoc = await db.collection('users').doc(addedByUid).get();
+  const senderName = senderDoc.data()?.displayName || 'Tu pareja';
+
+  const partnerUid = members.find((uid: string) => uid !== addedByUid);
+  if (!partnerUid) return { sent: false };
+
+  const partnerDoc = await db.collection('users').doc(partnerUid).get();
+  if (!partnerDoc.exists) return { sent: false };
+
+  const partnerData = partnerDoc.data()!;
+  if (!partnerData.notificationsEnabled || !partnerData.fcmToken) {
+    return { sent: false };
+  }
+
+  const body = titles.length === 1
+    ? `${senderName} agregó: ${titles[0]} 🛒`
+    : `${senderName} agregó ${titles.length} cosas a la lista 🛒`;
+
+  try {
+    await getMessaging().send({
+      token: partnerData.fcmToken,
+      notification: {
+        title: 'Motivarse 💪',
+        body,
+      },
+    });
+    return { sent: true };
+  } catch (err) {
+    console.error('notifyTodoAdded FCM error:', err);
+    return { sent: false };
+  }
+});
+
 // ── Notify habit completed ───────────────────────────────────────────────────
 
 export const notifyHabitCompleted = onCall(async (request) => {

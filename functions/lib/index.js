@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.aiProxy = exports.notifyReaction = exports.notifyHabitCompleted = exports.notifyTaskCompleted = exports.habitReminders = exports.weeklySummary = exports.dailyHabitReminder = void 0;
+exports.aiProxy = exports.notifyReaction = exports.notifyHabitCompleted = exports.notifyTodoAdded = exports.notifyTaskCompleted = exports.habitReminders = exports.weeklySummary = exports.dailyHabitReminder = void 0;
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const https_1 = require("firebase-functions/v2/https");
 const firestore_1 = require("firebase-functions/v2/firestore");
@@ -270,6 +270,49 @@ exports.notifyTaskCompleted = (0, https_1.onCall)(async (request) => {
     }
     catch (err) {
         console.error('notifyTaskCompleted FCM error:', err);
+        return { sent: false };
+    }
+});
+// ── Notify todo added ───────────────────────────────────────────────────────
+exports.notifyTodoAdded = (0, https_1.onCall)(async (request) => {
+    var _a;
+    if (!request.auth) {
+        throw new https_1.HttpsError('unauthenticated', 'Debes estar autenticado.');
+    }
+    const { coupleId, titles } = request.data;
+    const addedByUid = request.auth.uid;
+    const db = (0, firestore_2.getFirestore)();
+    const coupleDoc = await db.collection('couples').doc(coupleId).get();
+    if (!coupleDoc.exists)
+        return { sent: false };
+    const members = coupleDoc.data().members || [];
+    const senderDoc = await db.collection('users').doc(addedByUid).get();
+    const senderName = ((_a = senderDoc.data()) === null || _a === void 0 ? void 0 : _a.displayName) || 'Tu pareja';
+    const partnerUid = members.find((uid) => uid !== addedByUid);
+    if (!partnerUid)
+        return { sent: false };
+    const partnerDoc = await db.collection('users').doc(partnerUid).get();
+    if (!partnerDoc.exists)
+        return { sent: false };
+    const partnerData = partnerDoc.data();
+    if (!partnerData.notificationsEnabled || !partnerData.fcmToken) {
+        return { sent: false };
+    }
+    const body = titles.length === 1
+        ? `${senderName} agregó: ${titles[0]} 🛒`
+        : `${senderName} agregó ${titles.length} cosas a la lista 🛒`;
+    try {
+        await (0, messaging_1.getMessaging)().send({
+            token: partnerData.fcmToken,
+            notification: {
+                title: 'Motivarse 💪',
+                body,
+            },
+        });
+        return { sent: true };
+    }
+    catch (err) {
+        console.error('notifyTodoAdded FCM error:', err);
         return { sent: false };
     }
 });

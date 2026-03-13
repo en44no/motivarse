@@ -7,6 +7,22 @@ import { addTodo, updateTodo, deleteTodo, addPurchaseRecord } from '../services/
 import type { TodoPriority } from '../types/shared';
 
 const notifyTaskCompleted = httpsCallable(getFunctions(), 'notifyTaskCompleted');
+const notifyTodoAddedFn = httpsCallable(getFunctions(), 'notifyTodoAdded');
+
+// Debounce buffer — batches multiple adds into one notification
+let pendingTitles: string[] = [];
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleAddedNotification(coupleId: string, title: string) {
+  pendingTitles.push(title);
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    const titles = [...pendingTitles];
+    pendingTitles = [];
+    debounceTimer = null;
+    notifyTodoAddedFn({ coupleId, titles }).catch(() => {});
+  }, 3000);
+}
 
 export function useSharedTodos() {
   const { user, profile } = useAuthContext();
@@ -46,6 +62,8 @@ export function useSharedTodos() {
         ...(dueDate ? { dueDate } : {}),
         createdAt: Date.now(),
       });
+      // Notify partner (debounced — batches multiple adds into one notification)
+      scheduleAddedNotification(coupleId, title);
     } catch (error) {
       toast.error('No se pudo agregar el mandado.');
     }

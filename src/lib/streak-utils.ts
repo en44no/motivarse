@@ -1,40 +1,63 @@
 import { subDays } from 'date-fns';
-import { formatDate } from './date-utils';
+import { formatDate, isHabitScheduledForDate } from './date-utils';
+import type { Habit } from '../types/habit';
 
-export function calculateStreak(completedDates: string[]): { current: number; longest: number } {
+/**
+ * Schedule-aware streak calculation.
+ * Only counts days where the habit was scheduled.
+ * Today is "grace" — if scheduled but not done yet, it doesn't break the streak.
+ * lookbackDays should match how many days of logs are available (default 90).
+ */
+export function calculateStreak(
+  completedDates: string[],
+  habit?: Habit,
+  lookbackDays = 90,
+): { current: number; longest: number } {
   if (completedDates.length === 0) return { current: 0, longest: 0 };
 
-  const sorted = [...completedDates].sort().reverse();
-  const today = formatDate(new Date());
-  const yesterday = formatDate(subDays(new Date(), 1));
+  const completedSet = new Set(completedDates);
+  const today = new Date();
 
-  // Current streak must include today or yesterday
+  // --- Current streak ---
   let current = 0;
-  if (sorted[0] === today || sorted[0] === yesterday) {
-    current = 1;
-    for (let i = 1; i < sorted.length; i++) {
-      const expected = formatDate(subDays(new Date(sorted[0]), i));
-      if (sorted[i] === expected) {
-        current++;
-      } else {
-        break;
-      }
+  let foundFirst = false;
+
+  for (let i = 0; i < lookbackDays; i++) {
+    const date = subDays(today, i);
+    const dateStr = formatDate(date);
+
+    // If no habit info, fall back to checking every day
+    const isScheduled = habit ? isHabitScheduledForDate(habit, date) : true;
+    if (!isScheduled) continue;
+
+    if (completedSet.has(dateStr)) {
+      current++;
+      foundFirst = true;
+    } else {
+      // Scheduled but not completed
+      if (i === 0) continue; // today — still has time, grace period
+      break; // missed a scheduled day → streak broken
     }
   }
 
-  // Longest streak
+  // --- Longest streak (scan all available dates) ---
+  // Build list of scheduled dates in ascending order
+  const scheduledDates: string[] = [];
+  for (let i = lookbackDays - 1; i >= 0; i--) {
+    const date = subDays(today, i);
+    const dateStr = formatDate(date);
+    const isScheduled = habit ? isHabitScheduledForDate(habit, date) : true;
+    if (isScheduled) scheduledDates.push(dateStr);
+  }
+
   let longest = 0;
-  let streak = 1;
-  const ascending = [...completedDates].sort();
-  for (let i = 1; i < ascending.length; i++) {
-    const prev = new Date(ascending[i - 1]);
-    const curr = new Date(ascending[i]);
-    const diff = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
-    if (diff === 1) {
+  let streak = 0;
+  for (const dateStr of scheduledDates) {
+    if (completedSet.has(dateStr)) {
       streak++;
     } else {
       longest = Math.max(longest, streak);
-      streak = 1;
+      streak = 0;
     }
   }
   longest = Math.max(longest, streak, current);
@@ -42,10 +65,3 @@ export function calculateStreak(completedDates: string[]): { current: number; lo
   return { current, longest };
 }
 
-export function getStreakEmoji(streak: number): string {
-  if (streak >= 30) return '👑';
-  if (streak >= 14) return '💪';
-  if (streak >= 7) return '🔥';
-  if (streak >= 3) return '⚡';
-  return '✨';
-}
