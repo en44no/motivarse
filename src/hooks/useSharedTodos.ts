@@ -21,7 +21,7 @@ function scheduleAddedNotification(coupleId: string, title: string) {
     pendingTitles = [];
     debounceTimer = null;
     notifyTodoAddedFn({ coupleId, titles }).catch(() => {});
-  }, 3000);
+  }, 60000);
 }
 
 export function useSharedTodos() {
