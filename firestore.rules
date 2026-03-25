@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // ── Users ──
+    // Cualquier autenticado puede leer (el partner lo necesita)
+    // Solo el dueño puede escribir su propio doc
+    match /users/{uid} {
+      allow read: if isAuth();
+      allow write: if isOwner(uid);
+    }
+
+    // ── Couples ──
+    match /couples/{coupleId} {
+      allow read, write: if isAuth();
+    }
+
+    // ── Couple-scoped collections ──
+    // Solo usuarios autenticados pueden leer/escribir
+
+    match /habits/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /habitLogs/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /streaks/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /sharedTodos/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /purchaseHistory/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /runLogs/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /runProgress/{coupleId} {
+      allow read, write: if isAuth();
+    }
+
+    match /waterLogs/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /loveNotes/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /wishlistItems/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /achievements/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /reactions/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /coupleCategories/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /challenges/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    match /wishlistCategories/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    // ── User-scoped (privados) ──
+    // Solo el dueño puede acceder
+
+    match /journalEntries/{docId} {
+      allow read, update, delete: if isAuth() && resource.data.userId == request.auth.uid;
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+    }
+
+    match /coachHistory/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /coachMemory/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}
