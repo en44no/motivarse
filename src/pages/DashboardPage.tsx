@@ -12,7 +12,6 @@ import { PartnerStatus } from '../components/dashboard/PartnerStatus';
 import { StreakHighlight } from '../components/dashboard/StreakHighlight';
 import { RunningProgress } from '../components/dashboard/RunningProgress';
 import { QuickActions } from '../components/dashboard/QuickActions';
-import { ChallengeCard } from '../components/dashboard/ChallengeCard';
 import { ReceivedReactions } from '../components/dashboard/ReceivedReactions';
 import { FloatingLoveNotes } from '../components/dashboard/FloatingLoveNotes';
 import { Card } from '../components/ui/Card';
@@ -101,8 +100,6 @@ export function DashboardPage() {
       </Link>
 
       <RunningProgress progress={progress} />
-
-      <ChallengeCard />
 
       <div>
         <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 px-1">
