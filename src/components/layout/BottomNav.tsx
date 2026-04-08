@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, ListChecks, Footprints, ShoppingCart, User } from 'lucide-react';
+import { Home, ListChecks, Footprints, ShoppingCart, Wallet, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ROUTES } from '../../config/routes';
 import { cn } from '../../lib/utils';
@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { path: ROUTES.HABITS, icon: ListChecks, label: 'Hábitos' },
   { path: ROUTES.RUNNING, icon: Footprints, label: 'Correr' },
   { path: ROUTES.SHARED, icon: ShoppingCart, label: 'Mandados' },
+  { path: ROUTES.EXPENSES, icon: Wallet, label: 'Gastos' },
   { path: ROUTES.PROFILE, icon: User, label: 'Perfil' },
 ];
 
@@ -30,7 +31,7 @@ export function BottomNav() {
                 <button
                   onClick={() => navigate(item.path)}
                   className={cn(
-                    'relative flex flex-col items-center justify-center gap-0.5 w-16 min-h-[44px] transition-colors duration-200',
+                    'relative flex flex-col items-center justify-center gap-0.5 w-14 min-h-[44px] transition-colors duration-200',
                     isActive ? 'text-primary' : 'text-text-muted hover:text-text-secondary'
                   )}
                   aria-label={item.label}
@@ -43,7 +44,7 @@ export function BottomNav() {
                       transition={{ type: 'spring', stiffness: 380, damping: 28 }}
                     />
                   )}
-                  <item.icon size={21} strokeWidth={isActive ? 2.5 : 1.8} className="relative z-10" />
+                  <item.icon size={20} strokeWidth={isActive ? 2.5 : 1.8} className="relative z-10" />
                   <span className={cn(
                     'text-[10px] font-medium relative z-10 transition-opacity duration-200',
                     isActive ? 'opacity-100' : 'opacity-70'

@@ -4,6 +4,7 @@ export const ROUTES = {
   HABITS: '/habits',
   RUNNING: '/running',
   SHARED: '/shared',
+  EXPENSES: '/gastos',
   PROFILE: '/profile',
   JOURNAL: '/journal',
   INSIGHTS: '/insights',

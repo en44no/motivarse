@@ -31,6 +31,7 @@ const SharedPage = lazy(() => lazyRetry(() => import('./pages/SharedPage')).then
 const ProfilePage = lazy(() => lazyRetry(() => import('./pages/ProfilePage')).then((m) => ({ default: m.ProfilePage })));
 const JournalPage = lazy(() => lazyRetry(() => import('./pages/JournalPage')).then((m) => ({ default: m.JournalPage })));
 const MonthlyInsightsPage = lazy(() => lazyRetry(() => import('./pages/MonthlyInsightsPage')).then((m) => ({ default: m.MonthlyInsightsPage })));
+const ExpensesPage = lazy(() => lazyRetry(() => import('./pages/ExpensesPage')).then((m) => ({ default: m.ExpensesPage })));
 
 function PageSkeleton() {
   return (
@@ -62,6 +63,7 @@ function AppRoutes() {
           <Route path={ROUTES.PROFILE} element={<Suspense fallback={<PageSkeleton />}><ProfilePage /></Suspense>} />
           <Route path={ROUTES.JOURNAL} element={<Suspense fallback={<PageSkeleton />}><JournalPage /></Suspense>} />
           <Route path={ROUTES.INSIGHTS} element={<Suspense fallback={<PageSkeleton />}><MonthlyInsightsPage /></Suspense>} />
+          <Route path={ROUTES.EXPENSES} element={<Suspense fallback={<PageSkeleton />}><ExpensesPage /></Suspense>} />
         </Route>
         <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
       </Routes>
