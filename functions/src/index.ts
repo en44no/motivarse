@@ -49,7 +49,7 @@ export const dailyHabitReminder = onSchedule(
       .map((d) => ({
         token: d.data().fcmToken as string,
         notification: {
-          title: 'Motivarse 💪',
+          title: 'Gestionarse 💪',
           body: '¡Recordá completar tus hábitos de hoy!',
         },
       }));
@@ -334,7 +334,7 @@ export const notifyTaskCompleted = onCall(async (request) => {
     await getMessaging().send({
       token: partnerData.fcmToken,
       notification: {
-        title: 'Motivarse 💪',
+        title: 'Gestionarse 💪',
         body: `${completedByName} completó: ${taskTitle}`,
       },
     });
@@ -387,7 +387,7 @@ export const notifyTodoAdded = onCall(async (request) => {
     await getMessaging().send({
       token: partnerData.fcmToken,
       notification: {
-        title: 'Motivarse 💪',
+        title: 'Gestionarse 💪',
         body,
       },
     });
@@ -440,7 +440,7 @@ export const notifyHabitCompleted = onCall(async (request) => {
     await getMessaging().send({
       token: partnerData.fcmToken,
       notification: {
-        title: 'Motivarse 💪',
+        title: 'Gestionarse 💪',
         body: `${completedByName} completó: ${habitName} ✅`,
       },
     });
@@ -480,7 +480,7 @@ export const notifyReaction = onDocumentCreated('reactions/{reactionId}', async 
     await getMessaging().send({
       token: receiverData.fcmToken,
       notification: {
-        title: 'Motivarse 💪',
+        title: 'Gestionarse 💪',
         body: `${senderName} te envió ${type}`,
       },
     });
@@ -603,9 +603,9 @@ Devolvé SOLO un array JSON válido con esta estructura exacta, sin texto adicio
         ? `\nLo que ya sabés del usuario:\n${context.memory}\n`
         : '';
 
-      const systemPrompt = `Sos un coach de bienestar personal llamado "Moti" dentro de la app Motivarse. Respondés en español, con un tono cálido, motivador y breve (máx 3 oraciones salvo que te pidan más detalle).
+      const systemPrompt = `Sos un coach de bienestar personal llamado "Gesti" dentro de la app Gestionarse. Respondés en español, con un tono cálido, motivador y breve (máx 3 oraciones salvo que te pidan más detalle).
 
-IMPORTANTE: Solo respondés sobre hábitos, bienestar personal, mandados/tareas, pareja y motivación. Si te preguntan algo fuera de estos temas, respondé amablemente que solo podés ayudar con temas de la app Motivarse.
+IMPORTANTE: Solo respondés sobre hábitos, bienestar personal, mandados/tareas, pareja y motivación. Si te preguntan algo fuera de estos temas, respondé amablemente que solo podés ayudar con temas de la app Gestionarse.
 
 Datos del usuario:
 - Nombre: ${context.userName}
@@ -638,7 +638,7 @@ Ayudá al usuario con motivación, consejos de hábitos, estrategias de bienesta
         userName: string;
       };
 
-      const convo = messages.map((m) => `${m.role === 'user' ? userName : 'Moti'}: ${m.content}`).join('\n');
+      const convo = messages.map((m) => `${m.role === 'user' ? userName : 'Gesti'}: ${m.content}`).join('\n');
       const existing = existingMemory ? `Memoria actual:\n${existingMemory}\n\n` : '';
 
       const response = await client.messages.create({

@@ -3,7 +3,7 @@ import { THEMES, DEFAULT_THEME_ID, getThemeById, type ThemeDefinition } from '..
 import { useAuthContext } from './AuthContext';
 import { updateUserSettings } from '../services/user.service';
 
-const THEME_CACHE_KEY = 'motivarse_theme';
+const THEME_CACHE_KEY = 'gestionarse_theme';
 
 function getCachedThemeId(): string {
   try {

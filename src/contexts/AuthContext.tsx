@@ -4,7 +4,7 @@ import { auth } from '../config/firebase';
 import type { UserProfile } from '../types/user';
 import { subscribeToUser } from '../services/user.service';
 
-const PROFILE_CACHE_KEY = 'motivarse_profile';
+const PROFILE_CACHE_KEY = 'gestionarse_profile';
 
 function getCachedProfile(): UserProfile | null {
   try {

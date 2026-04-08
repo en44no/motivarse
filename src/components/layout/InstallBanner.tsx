@@ -21,7 +21,7 @@ export function InstallBanner() {
           {isIOS ? <Share size={18} className="text-primary" /> : <Download size={18} className="text-primary" />}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-text-primary">Instalar Motivarse</p>
+          <p className="text-sm font-semibold text-text-primary">Instalar Gestionarse</p>
           {isIOS ? (
             <p className="text-xs text-text-muted">
               Tocá <Share size={12} className="inline text-primary" /> y luego <span className="font-semibold text-text-secondary">"Agregar a inicio"</span>

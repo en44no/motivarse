@@ -11,7 +11,7 @@ self.addEventListener('push', (event) => {
     payload = {};
   }
 
-  const title = payload.notification?.title || 'Motivarse 💪';
+  const title = payload.notification?.title || 'Gestionarse 💪';
   const body = payload.notification?.body || '¡Recordá completar tus hábitos de hoy!';
 
   event.waitUntil(

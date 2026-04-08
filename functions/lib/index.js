@@ -22,7 +22,7 @@ exports.dailyHabitReminder = (0, scheduler_1.onSchedule)({ schedule: '0 22 * * *
         .map((d) => ({
         token: d.data().fcmToken,
         notification: {
-            title: 'Motivarse 💪',
+            title: 'Gestionarse 💪',
             body: '¡Recordá completar tus hábitos de hoy!',
         },
     }));
@@ -262,7 +262,7 @@ exports.notifyTaskCompleted = (0, https_1.onCall)(async (request) => {
         await (0, messaging_1.getMessaging)().send({
             token: partnerData.fcmToken,
             notification: {
-                title: 'Motivarse 💪',
+                title: 'Gestionarse 💪',
                 body: `${completedByName} completó: ${taskTitle}`,
             },
         });
@@ -305,7 +305,7 @@ exports.notifyTodoAdded = (0, https_1.onCall)(async (request) => {
         await (0, messaging_1.getMessaging)().send({
             token: partnerData.fcmToken,
             notification: {
-                title: 'Motivarse 💪',
+                title: 'Gestionarse 💪',
                 body,
             },
         });
@@ -349,7 +349,7 @@ exports.notifyHabitCompleted = (0, https_1.onCall)(async (request) => {
         await (0, messaging_1.getMessaging)().send({
             token: partnerData.fcmToken,
             notification: {
-                title: 'Motivarse 💪',
+                title: 'Gestionarse 💪',
                 body: `${completedByName} completó: ${habitName} ✅`,
             },
         });
@@ -382,7 +382,7 @@ exports.notifyReaction = (0, firestore_1.onDocumentCreated)('reactions/{reaction
         await (0, messaging_1.getMessaging)().send({
             token: receiverData.fcmToken,
             notification: {
-                title: 'Motivarse 💪',
+                title: 'Gestionarse 💪',
                 body: `${senderName} te envió ${type}`,
             },
         });
@@ -474,9 +474,9 @@ Devolvé SOLO un array JSON válido con esta estructura exacta, sin texto adicio
         const memorySection = context.memory
             ? `\nLo que ya sabés del usuario:\n${context.memory}\n`
             : '';
-        const systemPrompt = `Sos un coach de bienestar personal llamado "Moti" dentro de la app Motivarse. Respondés en español, con un tono cálido, motivador y breve (máx 3 oraciones salvo que te pidan más detalle).
+        const systemPrompt = `Sos un coach de bienestar personal llamado "Gesti" dentro de la app Gestionarse. Respondés en español, con un tono cálido, motivador y breve (máx 3 oraciones salvo que te pidan más detalle).
 
-IMPORTANTE: Solo respondés sobre hábitos, bienestar personal, mandados/tareas, pareja y motivación. Si te preguntan algo fuera de estos temas, respondé amablemente que solo podés ayudar con temas de la app Motivarse.
+IMPORTANTE: Solo respondés sobre hábitos, bienestar personal, mandados/tareas, pareja y motivación. Si te preguntan algo fuera de estos temas, respondé amablemente que solo podés ayudar con temas de la app Gestionarse.
 
 Datos del usuario:
 - Nombre: ${context.userName}
@@ -501,7 +501,7 @@ Ayudá al usuario con motivación, consejos de hábitos, estrategias de bienesta
     // ── updateMemory ──────────────────────────────────────────────────────────
     if (type === 'updateMemory') {
         const { messages, existingMemory, userName } = data;
-        const convo = messages.map((m) => `${m.role === 'user' ? userName : 'Moti'}: ${m.content}`).join('\n');
+        const convo = messages.map((m) => `${m.role === 'user' ? userName : 'Gesti'}: ${m.content}`).join('\n');
         const existing = existingMemory ? `Memoria actual:\n${existingMemory}\n\n` : '';
         const response = await client.messages.create({
             model: 'claude-haiku-4-5-20251001',

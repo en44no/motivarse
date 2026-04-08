@@ -27,8 +27,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/*.png'],
       manifest: {
-        name: 'Motivarse - Hábitos en Pareja',
-        short_name: 'Motivarse',
+        name: 'Gestionarse - Organizate en Pareja',
+        short_name: 'Gestionarse',
         description: 'App de hábitos para parejas que quieren mejorar juntos',
         theme_color: '#0f1729',
         background_color: '#0f1729',

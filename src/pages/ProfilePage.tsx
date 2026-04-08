@@ -185,7 +185,7 @@ export function ProfilePage() {
             <Smartphone size={20} className="text-primary" />
             <div>
               <h3 className="text-sm font-bold text-text-primary">App instalada</h3>
-              <p className="text-xs text-text-muted">Ya tenés Motivarse en tu dispositivo</p>
+              <p className="text-xs text-text-muted">Ya tenés Gestionarse en tu dispositivo</p>
             </div>
           </div>
         </Card>

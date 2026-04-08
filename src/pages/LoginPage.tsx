@@ -44,9 +44,9 @@ export function LoginPage() {
           <Flame size={44} className="text-white" />
         </div>
         <h1 className="text-3xl font-extrabold text-text-primary tracking-tight">
-          Motivarse
+          Gestionarse
         </h1>
-        <p className="text-sm text-text-muted mt-1">Mejorá tus hábitos en pareja</p>
+        <p className="text-sm text-text-muted mt-1">Organizate en pareja</p>
       </motion.div>
 
       {/* Form */}

@@ -17,7 +17,7 @@ const CoupleContext = createContext<CoupleContextType>({
   loading: true,
 });
 
-const COUPLE_CACHE_KEY = 'motivarse_couple_cache';
+const COUPLE_CACHE_KEY = 'gestionarse_couple_cache';
 
 function getCachedCouple(): Couple | null {
   try {
