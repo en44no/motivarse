@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.aiProxy = exports.notifyReaction = exports.notifyHabitCompleted = exports.notifyTodoAdded = exports.notifyTaskCompleted = exports.habitReminders = exports.recurringPaymentReminders = exports.weeklySummary = exports.dailyHabitReminder = void 0;
+exports.aiProxy = exports.notifyRecurringPaymentAdded = exports.notifyExpenseAdded = exports.notifyReaction = exports.notifyHabitCompleted = exports.notifyTodoAdded = exports.notifyTaskCompleted = exports.habitReminders = exports.recurringPaymentReminders = exports.weeklySummary = exports.dailyHabitReminder = void 0;
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const https_1 = require("firebase-functions/v2/https");
 const firestore_1 = require("firebase-functions/v2/firestore");
@@ -476,6 +476,85 @@ exports.notifyReaction = (0, firestore_1.onDocumentCreated)('reactions/{reaction
     }
     catch (err) {
         console.error('notifyReaction FCM error:', err);
+    }
+});
+// ── Notify expense/recurring payment added ──────────────────────────────────
+async function notifyExpensePartner(params) {
+    var _a, _b;
+    const { coupleId, createdBy, assignedTo, itemName, itemType } = params;
+    // Gasto propio del creador: no notifica
+    if (assignedTo === createdBy)
+        return;
+    const db = (0, firestore_2.getFirestore)();
+    const coupleDoc = await db.collection('couples').doc(coupleId).get();
+    if (!coupleDoc.exists)
+        return;
+    const members = ((_a = coupleDoc.data()) === null || _a === void 0 ? void 0 : _a.members) || [];
+    const partnerUid = members.find((uid) => uid !== createdBy);
+    if (!partnerUid)
+        return;
+    // Solo notificar si el gasto es 'both' o está asignado al partner
+    if (assignedTo !== 'both' && assignedTo !== partnerUid)
+        return;
+    const senderDoc = await db.collection('users').doc(createdBy).get();
+    const senderName = ((_b = senderDoc.data()) === null || _b === void 0 ? void 0 : _b.displayName) || 'Tu pareja';
+    const partnerDoc = await db.collection('users').doc(partnerUid).get();
+    if (!partnerDoc.exists)
+        return;
+    const partnerData = partnerDoc.data();
+    if (!partnerData.notificationsEnabled || !partnerData.fcmToken)
+        return;
+    const typeLabel = itemType === 'expense' ? 'gasto' : 'pago recurrente';
+    const body = assignedTo === 'both'
+        ? `${senderName} agregó un ${typeLabel} para los dos: ${itemName}`
+        : `${senderName} te asignó un ${typeLabel}: ${itemName}`;
+    try {
+        await (0, messaging_1.getMessaging)().send({
+            token: partnerData.fcmToken,
+            notification: {
+                title: 'Gestionarse 💸',
+                body,
+            },
+        });
+    }
+    catch (err) {
+        console.error('notifyExpensePartner FCM error:', err);
+    }
+}
+exports.notifyExpenseAdded = (0, firestore_1.onDocumentCreated)('expenses/{id}', async (event) => {
+    var _a;
+    const data = (_a = event.data) === null || _a === void 0 ? void 0 : _a.data();
+    if (!data)
+        return;
+    try {
+        await notifyExpensePartner({
+            coupleId: data.coupleId,
+            createdBy: data.createdBy,
+            assignedTo: data.assignedTo,
+            itemName: data.name,
+            itemType: 'expense',
+        });
+    }
+    catch (err) {
+        console.error('notifyExpenseAdded error:', err);
+    }
+});
+exports.notifyRecurringPaymentAdded = (0, firestore_1.onDocumentCreated)('recurringPayments/{id}', async (event) => {
+    var _a;
+    const data = (_a = event.data) === null || _a === void 0 ? void 0 : _a.data();
+    if (!data)
+        return;
+    try {
+        await notifyExpensePartner({
+            coupleId: data.coupleId,
+            createdBy: data.createdBy,
+            assignedTo: data.assignedTo,
+            itemName: data.name,
+            itemType: 'recurring',
+        });
+    }
+    catch (err) {
+        console.error('notifyRecurringPaymentAdded error:', err);
     }
 });
 // ── AI Proxy ──────────────────────────────────────────────────────────────────

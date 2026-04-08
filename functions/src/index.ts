@@ -593,6 +593,94 @@ export const notifyReaction = onDocumentCreated('reactions/{reactionId}', async 
   }
 });
 
+// ── Notify expense/recurring payment added ──────────────────────────────────
+
+async function notifyExpensePartner(params: {
+  coupleId: string;
+  createdBy: string;
+  assignedTo: string;
+  itemName: string;
+  itemType: 'expense' | 'recurring';
+}) {
+  const { coupleId, createdBy, assignedTo, itemName, itemType } = params;
+
+  // Gasto propio del creador: no notifica
+  if (assignedTo === createdBy) return;
+
+  const db = getFirestore();
+  const coupleDoc = await db.collection('couples').doc(coupleId).get();
+  if (!coupleDoc.exists) return;
+
+  const members: string[] = coupleDoc.data()?.members || [];
+  const partnerUid = members.find((uid) => uid !== createdBy);
+  if (!partnerUid) return;
+
+  // Solo notificar si el gasto es 'both' o está asignado al partner
+  if (assignedTo !== 'both' && assignedTo !== partnerUid) return;
+
+  const senderDoc = await db.collection('users').doc(createdBy).get();
+  const senderName = senderDoc.data()?.displayName || 'Tu pareja';
+
+  const partnerDoc = await db.collection('users').doc(partnerUid).get();
+  if (!partnerDoc.exists) return;
+
+  const partnerData = partnerDoc.data()!;
+  if (!partnerData.notificationsEnabled || !partnerData.fcmToken) return;
+
+  const typeLabel = itemType === 'expense' ? 'gasto' : 'pago recurrente';
+  const body =
+    assignedTo === 'both'
+      ? `${senderName} agregó un ${typeLabel} para los dos: ${itemName}`
+      : `${senderName} te asignó un ${typeLabel}: ${itemName}`;
+
+  try {
+    await getMessaging().send({
+      token: partnerData.fcmToken as string,
+      notification: {
+        title: 'Gestionarse 💸',
+        body,
+      },
+    });
+  } catch (err) {
+    console.error('notifyExpensePartner FCM error:', err);
+  }
+}
+
+export const notifyExpenseAdded = onDocumentCreated('expenses/{id}', async (event) => {
+  const data = event.data?.data();
+  if (!data) return;
+  try {
+    await notifyExpensePartner({
+      coupleId: data.coupleId,
+      createdBy: data.createdBy,
+      assignedTo: data.assignedTo,
+      itemName: data.name,
+      itemType: 'expense',
+    });
+  } catch (err) {
+    console.error('notifyExpenseAdded error:', err);
+  }
+});
+
+export const notifyRecurringPaymentAdded = onDocumentCreated(
+  'recurringPayments/{id}',
+  async (event) => {
+    const data = event.data?.data();
+    if (!data) return;
+    try {
+      await notifyExpensePartner({
+        coupleId: data.coupleId,
+        createdBy: data.createdBy,
+        assignedTo: data.assignedTo,
+        itemName: data.name,
+        itemType: 'recurring',
+      });
+    } catch (err) {
+      console.error('notifyRecurringPaymentAdded error:', err);
+    }
+  },
+);
+
 // ── AI Proxy ──────────────────────────────────────────────────────────────────
 
 export const aiProxy = onCall(
