@@ -1,35 +1,52 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Wallet, Plus } from 'lucide-react';
+import { Wallet, Plus, Repeat } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useExpenses } from '../hooks/useExpenses';
 import { useExpenseCards } from '../hooks/useExpenseCards';
 import { useExpenseCategories } from '../hooks/useExpenseCategories';
+import {
+  useRecurringPayments,
+  isPaidThisMonth,
+} from '../hooks/useRecurringPayments';
 import { ExpenseList } from '../components/expenses/ExpenseList';
 import { ExpenseAddDialog } from '../components/expenses/ExpenseAddDialog';
 import { ExpenseDetailDialog } from '../components/expenses/ExpenseDetailDialog';
 import { ExpenseSummaryFooter } from '../components/expenses/ExpenseSummaryFooter';
+import { RecurringPaymentList } from '../components/expenses/RecurringPaymentList';
+import { RecurringPaymentAddDialog } from '../components/expenses/RecurringPaymentAddDialog';
+import { RecurringPaymentDetailDialog } from '../components/expenses/RecurringPaymentDetailDialog';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Tabs } from '../components/ui/Tabs';
 import { cn } from '../lib/utils';
-import type { Expense } from '../types/expense';
+import type { Expense, RecurringPayment } from '../types/expense';
 
-type StatusTab = 'pending' | 'completed';
+type StatusTab = 'pending' | 'completed' | 'recurring';
 type AssignedFilter = 'all' | 'me' | 'partner' | 'both';
 
 export function ExpensesPage() {
   const { user } = useAuthContext();
   const { couple, partnerName } = useCoupleContext();
-  const { expenses, pending, completed, loading, remove, update, addPayment, removePayment } = useExpenses();
+  const { expenses, pending, completed, loading, remove, addPayment, removePayment } = useExpenses();
   const { cards } = useExpenseCards();
   const { categories } = useExpenseCategories();
+  const {
+    items: recurringItems,
+    loading: recurringLoading,
+    remove: removeRecurring,
+    markMonthPaid,
+    unmarkMonthPaid,
+  } = useRecurringPayments();
 
   const [tab, setTab] = useState<StatusTab>('pending');
   const [assignedFilter, setAssignedFilter] = useState<AssignedFilter>('all');
   const [cardFilter, setCardFilter] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [showAddRecurring, setShowAddRecurring] = useState(false);
+  const [editingRecurring, setEditingRecurring] = useState<RecurringPayment | null>(null);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [selectedRecurring, setSelectedRecurring] = useState<RecurringPayment | null>(null);
 
   const partnerId = couple?.members.find(m => m !== user?.uid);
 
@@ -40,11 +57,9 @@ export function ExpensesPage() {
     return names;
   }, [user, partnerId, partnerName]);
 
-  function getAssignedLabel(expense: Expense): string {
-    return memberNames[expense.assignedTo] || 'Desconocido';
-  }
+  const isRecurringTab = tab === 'recurring';
 
-  // Filter logic
+  // Filter logic (expenses)
   const filterExpenses = (list: Expense[]) => {
     let filtered = list;
     if (assignedFilter === 'me') filtered = filtered.filter(e => e.assignedTo === user?.uid);
@@ -54,20 +69,54 @@ export function ExpensesPage() {
     return filtered;
   };
 
-  const baseList = tab === 'pending' ? pending : completed;
-  const filteredList = filterExpenses(baseList);
+  // Filter logic (recurring)
+  const filterRecurring = (list: RecurringPayment[]) => {
+    let filtered = list;
+    if (assignedFilter === 'me') filtered = filtered.filter(i => i.assignedTo === user?.uid);
+    else if (assignedFilter === 'partner') filtered = filtered.filter(i => i.assignedTo === partnerId);
+    else if (assignedFilter === 'both') filtered = filtered.filter(i => i.assignedTo === 'both');
+    if (cardFilter) filtered = filtered.filter(i => i.card === cardFilter);
+    return filtered;
+  };
 
-  // Cards used in current tab for filter pills
-  const usedCardIds = new Set(baseList.map(e => e.card).filter(Boolean));
+  // Ordenar recurrentes: pendientes primero (por días hasta vencer), luego pagados
+  const sortedRecurring = useMemo(() => {
+    const sorted = [...recurringItems].sort((a, b) => {
+      const aPaid = isPaidThisMonth(a);
+      const bPaid = isPaidThisMonth(b);
+      if (aPaid !== bPaid) return aPaid ? 1 : -1;
+      return a.dayOfMonth - b.dayOfMonth;
+    });
+    return sorted;
+  }, [recurringItems]);
+
+  const baseExpenses = tab === 'pending' ? pending : tab === 'completed' ? completed : [];
+  const filteredExpenses = filterExpenses(baseExpenses);
+  const filteredRecurring = filterRecurring(sortedRecurring);
+
+  // Cards used for filter pills (depende del tab activo)
+  const usedCardIds = isRecurringTab
+    ? new Set(recurringItems.map(i => i.card).filter(Boolean))
+    : new Set(baseExpenses.map(e => e.card).filter(Boolean));
   const usedCards = cards.filter(c => usedCardIds.has(c.id));
 
   const currentSelected = selectedExpense
     ? expenses.find(e => e.id === selectedExpense.id) || null
     : null;
 
+  const currentSelectedRecurring = selectedRecurring
+    ? recurringItems.find(i => i.id === selectedRecurring.id) || null
+    : null;
+
+  const recurringPendingCount = useMemo(
+    () => recurringItems.filter(i => !isPaidThisMonth(i)).length,
+    [recurringItems],
+  );
+
   const TABS = [
     { id: 'pending', label: `Pendientes (${pending.length})` },
     { id: 'completed', label: `Completados (${completed.length})` },
+    { id: 'recurring', label: `Recurrentes (${recurringPendingCount})` },
   ];
 
   const ASSIGNED_FILTERS: { id: AssignedFilter; label: string }[] = [
@@ -77,7 +126,18 @@ export function ExpensesPage() {
     { id: 'both', label: 'Los dos' },
   ];
 
-  if (loading) {
+  function handleFabClick() {
+    if (isRecurringTab) {
+      setEditingRecurring(null);
+      setShowAddRecurring(true);
+    } else {
+      setShowAdd(true);
+    }
+  }
+
+  const showLoading = isRecurringTab ? recurringLoading : loading;
+
+  if (showLoading) {
     return (
       <div className="space-y-4 py-4">
         {[1, 2, 3].map(i => (
@@ -101,7 +161,7 @@ export function ExpensesPage() {
             className={cn(
               'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
               assignedFilter === f.id
-                ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                ? 'bg-primary text-primary-contrast shadow-sm shadow-primary/30'
                 : 'bg-surface-hover text-text-muted hover:text-text-secondary'
             )}
           >
@@ -118,7 +178,7 @@ export function ExpensesPage() {
             className={cn(
               'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
               cardFilter === null
-                ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                ? 'bg-primary text-primary-contrast shadow-sm shadow-primary/30'
                 : 'bg-surface-hover text-text-muted hover:text-text-secondary'
             )}
           >
@@ -131,7 +191,7 @@ export function ExpensesPage() {
               className={cn(
                 'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
                 cardFilter === card.id
-                  ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                  ? 'bg-primary text-primary-contrast shadow-sm shadow-primary/30'
                   : 'bg-surface-hover text-text-muted hover:text-text-secondary'
               )}
             >
@@ -141,10 +201,27 @@ export function ExpensesPage() {
         </div>
       )}
 
-      {/* Expense list */}
-      {filteredList.length > 0 ? (
+      {/* Content */}
+      {isRecurringTab ? (
+        filteredRecurring.length > 0 ? (
+          <RecurringPaymentList
+            items={filteredRecurring}
+            cards={cards}
+            categories={categories}
+            memberNames={memberNames}
+            onSelect={setSelectedRecurring}
+            onDelete={(id) => removeRecurring(id)}
+          />
+        ) : (
+          <EmptyState
+            icon={<Repeat size={36} />}
+            title="Sin pagos recurrentes"
+            description="Agregá suscripciones y servicios (Netflix, luz, etc.) con el botón +"
+          />
+        )
+      ) : filteredExpenses.length > 0 ? (
         <ExpenseList
-          expenses={filteredList}
+          expenses={filteredExpenses}
           cards={cards}
           categories={categories}
           memberNames={memberNames}
@@ -159,8 +236,8 @@ export function ExpensesPage() {
         />
       )}
 
-      {/* Summary footer */}
-      <ExpenseSummaryFooter expenses={filteredList} />
+      {/* Summary footer (solo para gastos normales) */}
+      {!isRecurringTab && <ExpenseSummaryFooter expenses={filteredExpenses} />}
 
       {/* Dialogs */}
       <ExpenseAddDialog open={showAdd} onClose={() => setShowAdd(false)} />
@@ -173,15 +250,37 @@ export function ExpensesPage() {
         onAddPayment={addPayment}
         onRemovePayment={removePayment}
         onDelete={remove}
-        onUpdate={update}
+      />
+
+      <RecurringPaymentAddDialog
+        open={showAddRecurring}
+        onClose={() => {
+          setShowAddRecurring(false);
+          setEditingRecurring(null);
+        }}
+        editing={editingRecurring}
+      />
+      <RecurringPaymentDetailDialog
+        item={currentSelectedRecurring}
+        cards={cards}
+        categories={categories}
+        memberNames={memberNames}
+        onClose={() => setSelectedRecurring(null)}
+        onMarkPaid={markMonthPaid}
+        onUnmarkPaid={unmarkMonthPaid}
+        onDelete={removeRecurring}
+        onEdit={(item) => {
+          setEditingRecurring(item);
+          setShowAddRecurring(true);
+        }}
       />
 
       {/* FAB */}
       {createPortal(
         <button
-          onClick={() => setShowAdd(true)}
-          className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-primary-hover text-white shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:from-primary-hover hover:to-primary transition-colors active:scale-90"
-          aria-label="Nuevo gasto"
+          onClick={handleFabClick}
+          className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-primary-hover text-primary-contrast shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:from-primary-hover hover:to-primary transition-colors active:scale-90"
+          aria-label={isRecurringTab ? 'Nuevo pago recurrente' : 'Nuevo gasto'}
         >
           <Plus size={24} />
         </button>,

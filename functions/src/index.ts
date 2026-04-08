@@ -190,6 +190,110 @@ export const weeklySummary = onSchedule(
   }
 );
 
+// ── Recurring Payment Reminders (daily 09:00 UY) ─────────────────────────────
+
+export const recurringPaymentReminders = onSchedule(
+  { schedule: '0 9 * * *', timeZone: 'America/Montevideo' },
+  async () => {
+    const db = getFirestore();
+
+    // Fecha actual en Montevideo
+    const nowMvd = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Montevideo' })
+    );
+    const year = nowMvd.getFullYear();
+    const month = nowMvd.getMonth(); // 0-indexed
+    const today = nowMvd.getDate();
+    const currentYM = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+    // Último día del mes actual (para acotar dayOfMonth > días del mes)
+    const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+
+    const snap = await db
+      .collection('recurringPayments')
+      .where('isActive', '==', true)
+      .get();
+
+    if (snap.empty) return;
+
+    const messages: {
+      token: string;
+      notification: { title: string; body: string };
+    }[] = [];
+
+    for (const doc of snap.docs) {
+      try {
+        const item = doc.data();
+        const reminders: number[] = Array.isArray(item.reminders) ? item.reminders : [];
+        if (reminders.length === 0) continue;
+
+        // Ya pagado este mes? skip
+        const history: { yearMonth: string }[] = Array.isArray(item.paymentHistory)
+          ? item.paymentHistory
+          : [];
+        const alreadyPaid = history.some((r) => r.yearMonth === currentYM);
+        if (alreadyPaid) continue;
+
+        // Día efectivo de vencimiento este mes
+        const dayOfMonth = Math.min(item.dayOfMonth as number, lastDayOfMonth);
+        const daysUntilDue = dayOfMonth - today;
+
+        // ¿Corresponde mandar push hoy?
+        if (!reminders.includes(daysUntilDue)) continue;
+
+        // Usuarios a notificar
+        const coupleId = item.coupleId as string;
+        const assignedTo = item.assignedTo as string;
+
+        const coupleDoc = await db.collection('couples').doc(coupleId).get();
+        if (!coupleDoc.exists) continue;
+        const members: string[] = coupleDoc.data()?.members || [];
+
+        const userIds =
+          assignedTo === 'both' ? members : members.filter((uid) => uid === assignedTo);
+
+        // Body del push según cuándo venza
+        let whenLabel: string;
+        if (daysUntilDue === 0) whenLabel = 'Vence hoy';
+        else if (daysUntilDue === 1) whenLabel = 'Vence mañana';
+        else whenLabel = `Vence en ${daysUntilDue} días`;
+
+        const amountLabel =
+          typeof item.suggestedAmount === 'number'
+            ? ` · ${item.currency === 'USD' ? 'U$S' : '$'}${item.suggestedAmount}`
+            : '';
+
+        const body = `${whenLabel}: ${item.name}${amountLabel}`;
+
+        for (const uid of userIds) {
+          const userDoc = await db.collection('users').doc(uid).get();
+          if (!userDoc.exists) continue;
+          const userData = userDoc.data()!;
+          if (!userData.notificationsEnabled || !userData.fcmToken) continue;
+
+          messages.push({
+            token: userData.fcmToken as string,
+            notification: {
+              title: 'Pago recurrente 💸',
+              body,
+            },
+          });
+        }
+      } catch (err) {
+        console.error(`recurringPaymentReminders error for ${doc.id}:`, err);
+      }
+    }
+
+    if (messages.length > 0) {
+      try {
+        await getMessaging().sendEach(messages);
+      } catch (err) {
+        console.error('recurringPaymentReminders sendEach error:', err);
+      }
+    }
+  }
+);
+
 // ── Habit Reminders (per-habit push notifications) ───────────────────────────
 
 export const habitReminders = onSchedule(
