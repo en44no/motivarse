@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { Dialog } from '../ui/Dialog';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -8,6 +9,7 @@ import { useCoupleContext } from '../../contexts/CoupleContext';
 import { useExpenses } from '../../hooks/useExpenses';
 import { useExpenseCards } from '../../hooks/useExpenseCards';
 import { useExpenseCategories } from '../../hooks/useExpenseCategories';
+import { autocategorize } from '../../services/ai.service';
 import { formatCurrency } from '../../lib/currency-utils';
 import { cn } from '../../lib/utils';
 import type { Currency } from '../../types/expense';
@@ -35,6 +37,10 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
   const [submitting, setSubmitting] = useState(false);
 
+  // AI autocategorize
+  const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
+
   // Inline creation states
   const [showNewCard, setShowNewCard] = useState(false);
   const [newCardName, setNewCardName] = useState('');
@@ -54,6 +60,52 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
     { value: 'both', label: 'Los dos' },
   ];
 
+  // ── AI autocategorize (debounced) ───────────────────────────────────────
+  useEffect(() => {
+    if (!open) return;
+    if (selectedCategory) {
+      setSuggestion(null);
+      setSuggesting(false);
+      return;
+    }
+    if (name.trim().length < 3 || categories.length === 0) {
+      setSuggestion(null);
+      setSuggesting(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+      setSuggesting(true);
+      try {
+        const id = await autocategorize(name.trim(), categories);
+        if (cancelled) return;
+        setSuggestion(id && categories.some((c) => c.id === id) ? id : null);
+      } catch {
+        if (!cancelled) setSuggestion(null);
+      } finally {
+        if (!cancelled) setSuggesting(false);
+      }
+    }, 700);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [name, categories.length, selectedCategory, open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const suggestedCategory = suggestion
+    ? categories.find((c) => c.id === suggestion)
+    : undefined;
+
+  function applySuggestion() {
+    if (suggestedCategory) {
+      setSelectedCategory(suggestedCategory.id);
+      setSuggestion(null);
+    }
+  }
+
   function resetForm() {
     setName('');
     setInstallmentPrice('');
@@ -68,6 +120,8 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
     setShowNewCat(false);
     setNewCatEmoji('');
     setNewCatLabel('');
+    setSuggestion(null);
+    setSuggesting(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -296,9 +350,30 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
 
         {/* Categoria */}
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1.5">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-text-secondary mb-1.5">
             Categoria
+            {suggesting && (
+              <Loader2 size={12} className="animate-spin text-primary" />
+            )}
           </label>
+          {suggestedCategory && (
+            <div className="flex items-center gap-2 mb-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
+              <Sparkles size={12} className="text-primary shrink-0" />
+              <span className="text-xs text-text-secondary">
+                Sugerido:{' '}
+                <span className="font-semibold">
+                  {suggestedCategory.emoji} {suggestedCategory.label}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={applySuggestion}
+                className="ml-auto text-xs font-semibold text-primary hover:underline"
+              >
+                Aplicar
+              </button>
+            </div>
+          )}
           <div className="flex gap-1.5 flex-wrap">
             {categories.map((cat) => (
               <button

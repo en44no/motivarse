@@ -1,5 +1,4 @@
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import type { CoupleCategory } from '../types/category';
 import type { HabitCategory, HabitFrequency, HabitScope } from '../types/habit';
 
 const functions = getFunctions();
@@ -35,7 +34,7 @@ export interface CoachContext {
 
 export async function autocategorize(
   title: string,
-  categories: CoupleCategory[]
+  categories: { id: string; emoji: string; label: string }[]
 ): Promise<string | null> {
   try {
     const result = await aiProxy({

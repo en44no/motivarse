@@ -221,11 +221,13 @@ export const recurringPaymentReminders = onSchedule(
       notification: { title: string; body: string };
     }[] = [];
 
+    // Días de atraso automáticos (no configurables por el usuario)
+    const AUTO_OVERDUE_DAYS = [-1, -3];
+
     for (const doc of snap.docs) {
       try {
         const item = doc.data();
         const reminders: number[] = Array.isArray(item.reminders) ? item.reminders : [];
-        if (reminders.length === 0) continue;
 
         // Ya pagado este mes? skip
         const history: { yearMonth: string }[] = Array.isArray(item.paymentHistory)
@@ -239,7 +241,9 @@ export const recurringPaymentReminders = onSchedule(
         const daysUntilDue = dayOfMonth - today;
 
         // ¿Corresponde mandar push hoy?
-        if (!reminders.includes(daysUntilDue)) continue;
+        const isScheduledReminder = reminders.includes(daysUntilDue);
+        const isAutoOverdueReminder = AUTO_OVERDUE_DAYS.includes(daysUntilDue);
+        if (!isScheduledReminder && !isAutoOverdueReminder) continue;
 
         // Usuarios a notificar
         const coupleId = item.coupleId as string;
@@ -252,9 +256,14 @@ export const recurringPaymentReminders = onSchedule(
         const userIds =
           assignedTo === 'both' ? members : members.filter((uid) => uid === assignedTo);
 
-        // Body del push según cuándo venza
+        // Title y body del push según si es atraso automático o recordatorio previo
+        let title = 'Pago recurrente 💸';
         let whenLabel: string;
-        if (daysUntilDue === 0) whenLabel = 'Vence hoy';
+        if (isAutoOverdueReminder) {
+          title = 'Pago atrasado ⚠️';
+          const daysLate = Math.abs(daysUntilDue);
+          whenLabel = `Atrasado ${daysLate} día${daysLate > 1 ? 's' : ''}`;
+        } else if (daysUntilDue === 0) whenLabel = 'Vence hoy';
         else if (daysUntilDue === 1) whenLabel = 'Vence mañana';
         else whenLabel = `Vence en ${daysUntilDue} días`;
 
@@ -274,7 +283,7 @@ export const recurringPaymentReminders = onSchedule(
           messages.push({
             token: userData.fcmToken as string,
             notification: {
-              title: 'Pago recurrente 💸',
+              title,
               body,
             },
           });

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Wallet, Plus, Repeat } from 'lucide-react';
+import { Wallet, Plus, Repeat, Search, X } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useExpenses } from '../hooks/useExpenses';
@@ -14,6 +14,7 @@ import { ExpenseList } from '../components/expenses/ExpenseList';
 import { ExpenseAddDialog } from '../components/expenses/ExpenseAddDialog';
 import { ExpenseDetailDialog } from '../components/expenses/ExpenseDetailDialog';
 import { ExpenseSummaryFooter } from '../components/expenses/ExpenseSummaryFooter';
+import { ExpensesCalendar } from '../components/expenses/ExpensesCalendar';
 import { RecurringPaymentList } from '../components/expenses/RecurringPaymentList';
 import { RecurringPaymentAddDialog } from '../components/expenses/RecurringPaymentAddDialog';
 import { RecurringPaymentDetailDialog } from '../components/expenses/RecurringPaymentDetailDialog';
@@ -22,13 +23,13 @@ import { Tabs } from '../components/ui/Tabs';
 import { cn } from '../lib/utils';
 import type { Expense, RecurringPayment } from '../types/expense';
 
-type StatusTab = 'pending' | 'completed' | 'recurring';
+type StatusTab = 'pending' | 'completed' | 'recurring' | 'calendar';
 type AssignedFilter = 'all' | 'me' | 'partner' | 'both';
 
 export function ExpensesPage() {
   const { user } = useAuthContext();
   const { couple, partnerName } = useCoupleContext();
-  const { expenses, pending, completed, loading, remove, addPayment, removePayment } = useExpenses();
+  const { expenses, pending, completed, loading, remove, addPayment, removePayment, duplicate } = useExpenses();
   const { cards } = useExpenseCards();
   const { categories } = useExpenseCategories();
   const {
@@ -42,6 +43,7 @@ export function ExpensesPage() {
   const [tab, setTab] = useState<StatusTab>('pending');
   const [assignedFilter, setAssignedFilter] = useState<AssignedFilter>('all');
   const [cardFilter, setCardFilter] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [showAddRecurring, setShowAddRecurring] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState<RecurringPayment | null>(null);
@@ -58,6 +60,8 @@ export function ExpensesPage() {
   }, [user, partnerId, partnerName]);
 
   const isRecurringTab = tab === 'recurring';
+  const isCalendarTab = tab === 'calendar';
+  const searchQuery = search.trim().toLowerCase();
 
   // Filter logic (expenses)
   const filterExpenses = (list: Expense[]) => {
@@ -66,6 +70,7 @@ export function ExpensesPage() {
     else if (assignedFilter === 'partner') filtered = filtered.filter(e => e.assignedTo === partnerId);
     else if (assignedFilter === 'both') filtered = filtered.filter(e => e.assignedTo === 'both');
     if (cardFilter) filtered = filtered.filter(e => e.card === cardFilter);
+    if (searchQuery) filtered = filtered.filter(e => e.name.toLowerCase().includes(searchQuery));
     return filtered;
   };
 
@@ -76,6 +81,7 @@ export function ExpensesPage() {
     else if (assignedFilter === 'partner') filtered = filtered.filter(i => i.assignedTo === partnerId);
     else if (assignedFilter === 'both') filtered = filtered.filter(i => i.assignedTo === 'both');
     if (cardFilter) filtered = filtered.filter(i => i.card === cardFilter);
+    if (searchQuery) filtered = filtered.filter(i => i.name.toLowerCase().includes(searchQuery));
     return filtered;
   };
 
@@ -117,6 +123,7 @@ export function ExpensesPage() {
     { id: 'pending', label: `Pendientes (${pending.length})` },
     { id: 'completed', label: `Completados (${completed.length})` },
     { id: 'recurring', label: `Recurrentes (${recurringPendingCount})` },
+    { id: 'calendar', label: 'Calendario' },
   ];
 
   const ASSIGNED_FILTERS: { id: AssignedFilter; label: string }[] = [
@@ -135,7 +142,11 @@ export function ExpensesPage() {
     }
   }
 
-  const showLoading = isRecurringTab ? recurringLoading : loading;
+  const showLoading = isCalendarTab
+    ? loading || recurringLoading
+    : isRecurringTab
+      ? recurringLoading
+      : loading;
 
   if (showLoading) {
     return (
@@ -152,26 +163,55 @@ export function ExpensesPage() {
       {/* Status tabs */}
       <Tabs tabs={TABS} activeTab={tab} onChange={(id) => { setTab(id as StatusTab); setCardFilter(null); }} />
 
-      {/* Assigned filter pills */}
-      <div className="flex gap-1.5 overflow-x-auto pb-0.5 px-1 scrollbar-none">
-        {ASSIGNED_FILTERS.map(f => (
-          <button
-            key={f.id}
-            onClick={() => setAssignedFilter(assignedFilter === f.id && f.id !== 'all' ? 'all' : f.id)}
-            className={cn(
-              'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
-              assignedFilter === f.id
-                ? 'bg-primary text-primary-contrast shadow-sm shadow-primary/30'
-                : 'bg-surface-hover text-text-muted hover:text-text-secondary'
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      {/* Search input (oculto en tab calendario) */}
+      {!isCalendarTab && (
+        <div className="relative">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+          />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar gasto..."
+            className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl bg-surface-light border border-border/60 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/60 transition-colors"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+              aria-label="Limpiar busqueda"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Assigned filter pills (oculto en tab calendario) */}
+      {!isCalendarTab && (
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 px-1 scrollbar-none">
+          {ASSIGNED_FILTERS.map(f => (
+            <button
+              key={f.id}
+              onClick={() => setAssignedFilter(assignedFilter === f.id && f.id !== 'all' ? 'all' : f.id)}
+              className={cn(
+                'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
+                assignedFilter === f.id
+                  ? 'bg-primary text-primary-contrast shadow-sm shadow-primary/30'
+                  : 'bg-surface-hover text-text-muted hover:text-text-secondary'
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Card filter pills (only show if cards exist in current tab) */}
-      {usedCards.length > 0 && (
+      {!isCalendarTab && usedCards.length > 0 && (
         <div className="flex gap-1.5 overflow-x-auto pb-0.5 px-1 scrollbar-none">
           <button
             onClick={() => setCardFilter(null)}
@@ -202,7 +242,14 @@ export function ExpensesPage() {
       )}
 
       {/* Content */}
-      {isRecurringTab ? (
+      {isCalendarTab ? (
+        <ExpensesCalendar
+          expenses={expenses}
+          recurringPayments={recurringItems}
+          cards={cards}
+          categories={categories}
+        />
+      ) : isRecurringTab ? (
         filteredRecurring.length > 0 ? (
           <RecurringPaymentList
             items={filteredRecurring}
@@ -237,7 +284,7 @@ export function ExpensesPage() {
       )}
 
       {/* Summary footer (solo para gastos normales) */}
-      {!isRecurringTab && <ExpenseSummaryFooter expenses={filteredExpenses} />}
+      {!isRecurringTab && !isCalendarTab && <ExpenseSummaryFooter expenses={filteredExpenses} />}
 
       {/* Dialogs */}
       <ExpenseAddDialog open={showAdd} onClose={() => setShowAdd(false)} />
@@ -250,6 +297,7 @@ export function ExpensesPage() {
         onAddPayment={addPayment}
         onRemovePayment={removePayment}
         onDelete={remove}
+        onDuplicate={duplicate}
       />
 
       <RecurringPaymentAddDialog
@@ -281,6 +329,7 @@ export function ExpensesPage() {
           onClick={handleFabClick}
           className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-primary-hover text-primary-contrast shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:from-primary-hover hover:to-primary transition-colors active:scale-90"
           aria-label={isRecurringTab ? 'Nuevo pago recurrente' : 'Nuevo gasto'}
+          title={isRecurringTab ? 'Nuevo pago recurrente' : 'Nuevo gasto'}
         >
           <Plus size={24} />
         </button>,

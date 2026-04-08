@@ -132,5 +132,35 @@ export function useExpenses() {
     [user, coupleId, expenses],
   );
 
-  return { expenses, pending, completed, loading, add, update, remove, addPayment, removePayment };
+  const duplicate = useCallback(
+    async (id: string) => {
+      if (!user || !coupleId) return;
+      const source = expenses.find((e) => e.id === id);
+      if (!source) return;
+      try {
+        const now = Date.now();
+        await addExpense({
+          coupleId,
+          name: source.name,
+          installmentPrice: source.installmentPrice,
+          totalInstallments: source.totalInstallments,
+          isFixedInstallment: source.isFixedInstallment,
+          currency: source.currency,
+          ...(source.category ? { category: source.category } : {}),
+          ...(source.card ? { card: source.card } : {}),
+          assignedTo: source.assignedTo,
+          payments: [],
+          createdBy: user.uid,
+          createdAt: now,
+          updatedAt: now,
+        });
+        toast.success('Gasto duplicado');
+      } catch (error) {
+        toast.error('No se pudo duplicar el gasto.');
+      }
+    },
+    [user, coupleId, expenses],
+  );
+
+  return { expenses, pending, completed, loading, add, update, remove, addPayment, removePayment, duplicate };
 }

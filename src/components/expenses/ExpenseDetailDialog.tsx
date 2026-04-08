@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, CreditCard, Calendar, DollarSign, Trash2 } from 'lucide-react';
+import { Check, CreditCard, Calendar, DollarSign, Trash2, Copy } from 'lucide-react';
 import { Dialog } from '../ui/Dialog';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -17,6 +17,7 @@ interface ExpenseDetailDialogProps {
   onAddPayment: (expenseId: string, payment: ExpensePayment) => Promise<void>;
   onRemovePayment: (expenseId: string, installmentNumber: number) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onDuplicate: (id: string) => Promise<void>;
 }
 
 function formatDate(timestamp: number): string {
@@ -36,6 +37,7 @@ export function ExpenseDetailDialog({
   onAddPayment,
   onRemovePayment,
   onDelete,
+  onDuplicate,
 }: ExpenseDetailDialogProps) {
   const [loadingInstallment, setLoadingInstallment] = useState<number | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -315,19 +317,31 @@ export function ExpenseDetailDialog({
         )}
       </div>
 
-      {/* Delete */}
-      <div className="mt-6 pt-4 border-t border-border">
+      {/* Actions */}
+      <div className="mt-6 pt-4 border-t border-border flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1"
+          onClick={async () => {
+            await onDuplicate(expense.id);
+            onClose();
+          }}
+        >
+          <Copy size={16} />
+          Duplicar
+        </Button>
         <Button
           variant="danger"
           size="sm"
-          className="w-full"
+          className="flex-1"
           onClick={async () => {
             await onDelete(expense.id);
             onClose();
           }}
         >
           <Trash2 size={16} />
-          Eliminar gasto
+          Eliminar
         </Button>
       </div>
     </Dialog>

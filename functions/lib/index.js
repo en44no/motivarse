@@ -157,12 +157,12 @@ exports.recurringPaymentReminders = (0, scheduler_1.onSchedule)({ schedule: '0 9
     if (snap.empty)
         return;
     const messages = [];
+    // Días de atraso automáticos (no configurables por el usuario)
+    const AUTO_OVERDUE_DAYS = [-1, -3];
     for (const doc of snap.docs) {
         try {
             const item = doc.data();
             const reminders = Array.isArray(item.reminders) ? item.reminders : [];
-            if (reminders.length === 0)
-                continue;
             // Ya pagado este mes? skip
             const history = Array.isArray(item.paymentHistory)
                 ? item.paymentHistory
@@ -174,7 +174,9 @@ exports.recurringPaymentReminders = (0, scheduler_1.onSchedule)({ schedule: '0 9
             const dayOfMonth = Math.min(item.dayOfMonth, lastDayOfMonth);
             const daysUntilDue = dayOfMonth - today;
             // ¿Corresponde mandar push hoy?
-            if (!reminders.includes(daysUntilDue))
+            const isScheduledReminder = reminders.includes(daysUntilDue);
+            const isAutoOverdueReminder = AUTO_OVERDUE_DAYS.includes(daysUntilDue);
+            if (!isScheduledReminder && !isAutoOverdueReminder)
                 continue;
             // Usuarios a notificar
             const coupleId = item.coupleId;
@@ -184,9 +186,15 @@ exports.recurringPaymentReminders = (0, scheduler_1.onSchedule)({ schedule: '0 9
                 continue;
             const members = ((_a = coupleDoc.data()) === null || _a === void 0 ? void 0 : _a.members) || [];
             const userIds = assignedTo === 'both' ? members : members.filter((uid) => uid === assignedTo);
-            // Body del push según cuándo venza
+            // Title y body del push según si es atraso automático o recordatorio previo
+            let title = 'Pago recurrente 💸';
             let whenLabel;
-            if (daysUntilDue === 0)
+            if (isAutoOverdueReminder) {
+                title = 'Pago atrasado ⚠️';
+                const daysLate = Math.abs(daysUntilDue);
+                whenLabel = `Atrasado ${daysLate} día${daysLate > 1 ? 's' : ''}`;
+            }
+            else if (daysUntilDue === 0)
                 whenLabel = 'Vence hoy';
             else if (daysUntilDue === 1)
                 whenLabel = 'Vence mañana';
@@ -206,7 +214,7 @@ exports.recurringPaymentReminders = (0, scheduler_1.onSchedule)({ schedule: '0 9
                 messages.push({
                     token: userData.fcmToken,
                     notification: {
-                        title: 'Pago recurrente 💸',
+                        title,
                         body,
                     },
                 });
