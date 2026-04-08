@@ -164,9 +164,9 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
                   type="button"
                   onClick={() => setCurrency(c)}
                   className={cn(
-                    'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
+                    'px-3 py-1 rounded-full text-xs font-medium transition-all',
                     currency === c
-                      ? 'bg-primary text-primary-contrast'
+                      ? 'bg-primary text-white shadow-sm shadow-primary/30'
                       : 'bg-surface-hover text-text-muted',
                   )}
                 >
@@ -184,9 +184,9 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
                 type="button"
                 onClick={() => setIsFixed(true)}
                 className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
+                  'px-3 py-1 rounded-full text-xs font-medium transition-all',
                   isFixed
-                    ? 'bg-primary text-primary-contrast'
+                    ? 'bg-primary text-white shadow-sm shadow-primary/30'
                     : 'bg-surface-hover text-text-muted',
                 )}
               >
@@ -196,9 +196,9 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
                 type="button"
                 onClick={() => setIsFixed(false)}
                 className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
+                  'px-3 py-1 rounded-full text-xs font-medium transition-all',
                   !isFixed
-                    ? 'bg-primary text-primary-contrast'
+                    ? 'bg-primary text-white shadow-sm shadow-primary/30'
                     : 'bg-surface-hover text-text-muted',
                 )}
               >
@@ -220,9 +220,9 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
                 type="button"
                 onClick={() => setAssignedTo(opt.value)}
                 className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
+                  'px-3 py-1 rounded-full text-xs font-medium transition-all',
                   assignedTo === opt.value
-                    ? 'bg-primary text-primary-contrast'
+                    ? 'bg-primary text-white shadow-sm shadow-primary/30'
                     : 'bg-surface-hover text-text-muted',
                 )}
               >
@@ -248,7 +248,7 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
                 className={cn(
                   'px-2.5 py-1 rounded-full text-xs font-medium transition-all',
                   selectedCard === card.id
-                    ? 'bg-primary text-primary-contrast'
+                    ? 'bg-primary text-white shadow-sm shadow-primary/30'
                     : 'bg-surface-hover text-text-muted',
                 )}
               >
@@ -312,7 +312,7 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
                 className={cn(
                   'px-2.5 py-1 rounded-full text-xs font-medium transition-all',
                   selectedCategory === cat.id
-                    ? 'bg-primary text-primary-contrast'
+                    ? 'bg-primary text-white shadow-sm shadow-primary/30'
                     : 'bg-surface-hover text-text-muted',
                 )}
               >

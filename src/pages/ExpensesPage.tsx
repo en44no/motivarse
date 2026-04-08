@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wallet, Plus, Eye, EyeOff } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -73,9 +74,9 @@ export function ExpensesPage() {
             key={f.id}
             onClick={() => setFilter(filter === f.id && f.id !== 'all' ? 'all' : f.id)}
             className={cn(
-              'shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all',
+              'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
               filter === f.id
-                ? 'bg-primary text-primary-contrast shadow-sm shadow-primary/30'
+                ? 'bg-primary text-white shadow-sm shadow-primary/30'
                 : 'bg-surface-hover text-text-muted hover:text-text-secondary'
             )}
           >
@@ -134,15 +135,6 @@ export function ExpensesPage() {
       {/* Summary footer */}
       <ExpenseSummaryFooter expenses={filter === 'all' ? pending : filteredPending} />
 
-      {/* FAB */}
-      <button
-        onClick={() => setShowAdd(true)}
-        className="fixed bottom-24 right-4 z-30 w-14 h-14 rounded-2xl bg-primary text-primary-contrast shadow-lg shadow-primary/30 flex items-center justify-center active:scale-95 transition-transform"
-        aria-label="Nuevo gasto"
-      >
-        <Plus size={24} />
-      </button>
-
       {/* Dialogs */}
       <ExpenseAddDialog open={showAdd} onClose={() => setShowAdd(false)} />
       <ExpenseDetailDialog
@@ -153,6 +145,18 @@ export function ExpensesPage() {
         onAddPayment={addPayment}
         onRemovePayment={removePayment}
       />
+
+      {/* FAB via portal (same pattern as HabitsPage) */}
+      {createPortal(
+        <button
+          onClick={() => setShowAdd(true)}
+          className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-primary-hover text-white shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:from-primary-hover hover:to-primary transition-colors active:scale-90"
+          aria-label="Nuevo gasto"
+        >
+          <Plus size={24} />
+        </button>,
+        document.body,
+      )}
     </div>
   );
 }
