@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Wallet, Plus, Eye, EyeOff } from 'lucide-react';
+import { Wallet, Plus } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useExpenses } from '../hooks/useExpenses';
@@ -12,48 +11,71 @@ import { ExpenseAddDialog } from '../components/expenses/ExpenseAddDialog';
 import { ExpenseDetailDialog } from '../components/expenses/ExpenseDetailDialog';
 import { ExpenseSummaryFooter } from '../components/expenses/ExpenseSummaryFooter';
 import { EmptyState } from '../components/ui/EmptyState';
+import { Tabs } from '../components/ui/Tabs';
 import { cn } from '../lib/utils';
 import type { Expense } from '../types/expense';
 
+type StatusTab = 'pending' | 'completed';
 type AssignedFilter = 'all' | 'me' | 'partner' | 'both';
 
 export function ExpensesPage() {
   const { user } = useAuthContext();
   const { couple, partnerName } = useCoupleContext();
-  const { expenses, pending, completed, loading, remove, addPayment, removePayment } = useExpenses();
+  const { expenses, pending, completed, loading, remove, update, addPayment, removePayment } = useExpenses();
   const { cards } = useExpenseCards();
   const { categories } = useExpenseCategories();
 
-  const [filter, setFilter] = useState<AssignedFilter>('all');
-  const [showCompleted, setShowCompleted] = useState(false);
+  const [tab, setTab] = useState<StatusTab>('pending');
+  const [assignedFilter, setAssignedFilter] = useState<AssignedFilter>('all');
+  const [cardFilter, setCardFilter] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
 
+  const partnerId = couple?.members.find(m => m !== user?.uid);
+
+  const memberNames: Record<string, string> = useMemo(() => {
+    const names: Record<string, string> = { both: 'Ambos' };
+    if (user) names[user.uid] = 'Yo';
+    if (partnerId) names[partnerId] = partnerName || 'Pareja';
+    return names;
+  }, [user, partnerId, partnerName]);
+
+  function getAssignedLabel(expense: Expense): string {
+    return memberNames[expense.assignedTo] || 'Desconocido';
+  }
+
   // Filter logic
   const filterExpenses = (list: Expense[]) => {
-    if (filter === 'all') return list;
-    if (filter === 'me') return list.filter(e => e.assignedTo === user?.uid);
-    if (filter === 'partner') {
-      const partnerId = couple?.members.find(m => m !== user?.uid);
-      return list.filter(e => e.assignedTo === partnerId);
-    }
-    return list.filter(e => e.assignedTo === 'both');
+    let filtered = list;
+    if (assignedFilter === 'me') filtered = filtered.filter(e => e.assignedTo === user?.uid);
+    else if (assignedFilter === 'partner') filtered = filtered.filter(e => e.assignedTo === partnerId);
+    else if (assignedFilter === 'both') filtered = filtered.filter(e => e.assignedTo === 'both');
+    if (cardFilter) filtered = filtered.filter(e => e.card === cardFilter);
+    return filtered;
   };
 
-  const filteredPending = filterExpenses(pending);
-  const filteredCompleted = filterExpenses(completed);
+  const baseList = tab === 'pending' ? pending : completed;
+  const filteredList = filterExpenses(baseList);
 
-  const FILTERS: { id: AssignedFilter; label: string }[] = [
+  // Cards used in current tab for filter pills
+  const usedCardIds = new Set(baseList.map(e => e.card).filter(Boolean));
+  const usedCards = cards.filter(c => usedCardIds.has(c.id));
+
+  const currentSelected = selectedExpense
+    ? expenses.find(e => e.id === selectedExpense.id) || null
+    : null;
+
+  const TABS = [
+    { id: 'pending', label: `Pendientes (${pending.length})` },
+    { id: 'completed', label: `Completados (${completed.length})` },
+  ];
+
+  const ASSIGNED_FILTERS: { id: AssignedFilter; label: string }[] = [
     { id: 'all', label: 'Todos' },
     { id: 'me', label: 'Yo' },
     { id: 'partner', label: partnerName || 'Pareja' },
     { id: 'both', label: 'Los dos' },
   ];
-
-  // When the selected expense updates in the list, sync it
-  const currentSelected = selectedExpense
-    ? expenses.find(e => e.id === selectedExpense.id) || null
-    : null;
 
   if (loading) {
     return (
@@ -67,15 +89,18 @@ export function ExpensesPage() {
 
   return (
     <div className="space-y-4 py-4 pb-52">
-      {/* Filter pills */}
-      <div className="flex gap-1.5 overflow-x-auto pb-0.5 px-1">
-        {FILTERS.map(f => (
+      {/* Status tabs */}
+      <Tabs tabs={TABS} activeTab={tab} onChange={(id) => { setTab(id as StatusTab); setCardFilter(null); }} />
+
+      {/* Assigned filter pills */}
+      <div className="flex gap-1.5 overflow-x-auto pb-0.5 px-1 scrollbar-none">
+        {ASSIGNED_FILTERS.map(f => (
           <button
             key={f.id}
-            onClick={() => setFilter(filter === f.id && f.id !== 'all' ? 'all' : f.id)}
+            onClick={() => setAssignedFilter(assignedFilter === f.id && f.id !== 'all' ? 'all' : f.id)}
             className={cn(
               'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
-              filter === f.id
+              assignedFilter === f.id
                 ? 'bg-primary text-white shadow-sm shadow-primary/30'
                 : 'bg-surface-hover text-text-muted hover:text-text-secondary'
             )}
@@ -85,55 +110,57 @@ export function ExpensesPage() {
         ))}
       </div>
 
-      {/* Pending expenses */}
-      {filteredPending.length > 0 ? (
+      {/* Card filter pills (only show if cards exist in current tab) */}
+      {usedCards.length > 0 && (
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 px-1 scrollbar-none">
+          <button
+            onClick={() => setCardFilter(null)}
+            className={cn(
+              'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
+              cardFilter === null
+                ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                : 'bg-surface-hover text-text-muted hover:text-text-secondary'
+            )}
+          >
+            Todas
+          </button>
+          {usedCards.map(card => (
+            <button
+              key={card.id}
+              onClick={() => setCardFilter(cardFilter === card.id ? null : card.id)}
+              className={cn(
+                'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
+                cardFilter === card.id
+                  ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                  : 'bg-surface-hover text-text-muted hover:text-text-secondary'
+              )}
+            >
+              {card.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Expense list */}
+      {filteredList.length > 0 ? (
         <ExpenseList
-          expenses={filteredPending}
+          expenses={filteredList}
           cards={cards}
           categories={categories}
+          memberNames={memberNames}
           onSelect={setSelectedExpense}
           onDelete={(id) => remove(id)}
         />
       ) : (
         <EmptyState
           icon={<Wallet size={36} />}
-          title="Sin gastos pendientes"
-          description="Agregá un gasto con el botón +"
+          title={tab === 'pending' ? 'Sin gastos pendientes' : 'Sin gastos completados'}
+          description={tab === 'pending' ? 'Agregá un gasto con el botón +' : 'Los gastos que completes aparecen acá'}
         />
       )}
 
-      {/* Completed section */}
-      {filteredCompleted.length > 0 && (
-        <div className="space-y-2">
-          <button
-            onClick={() => setShowCompleted(!showCompleted)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-text-muted uppercase tracking-wider px-1"
-          >
-            {showCompleted ? <EyeOff size={13} /> : <Eye size={13} />}
-            Completados ({filteredCompleted.length})
-          </button>
-          <AnimatePresence>
-            {showCompleted && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-              >
-                <ExpenseList
-                  expenses={filteredCompleted}
-                  cards={cards}
-                  categories={categories}
-                  onSelect={setSelectedExpense}
-                  onDelete={(id) => remove(id)}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
-
       {/* Summary footer */}
-      <ExpenseSummaryFooter expenses={filter === 'all' ? pending : filteredPending} />
+      <ExpenseSummaryFooter expenses={filteredList} />
 
       {/* Dialogs */}
       <ExpenseAddDialog open={showAdd} onClose={() => setShowAdd(false)} />
@@ -141,12 +168,15 @@ export function ExpensesPage() {
         expense={currentSelected}
         cards={cards}
         categories={categories}
+        memberNames={memberNames}
         onClose={() => setSelectedExpense(null)}
         onAddPayment={addPayment}
         onRemovePayment={removePayment}
+        onDelete={remove}
+        onUpdate={update}
       />
 
-      {/* FAB via portal (same pattern as HabitsPage) */}
+      {/* FAB */}
       {createPortal(
         <button
           onClick={() => setShowAdd(true)}

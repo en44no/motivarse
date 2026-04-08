@@ -11,6 +11,7 @@ interface ExpenseItemProps {
   expense: Expense;
   card?: ExpenseCard;
   category?: ExpenseCategory;
+  assignedToLabel: string;
   onSelect: () => void;
   onDelete: () => void;
 }
@@ -19,6 +20,7 @@ export const ExpenseItem = memo(function ExpenseItem({
   expense,
   card,
   category,
+  assignedToLabel,
   onSelect,
   onDelete,
 }: ExpenseItemProps) {
@@ -97,6 +99,19 @@ export const ExpenseItem = memo(function ExpenseItem({
           </span>
         </div>
 
+        {/* Amounts row */}
+        {!isCompleted && (
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] text-text-muted">
+              Pagado: {formatCurrency(paidAmount, expense.currency)}
+            </span>
+            <span className="text-[11px] font-semibold text-accent">
+              Restante: {formatCurrency(totalPrice - paidAmount, expense.currency)}
+            </span>
+          </div>
+        )}
+
+        {/* Tags row */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {card && (
             <Badge variant="default" className="text-[10px]">
@@ -104,6 +119,7 @@ export const ExpenseItem = memo(function ExpenseItem({
               {card.name}
             </Badge>
           )}
+          <span className="text-[10px] text-text-muted">{assignedToLabel}</span>
           <span className="text-[10px] text-text-muted">
             {formatCurrency(expense.installmentPrice, expense.currency)}/cuota
           </span>

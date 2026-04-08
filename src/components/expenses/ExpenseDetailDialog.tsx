@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, CreditCard, Calendar, DollarSign } from 'lucide-react';
+import { Check, CreditCard, Calendar, DollarSign, Trash2 } from 'lucide-react';
 import { Dialog } from '../ui/Dialog';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -12,9 +12,11 @@ interface ExpenseDetailDialogProps {
   expense: Expense | null;
   cards: ExpenseCard[];
   categories: ExpenseCategory[];
+  memberNames: Record<string, string>;
   onClose: () => void;
   onAddPayment: (expenseId: string, payment: ExpensePayment) => Promise<void>;
   onRemovePayment: (expenseId: string, installmentNumber: number) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
 function formatDate(timestamp: number): string {
@@ -29,9 +31,11 @@ export function ExpenseDetailDialog({
   expense,
   cards,
   categories,
+  memberNames,
   onClose,
   onAddPayment,
   onRemovePayment,
+  onDelete,
 }: ExpenseDetailDialogProps) {
   const [loadingInstallment, setLoadingInstallment] = useState<number | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -48,6 +52,8 @@ export function ExpenseDetailDialog({
       : 0;
 
   const totalPrice = expense.installmentPrice * expense.totalInstallments;
+  const paidAmount = expense.payments.reduce((s, p) => s + p.amount, 0);
+  const remainingAmount = totalPrice - paidAmount;
 
   const isInstallmentPaid = (num: number) =>
     expense.payments.some((p) => p.installmentNumber === num);
@@ -107,6 +113,18 @@ export function ExpenseDetailDialog({
               {formatCurrency(expense.installmentPrice, expense.currency)}
             </p>
           </div>
+          <div className="bg-primary/10 rounded-xl p-3">
+            <p className="text-xs text-text-muted mb-0.5">Pagado</p>
+            <p className="text-sm font-bold text-primary">
+              {formatCurrency(paidAmount, expense.currency)}
+            </p>
+          </div>
+          <div className="bg-accent/10 rounded-xl p-3">
+            <p className="text-xs text-text-muted mb-0.5">Restante</p>
+            <p className="text-sm font-bold text-accent">
+              {formatCurrency(remainingAmount, expense.currency)}
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -124,6 +142,9 @@ export function ExpenseDetailDialog({
           <Badge variant="default">
             <DollarSign size={12} />
             {expense.currency}
+          </Badge>
+          <Badge variant="default">
+            {memberNames[expense.assignedTo] || 'Desconocido'}
           </Badge>
         </div>
 
@@ -292,6 +313,22 @@ export function ExpenseDetailDialog({
             )}
           </div>
         )}
+      </div>
+
+      {/* Delete */}
+      <div className="mt-6 pt-4 border-t border-border">
+        <Button
+          variant="danger"
+          size="sm"
+          className="w-full"
+          onClick={async () => {
+            await onDelete(expense.id);
+            onClose();
+          }}
+        >
+          <Trash2 size={16} />
+          Eliminar gasto
+        </Button>
       </div>
     </Dialog>
   );

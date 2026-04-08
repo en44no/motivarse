@@ -6,11 +6,12 @@ interface ExpenseListProps {
   expenses: Expense[];
   cards: ExpenseCard[];
   categories: ExpenseCategory[];
+  memberNames: Record<string, string>;
   onSelect: (expense: Expense) => void;
   onDelete: (id: string) => void;
 }
 
-export function ExpenseList({ expenses, cards, categories, onSelect, onDelete }: ExpenseListProps) {
+export function ExpenseList({ expenses, cards, categories, memberNames, onSelect, onDelete }: ExpenseListProps) {
   return (
     <div className="space-y-2">
       <AnimatePresence mode="popLayout">
@@ -20,6 +21,7 @@ export function ExpenseList({ expenses, cards, categories, onSelect, onDelete }:
             expense={expense}
             card={expense.card ? cards.find(c => c.id === expense.card) : undefined}
             category={expense.category ? categories.find(c => c.id === expense.category) : undefined}
+            assignedToLabel={memberNames[expense.assignedTo] || ''}
             onSelect={() => onSelect(expense)}
             onDelete={() => onDelete(expense.id)}
           />
