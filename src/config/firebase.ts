@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, browserLocalPersistence, setPersistence } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, browserLocalPersistence, setPersistence } from 'firebase/auth';
 import { initializeFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -14,6 +14,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
+
+export const googleProvider = new GoogleAuthProvider();
 
 // Ensure auth session persists across browser refreshes
 setPersistence(auth, browserLocalPersistence).catch(() => {});

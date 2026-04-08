@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../contexts/AuthContext';
-import { registerUser, loginUser, logoutUser, linkPartner } from '../services/auth.service';
+import { registerUser, loginUser, loginWithGoogle, logoutUser, linkPartner } from '../services/auth.service';
 
 export function useAuth() {
   const { user, profile, loading } = useAuthContext();
@@ -44,6 +44,26 @@ export function useAuth() {
     }
   }
 
+  async function googleLogin() {
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await loginWithGoogle();
+    } catch (e: unknown) {
+      const code = e instanceof Error ? (e as any).code : undefined;
+      const msg = code === 'auth/popup-closed-by-user'
+        ? 'Se cerró la ventana de Google'
+        : code === 'auth/popup-blocked'
+        ? 'El navegador bloqueó la ventana. Permití popups para esta página.'
+        : code === 'auth/account-exists-with-different-credential'
+        ? 'Ya existe una cuenta con ese email. Probá con email y contraseña.'
+        : 'Error al iniciar con Google';
+      setError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   async function logout() {
     try {
       await logoutUser();
@@ -73,6 +93,7 @@ export function useAuth() {
     error,
     isSubmitting,
     login,
+    googleLogin,
     register,
     logout,
     linkPartner: link,

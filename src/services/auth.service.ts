@@ -1,12 +1,13 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   updateProfile,
   type User,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, writeBatch } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
+import { auth, db, googleProvider } from '../config/firebase';
 import type { UserProfile, Couple } from '../types/user';
 
 export async function registerUser(email: string, password: string, displayName: string): Promise<User> {
@@ -30,6 +31,28 @@ export async function registerUser(email: string, password: string, displayName:
 export async function loginUser(email: string, password: string): Promise<User> {
   const cred = await signInWithEmailAndPassword(auth, email, password);
   return cred.user;
+}
+
+export async function loginWithGoogle(): Promise<User> {
+  const cred = await signInWithPopup(auth, googleProvider);
+  const user = cred.user;
+
+  // If no Firestore profile exists yet, create one from Google info
+  const existing = await getDoc(doc(db, 'users', user.uid));
+  if (!existing.exists()) {
+    const profile: Omit<UserProfile, 'uid'> & { uid: string } = {
+      uid: user.uid,
+      email: user.email!,
+      displayName: user.displayName || 'Usuario',
+      partnerId: null,
+      coupleId: null,
+      createdAt: Date.now(),
+      settings: { notifications: true },
+    };
+    await setDoc(doc(db, 'users', user.uid), profile);
+  }
+
+  return user;
 }
 
 export async function logoutUser(): Promise<void> {
