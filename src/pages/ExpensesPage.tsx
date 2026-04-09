@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Wallet, Plus, Repeat, Search, X } from 'lucide-react';
+import { Wallet, Plus, Repeat, Search, X, Calendar as CalendarIcon } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useExpenses } from '../hooks/useExpenses';
@@ -120,10 +120,9 @@ export function ExpensesPage() {
   );
 
   const TABS = [
-    { id: 'pending', label: `Pendientes (${pending.length})` },
-    { id: 'completed', label: `Completados (${completed.length})` },
+    { id: 'pending', label: `Pend. (${pending.length})` },
+    { id: 'completed', label: `Compl. (${completed.length})` },
     { id: 'recurring', label: `Recurrentes (${recurringPendingCount})` },
-    { id: 'calendar', label: 'Calendario' },
   ];
 
   const ASSIGNED_FILTERS: { id: AssignedFilter; label: string }[] = [
@@ -160,8 +159,29 @@ export function ExpensesPage() {
 
   return (
     <div className="space-y-4 py-4 pb-52">
-      {/* Status tabs */}
-      <Tabs tabs={TABS} activeTab={tab} onChange={(id) => { setTab(id as StatusTab); setCardFilter(null); }} />
+      {/* Status tabs + Calendar toggle */}
+      <div className="flex items-stretch gap-2">
+        <Tabs
+          tabs={TABS}
+          activeTab={tab}
+          onChange={(id) => { setTab(id as StatusTab); setCardFilter(null); }}
+          className="flex-1 min-w-0"
+        />
+        <button
+          type="button"
+          onClick={() => { setTab('calendar'); setCardFilter(null); }}
+          aria-label="Ver calendario"
+          aria-pressed={isCalendarTab}
+          className={cn(
+            'shrink-0 flex items-center justify-center w-11 rounded-xl border transition-colors',
+            isCalendarTab
+              ? 'bg-gradient-to-b from-primary to-primary-hover text-primary-contrast border-transparent shadow-[var(--shadow-glow-primary)]'
+              : 'bg-surface border-border/50 text-text-muted hover:text-text-secondary'
+          )}
+        >
+          <CalendarIcon size={18} />
+        </button>
+      </div>
 
       {/* Search input (oculto en tab calendario) */}
       {!isCalendarTab && (
