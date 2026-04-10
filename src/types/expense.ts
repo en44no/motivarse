@@ -4,6 +4,11 @@ export interface ExpensePayment {
   installmentNumber: number;
   amount: number;
   paidAt: number;
+  /**
+   * Quien efectivamente pago esta cuota: userId o 'both'.
+   * Opcional para back-compat con pagos viejos sin este dato (se asume que coincide con assignedTo).
+   */
+  paidBy?: string;
 }
 
 export interface Expense {

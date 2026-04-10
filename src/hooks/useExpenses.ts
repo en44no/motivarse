@@ -38,16 +38,21 @@ export function useExpenses() {
   const completed = expenses.filter((e) => e.payments.length >= e.totalInstallments);
 
   const add = useCallback(
-    async (data: Omit<Expense, 'id' | 'coupleId' | 'createdBy' | 'payments' | 'createdAt' | 'updatedAt'>) => {
+    async (
+      data: Omit<Expense, 'id' | 'coupleId' | 'createdBy' | 'payments' | 'createdAt' | 'updatedAt'> & {
+        createdAt?: number;
+      },
+    ) => {
       if (!user || !coupleId) return;
       try {
         const now = Date.now();
+        const { createdAt, ...rest } = data;
         await addExpense({
-          ...data,
+          ...rest,
           coupleId,
           createdBy: user.uid,
           payments: [],
-          createdAt: now,
+          createdAt: createdAt ?? now,
           updatedAt: now,
         });
       } catch (error) {

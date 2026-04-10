@@ -19,6 +19,20 @@ interface ExpenseAddDialogProps {
   onClose: () => void;
 }
 
+// Convierte un timestamp al formato YYYY-MM-DD usando la fecha local del usuario
+function toDateInputValue(ts: number): string {
+  const d = new Date(ts);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Convierte YYYY-MM-DD a timestamp local (mediodia para evitar saltos de TZ)
+function fromDateInputValue(value: string): number {
+  return new Date(`${value}T12:00:00`).getTime();
+}
+
 export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
   const { user } = useAuthContext();
   const { couple, partnerName } = useCoupleContext();
@@ -35,6 +49,7 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
   const [assignedTo, setAssignedTo] = useState<string>('both');
   const [selectedCard, setSelectedCard] = useState<string | undefined>();
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+  const [createdAtDate, setCreatedAtDate] = useState<string>(() => toDateInputValue(Date.now()));
   const [submitting, setSubmitting] = useState(false);
 
   // AI autocategorize
@@ -115,6 +130,7 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
     setAssignedTo('both');
     setSelectedCard(undefined);
     setSelectedCategory(undefined);
+    setCreatedAtDate(toDateInputValue(Date.now()));
     setShowNewCard(false);
     setNewCardName('');
     setShowNewCat(false);
@@ -139,6 +155,7 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
         assignedTo,
         ...(selectedCard ? { card: selectedCard } : {}),
         ...(selectedCategory ? { category: selectedCategory } : {}),
+        ...(createdAtDate ? { createdAt: fromDateInputValue(createdAtDate) } : {}),
       });
       resetForm();
       onClose();
@@ -260,6 +277,20 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Fecha de creacion */}
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-1.5">
+            Fecha
+          </label>
+          <input
+            type="date"
+            value={createdAtDate}
+            onChange={(e) => setCreatedAtDate(e.target.value)}
+            max={toDateInputValue(Date.now())}
+            className="w-full rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary/50"
+          />
         </div>
 
         {/* Asignado a */}

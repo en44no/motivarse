@@ -1,8 +1,9 @@
 import { memo } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
-import { Trash2, CreditCard } from 'lucide-react';
+import { Trash2, CreditCard, AlertTriangle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatCurrency } from '../../lib/currency-utils';
+import { hasPaymentMismatch } from '../../lib/expense-utils';
 import { ProgressBar } from '../ui/ProgressBar';
 import { Badge } from '../ui/Badge';
 import type { Expense, ExpenseCard, ExpenseCategory } from '../../types/expense';
@@ -35,6 +36,7 @@ export const ExpenseItem = memo(function ExpenseItem({
   const progress = expense.totalInstallments > 0
     ? (currentInstallment / expense.totalInstallments) * 100
     : 0;
+  const mismatch = hasPaymentMismatch(expense);
 
   return (
     <motion.div
@@ -58,7 +60,8 @@ export const ExpenseItem = memo(function ExpenseItem({
       {/* Card content */}
       <motion.div
         className={cn(
-          'bg-surface rounded-xl border border-border p-3.5 shadow-sm relative cursor-pointer active:bg-surface-hover transition-colors',
+          'bg-surface rounded-xl border p-3.5 shadow-sm relative cursor-pointer active:bg-surface-hover transition-colors',
+          mismatch ? 'border-amber-500/40' : 'border-border',
           isCompleted && 'opacity-60',
         )}
         style={{ x }}
@@ -73,6 +76,14 @@ export const ExpenseItem = memo(function ExpenseItem({
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
+              {mismatch && (
+                <span
+                  title="Hay cuotas que no las pago quien correspondia"
+                  className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500/20 text-amber-500 shrink-0"
+                >
+                  <AlertTriangle size={10} />
+                </span>
+              )}
               <p className={cn(
                 'text-sm font-semibold',
                 isCompleted ? 'text-text-muted line-through' : 'text-text-primary'

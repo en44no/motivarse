@@ -29,7 +29,7 @@ type AssignedFilter = 'all' | 'me' | 'partner' | 'both';
 export function ExpensesPage() {
   const { user } = useAuthContext();
   const { couple, partnerName } = useCoupleContext();
-  const { expenses, pending, completed, loading, remove, addPayment, removePayment, duplicate } = useExpenses();
+  const { expenses, pending, completed, loading, remove, addPayment, removePayment, duplicate, update } = useExpenses();
   const { cards } = useExpenseCards();
   const { categories } = useExpenseCategories();
   const {
@@ -318,6 +318,7 @@ export function ExpensesPage() {
         onRemovePayment={removePayment}
         onDelete={remove}
         onDuplicate={duplicate}
+        onUpdate={update}
       />
 
       <RecurringPaymentAddDialog
