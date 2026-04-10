@@ -8,6 +8,8 @@ import {
   Copy,
   AlertTriangle,
   User,
+  StickyNote,
+  Pencil,
 } from 'lucide-react';
 import { Dialog } from '../ui/Dialog';
 import { Badge } from '../ui/Badge';
@@ -79,6 +81,9 @@ export function ExpenseDetailDialog({
   const [paidByMode, setPaidByMode] = useState<string>('both');
   const [editingDate, setEditingDate] = useState(false);
   const [savingDate, setSavingDate] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [descriptionDraft, setDescriptionDraft] = useState('');
+  const [savingDescription, setSavingDescription] = useState(false);
 
   // Reset paidByMode al asignado del gasto cada vez que se abre/cambia
   useEffect(() => {
@@ -164,6 +169,29 @@ export function ExpenseDetailDialog({
       setEditingDate(false);
     } finally {
       setSavingDate(false);
+    }
+  }
+
+  function startEditingDescription() {
+    if (!expense) return;
+    setDescriptionDraft(expense.description ?? '');
+    setEditingDescription(true);
+  }
+
+  async function handleSaveDescription() {
+    if (!expense) return;
+    const trimmed = descriptionDraft.trim();
+    const current = (expense.description ?? '').trim();
+    if (trimmed === current) {
+      setEditingDescription(false);
+      return;
+    }
+    setSavingDescription(true);
+    try {
+      await onUpdate(expense.id, { description: trimmed });
+      setEditingDescription(false);
+    } finally {
+      setSavingDescription(false);
     }
   }
 
@@ -484,6 +512,74 @@ export function ExpenseDetailDialog({
               </Button>
             )}
           </div>
+        )}
+      </div>
+
+      {/* Descripcion (nota libre opcional) */}
+      <div className="mt-5">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-text-primary inline-flex items-center gap-1.5">
+            <StickyNote size={14} className="text-text-muted" />
+            Descripcion
+          </h3>
+          {!editingDescription && expense.description && (
+            <button
+              type="button"
+              onClick={startEditingDescription}
+              className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+            >
+              <Pencil size={11} />
+              Editar
+            </button>
+          )}
+        </div>
+
+        {editingDescription ? (
+          <div className="space-y-2">
+            <textarea
+              value={descriptionDraft}
+              onChange={(e) => setDescriptionDraft(e.target.value)}
+              placeholder="Agrega una nota sobre este gasto..."
+              rows={3}
+              maxLength={500}
+              disabled={savingDescription}
+              className="w-full rounded-xl border border-border bg-surface-light px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary resize-none"
+            />
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] text-text-muted">
+                {descriptionDraft.length}/500
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setEditingDescription(false)}
+                  disabled={savingDescription}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSaveDescription}
+                  isLoading={savingDescription}
+                >
+                  Guardar
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : expense.description ? (
+          <p className="text-sm text-text-secondary leading-relaxed bg-surface-light rounded-xl px-3 py-2.5 whitespace-pre-wrap break-words">
+            {expense.description}
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={startEditingDescription}
+            className="w-full text-left text-sm text-text-muted bg-surface-light hover:bg-surface-hover rounded-xl px-3 py-2.5 border border-dashed border-border transition-colors"
+          >
+            + Agregar una nota
+          </button>
         )}
       </div>
 

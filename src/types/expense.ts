@@ -22,6 +22,8 @@ export interface Expense {
   category?: string;
   card?: string;
   assignedTo: string; // userId or 'both'
+  /** Nota libre opcional sobre el gasto. */
+  description?: string;
   payments: ExpensePayment[];
   createdBy: string;
   createdAt: number;
