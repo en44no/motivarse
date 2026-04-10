@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Check, CreditCard, Calendar, DollarSign, Trash2, Pencil, Bell } from 'lucide-react';
+import { Check, CreditCard, Calendar, DollarSign, Trash2, Pencil, Bell, User } from 'lucide-react';
 import { Dialog } from '../ui/Dialog';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -171,23 +171,25 @@ export function RecurringPaymentDetailDialog({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {category && (
+            <Badge variant="secondary">
+              <span className="text-[13px] leading-none">{category.emoji}</span>
+              {category.label}
+            </Badge>
+          )}
           {card && (
             <Badge variant="primary">
               <CreditCard size={12} />
               {card.name}
             </Badge>
           )}
-          {category && (
-            <Badge variant="secondary">
-              {category.emoji} {category.label}
-            </Badge>
-          )}
+          <Badge variant="default">
+            <User size={12} />
+            {memberNames[item.assignedTo] || 'Desconocido'}
+          </Badge>
           <Badge variant="default">
             <DollarSign size={12} />
             {item.currency}
-          </Badge>
-          <Badge variant="default">
-            {memberNames[item.assignedTo] || 'Desconocido'}
           </Badge>
         </div>
 

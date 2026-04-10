@@ -122,7 +122,7 @@ export function ExpensesPage() {
   const TABS = [
     { id: 'pending', label: `Pend. (${pending.length})` },
     { id: 'completed', label: `Compl. (${completed.length})` },
-    { id: 'recurring', label: `Recurrentes (${recurringPendingCount})` },
+    { id: 'recurring', label: `Rec. (${recurringPendingCount})` },
   ];
 
   const ASSIGNED_FILTERS: { id: AssignedFilter; label: string }[] = [

@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
-import { Trash2, CreditCard, Calendar, Check, AlertCircle } from 'lucide-react';
+import { Trash2, CreditCard, Calendar, Check, AlertCircle, User, Bell } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatCurrency } from '../../lib/currency-utils';
 import { Badge } from '../ui/Badge';
@@ -114,31 +114,23 @@ export const RecurringPaymentItem = memo(function RecurringPaymentItem({
         }}
         onClick={onSelect}
       >
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p
-                className={cn(
-                  'text-sm font-semibold',
-                  paid ? 'text-text-secondary' : 'text-text-primary',
-                )}
-              >
-                {item.name}
-              </p>
-              {category && (
-                <span className="text-xs">
-                  {category.emoji} {category.label}
-                </span>
-              )}
-            </div>
-          </div>
-          <p className="text-sm font-bold shrink-0 text-text-primary">
+        {/* Title row */}
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <p
+            className={cn(
+              'text-sm font-semibold truncate flex-1 min-w-0',
+              paid ? 'text-text-secondary' : 'text-text-primary',
+            )}
+          >
+            {item.name}
+          </p>
+          <p className="text-sm font-bold shrink-0 text-text-primary tabular-nums">
             {formatCurrency(item.suggestedAmount, item.currency)}
           </p>
         </div>
 
         {/* Status pill */}
-        <div className="flex items-center gap-1.5 mb-2">
+        <div className="flex items-center gap-1.5 mb-2.5 flex-wrap">
           <span
             className={cn(
               'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold',
@@ -149,23 +141,35 @@ export const RecurringPaymentItem = memo(function RecurringPaymentItem({
             {status.label}
           </span>
           <span className="text-[11px] text-text-muted">
-            · día {item.dayOfMonth} de cada mes
+            día {item.dayOfMonth} de cada mes
           </span>
         </div>
 
-        {/* Tags row */}
+        {/* Tags row — todos como badges consistentes */}
         <div className="flex items-center gap-1.5 flex-wrap">
+          {category && (
+            <Badge variant="secondary" className="text-[10px] py-0.5">
+              <span className="text-[11px] leading-none">{category.emoji}</span>
+              {category.label}
+            </Badge>
+          )}
           {card && (
-            <Badge variant="default" className="text-[10px]">
+            <Badge variant="default" className="text-[10px] py-0.5">
               <CreditCard size={10} />
               {card.name}
             </Badge>
           )}
-          <span className="text-[10px] text-text-muted">{assignedToLabel}</span>
+          {assignedToLabel && (
+            <Badge variant="default" className="text-[10px] py-0.5">
+              <User size={10} />
+              {assignedToLabel}
+            </Badge>
+          )}
           {item.reminders.length > 0 && (
-            <span className="text-[10px] text-text-muted">
-              · {item.reminders.length} recordatorio{item.reminders.length > 1 ? 's' : ''}
-            </span>
+            <Badge variant="default" className="text-[10px] py-0.5">
+              <Bell size={10} />
+              {item.reminders.length}
+            </Badge>
           )}
         </div>
       </motion.div>

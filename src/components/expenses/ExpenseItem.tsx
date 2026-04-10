@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
-import { Trash2, CreditCard, AlertTriangle } from 'lucide-react';
+import { Trash2, CreditCard, AlertTriangle, User } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatCurrency } from '../../lib/currency-utils';
 import { hasPaymentMismatch } from '../../lib/expense-utils';
@@ -73,67 +73,85 @@ export const ExpenseItem = memo(function ExpenseItem({
         }}
         onClick={onSelect}
       >
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              {mismatch && (
-                <span
-                  title="Hay cuotas que no las pago quien correspondia"
-                  className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500/20 text-amber-500 shrink-0"
-                >
-                  <AlertTriangle size={10} />
-                </span>
+        {/* Title row */}
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            {mismatch && (
+              <span
+                title="Hay cuotas que no las pago quien correspondia"
+                className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500/20 text-amber-500 shrink-0"
+              >
+                <AlertTriangle size={10} />
+              </span>
+            )}
+            <p
+              className={cn(
+                'text-sm font-semibold truncate',
+                isCompleted ? 'text-text-muted line-through' : 'text-text-primary',
               )}
-              <p className={cn(
-                'text-sm font-semibold',
-                isCompleted ? 'text-text-muted line-through' : 'text-text-primary'
-              )}>
-                {expense.name}
-              </p>
-              {category && (
-                <span className="text-xs">{category.emoji} {category.label}</span>
-              )}
-            </div>
+            >
+              {expense.name}
+            </p>
           </div>
-          <p className={cn(
-            'text-sm font-bold shrink-0',
-            isCompleted ? 'text-text-muted' : 'text-text-primary'
-          )}>
+          <p
+            className={cn(
+              'text-sm font-bold shrink-0 tabular-nums',
+              isCompleted ? 'text-text-muted' : 'text-text-primary',
+            )}
+          >
             {formatCurrency(totalPrice, expense.currency)}
           </p>
         </div>
 
+        {/* Progress */}
         <div className="flex items-center gap-2 mb-2">
           <ProgressBar value={progress} size="sm" className="flex-1" />
-          <span className="text-[11px] font-medium text-text-muted shrink-0">
+          <span className="text-[11px] font-medium text-text-muted shrink-0 tabular-nums">
             {currentInstallment}/{expense.totalInstallments}
           </span>
         </div>
 
         {/* Amounts row */}
         {!isCompleted && (
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] text-text-muted">
-              Pagado: {formatCurrency(paidAmount, expense.currency)}
+          <div className="flex items-center justify-between mb-2.5 gap-2">
+            <span className="text-[11px] text-text-muted truncate">
+              Pagado{' '}
+              <span className="font-semibold text-text-secondary tabular-nums">
+                {formatCurrency(paidAmount, expense.currency)}
+              </span>
             </span>
-            <span className="text-[11px] font-semibold text-accent">
-              Restante: {formatCurrency(totalPrice - paidAmount, expense.currency)}
+            <span className="text-[11px] text-text-muted truncate">
+              Restante{' '}
+              <span className="font-semibold text-accent tabular-nums">
+                {formatCurrency(totalPrice - paidAmount, expense.currency)}
+              </span>
             </span>
           </div>
         )}
 
-        {/* Tags row */}
+        {/* Tags row — todos como badges consistentes */}
         <div className="flex items-center gap-1.5 flex-wrap">
+          {category && (
+            <Badge variant="secondary" className="text-[10px] py-0.5">
+              <span className="text-[11px] leading-none">{category.emoji}</span>
+              {category.label}
+            </Badge>
+          )}
           {card && (
-            <Badge variant="default" className="text-[10px]">
+            <Badge variant="default" className="text-[10px] py-0.5">
               <CreditCard size={10} />
               {card.name}
             </Badge>
           )}
-          <span className="text-[10px] text-text-muted">{assignedToLabel}</span>
-          <span className="text-[10px] text-text-muted">
+          {assignedToLabel && (
+            <Badge variant="default" className="text-[10px] py-0.5">
+              <User size={10} />
+              {assignedToLabel}
+            </Badge>
+          )}
+          <Badge variant="default" className="text-[10px] py-0.5 tabular-nums">
             {formatCurrency(expense.installmentPrice, expense.currency)}/cuota
-          </span>
+          </Badge>
         </div>
       </motion.div>
     </motion.div>

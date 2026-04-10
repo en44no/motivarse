@@ -1,3 +1,4 @@
+import { Wallet } from 'lucide-react';
 import { formatCurrency } from '../../lib/currency-utils';
 import type { Expense, Currency } from '../../types/expense';
 
@@ -38,28 +39,40 @@ export function ExpenseSummaryFooter({ expenses }: ExpenseSummaryFooterProps) {
   return (
     <div className="sticky bottom-20 z-20 mx-auto max-w-lg">
       <div className="bg-surface/90 backdrop-blur-xl border border-border rounded-2xl px-4 py-3 shadow-lg">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-text-muted font-medium">
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-2">
+          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary shrink-0">
+            <Wallet size={12} />
+          </span>
+          <span className="text-xs font-semibold text-text-secondary">
             {expenses.length} {expenses.length === 1 ? 'gasto' : 'gastos'}
           </span>
-          <div className="flex items-center gap-3">
-            {summaries.map((s) => (
-              <div key={s.currency} className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-text-muted">Total</p>
-                  <p className="font-bold text-text-primary">
-                    {formatCurrency(s.totalAmount, s.currency)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-text-muted">Restante</p>
-                  <p className="font-bold text-accent">
-                    {formatCurrency(s.remainingAmount, s.currency)}
-                  </p>
-                </div>
+        </div>
+
+        {/* Summaries por moneda */}
+        <div className="space-y-1.5">
+          {summaries.map((s) => (
+            <div
+              key={s.currency}
+              className="flex items-center justify-between gap-3 text-xs"
+            >
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-[10px] font-bold text-text-muted shrink-0">
+                  {s.currency}
+                </span>
+                <span className="text-text-muted truncate">Total</span>
+                <span className="font-bold text-text-primary tabular-nums truncate">
+                  {formatCurrency(s.totalAmount, s.currency)}
+                </span>
               </div>
-            ))}
-          </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-text-muted">Restante</span>
+                <span className="font-bold text-accent tabular-nums">
+                  {formatCurrency(s.remainingAmount, s.currency)}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

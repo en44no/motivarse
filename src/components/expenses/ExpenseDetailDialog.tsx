@@ -7,6 +7,7 @@ import {
   Trash2,
   Copy,
   AlertTriangle,
+  User,
 } from 'lucide-react';
 import { Dialog } from '../ui/Dialog';
 import { Badge } from '../ui/Badge';
@@ -198,23 +199,25 @@ export function ExpenseDetailDialog({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {category && (
+            <Badge variant="secondary">
+              <span className="text-[13px] leading-none">{category.emoji}</span>
+              {category.label}
+            </Badge>
+          )}
           {card && (
             <Badge variant="primary">
               <CreditCard size={12} />
               {card.name}
             </Badge>
           )}
-          {category && (
-            <Badge variant="secondary">
-              {category.emoji} {category.label}
-            </Badge>
-          )}
+          <Badge variant="default">
+            <User size={12} />
+            {memberNames[expense.assignedTo] || 'Desconocido'}
+          </Badge>
           <Badge variant="default">
             <DollarSign size={12} />
             {expense.currency}
-          </Badge>
-          <Badge variant="default">
-            {memberNames[expense.assignedTo] || 'Desconocido'}
           </Badge>
         </div>
 
