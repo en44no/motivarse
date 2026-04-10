@@ -3,6 +3,7 @@ import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { Check, Trash2, Calendar } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatRelativeTime, getToday } from '../../lib/date-utils';
+import { useDensity } from '../../contexts/DensityContext';
 import type { SharedTodo } from '../../types/shared';
 import type { CoupleCategory } from '../../types/category';
 
@@ -16,7 +17,17 @@ interface TodoItemProps {
   index?: number;
 }
 
-export const TodoItem = memo(function TodoItem({ todo, onToggle, onDelete, currentUserId, memberNames, categories = [], index = 0 }: TodoItemProps) {
+export const TodoItem = memo(function TodoItem({
+  todo,
+  onToggle,
+  onDelete,
+  currentUserId,
+  memberNames,
+  categories = [],
+  index = 0,
+}: TodoItemProps) {
+  const { isCompact } = useDensity();
+
   const priorityColors = {
     low: 'border-l-text-muted',
     medium: 'border-l-secondary',
@@ -31,7 +42,7 @@ export const TodoItem = memo(function TodoItem({ todo, onToggle, onDelete, curre
   let dueDateColor = 'text-text-muted';
   if (todo.dueDate && !todo.completed) {
     if (todo.dueDate < today) dueDateColor = 'text-danger';
-    else if (todo.dueDate === today) dueDateColor = 'text-secondary';
+    else if (todo.dueDate === today) dueDateColor = 'text-warning';
   }
 
   void currentUserId;
@@ -63,9 +74,10 @@ export const TodoItem = memo(function TodoItem({ todo, onToggle, onDelete, curre
       {/* Card content */}
       <motion.div
         className={cn(
-          'flex items-center gap-3 bg-surface rounded-xl border border-border p-3 border-l-[3px] shadow-sm relative',
+          'flex items-center gap-3 bg-surface rounded-xl border border-border/60 border-l-[3px] shadow-sm relative',
+          isCompact ? 'p-3' : 'p-4',
           priorityColors[todo.priority],
-          todo.completed && 'opacity-60'
+          todo.completed && 'opacity-60',
         )}
         style={{ x }}
         drag="x"
@@ -80,12 +92,13 @@ export const TodoItem = memo(function TodoItem({ todo, onToggle, onDelete, curre
         <button
           onClick={() => onToggle(!todo.completed)}
           className={cn(
-            'w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all',
+            'rounded-full flex items-center justify-center shrink-0 transition-colors',
+            isCompact ? 'w-7 h-7' : 'w-8 h-8',
             todo.completed
-              ? 'bg-primary text-white'
-              : 'border-2 border-border hover:border-primary/50'
+              ? 'bg-primary text-primary-contrast'
+              : 'border-2 border-border hover:border-primary/50',
           )}
-          aria-label={todo.completed ? "Desmarcar mandado" : "Completar mandado"}
+          aria-label={todo.completed ? 'Desmarcar mandado' : 'Completar mandado'}
           role="checkbox"
           aria-checked={todo.completed}
         >
@@ -94,29 +107,37 @@ export const TodoItem = memo(function TodoItem({ todo, onToggle, onDelete, curre
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            {categoryDef && (
-              <span className="text-sm">{categoryDef.emoji}</span>
-            )}
-            <p className={cn(
-              'text-sm font-medium',
-              todo.completed ? 'text-text-muted line-through' : 'text-text-primary'
-            )}>
+            {categoryDef && <span className="text-sm leading-none">{categoryDef.emoji}</span>}
+            <p
+              className={cn(
+                'text-sm font-semibold',
+                todo.completed ? 'text-text-muted line-through' : 'text-text-primary',
+              )}
+            >
               {todo.title}
             </p>
           </div>
-          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-            <p className="text-[10px] text-text-muted">
-              {todo.completed
-                ? `Completado por ${completedByName}${todo.completedAt ? ` · ${formatRelativeTime(todo.completedAt)}` : ''}`
-                : `Agregado por ${createdByName}`}
-            </p>
-            {todo.dueDate && (
-              <span className={cn('text-[10px] flex items-center gap-0.5', dueDateColor)}>
-                <Calendar size={9} />
-                {todo.dueDate}
-              </span>
-            )}
-          </div>
+          {!isCompact && (
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <p className="text-2xs text-text-muted">
+                {todo.completed
+                  ? `Completado por ${completedByName}${todo.completedAt ? ` · ${formatRelativeTime(todo.completedAt)}` : ''}`
+                  : `Agregado por ${createdByName}`}
+              </p>
+              {todo.dueDate && (
+                <span className={cn('text-2xs flex items-center gap-0.5', dueDateColor)}>
+                  <Calendar size={10} />
+                  {todo.dueDate}
+                </span>
+              )}
+            </div>
+          )}
+          {isCompact && todo.dueDate && (
+            <span className={cn('text-2xs flex items-center gap-0.5 mt-0.5', dueDateColor)}>
+              <Calendar size={10} />
+              {todo.dueDate}
+            </span>
+          )}
         </div>
       </motion.div>
     </motion.div>

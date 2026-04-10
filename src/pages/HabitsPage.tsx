@@ -11,6 +11,7 @@ import { useCoupleContext } from '../contexts/CoupleContext';
 import { useDataContext } from '../contexts/DataContext';
 import { Tabs } from '../components/ui/Tabs';
 import { Button } from '../components/ui/Button';
+import { IconButton } from '../components/ui/IconButton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { HabitList } from '../components/habits/HabitList';
@@ -31,7 +32,7 @@ const MAX_DAYS_BACK = 7;
 const TABS = [
   { id: 'today', label: 'Hoy' },
   { id: 'week', label: 'Semana' },
-  { id: 'month', label: 'Calendario' },
+  { id: 'month', label: 'Calend.' },
   { id: 'stats', label: 'Stats' },
 ];
 
@@ -199,27 +200,31 @@ export function HabitsPage() {
             className="space-y-4"
           >
             {/* Date navigator */}
-            <div className="flex items-center justify-center gap-2">
-              <button
+            <div className="flex items-center justify-center gap-1">
+              <IconButton
+                size="sm"
+                variant="ghost"
+                aria-label="Día anterior"
                 onClick={goBack}
                 disabled={!canGoBack}
-                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors disabled:opacity-30 disabled:pointer-events-none"
               >
-                <ChevronLeft size={20} />
-              </button>
+                <ChevronLeft size={18} />
+              </IconButton>
               <button
                 onClick={goToToday}
-                className="text-sm font-semibold text-text-primary px-3 py-1 rounded-lg hover:bg-surface-hover transition-colors capitalize"
+                className="text-sm font-semibold text-text-primary px-3 h-9 rounded-lg hover:bg-surface-hover transition-colors duration-150 capitalize"
               >
                 {dateLabel}
               </button>
-              <button
+              <IconButton
+                size="sm"
+                variant="ghost"
+                aria-label="Día siguiente"
                 onClick={goForward}
                 disabled={!canGoForward}
-                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors disabled:opacity-30 disabled:pointer-events-none"
               >
-                <ChevronRight size={20} />
-              </button>
+                <ChevronRight size={18} />
+              </IconButton>
             </div>
 
             <HabitList
@@ -248,20 +253,33 @@ export function HabitsPage() {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 10 }}
-            className="space-y-4"
+            className="space-y-3"
           >
-            {myHabits.map((habit) => {
-              const habitLogs = getLogsForHabit(habit.id, userId);
-              return (
-                <div key={habit.id} className="bg-surface rounded-2xl border border-border p-4 space-y-3 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: habit.color }} />
-                    <h3 className="text-sm font-semibold text-text-primary">{habit.name}</h3>
+            <h2 className="text-2xs font-semibold text-text-muted uppercase tracking-wider px-1">
+              Esta semana
+            </h2>
+            <div className="space-y-2">
+              {myHabits.map((habit) => {
+                const habitLogs = getLogsForHabit(habit.id, userId);
+                return (
+                  <div
+                    key={habit.id}
+                    className="bg-surface rounded-2xl border border-border/60 px-3 py-3 shadow-sm"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: habit.color }}
+                      />
+                      <h3 className="text-sm font-semibold text-text-primary truncate">
+                        {habit.name}
+                      </h3>
+                    </div>
+                    <HabitWeekView logs={habitLogs} color={habit.color} />
                   </div>
-                  <HabitWeekView logs={habitLogs} color={habit.color} />
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </motion.div>
         )}
 
@@ -329,7 +347,8 @@ export function HabitsPage() {
       {createPortal(
         <button
           onClick={() => setShowForm(true)}
-          className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-primary-hover text-white shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:from-primary-hover hover:to-primary transition-colors active:scale-90"
+          aria-label="Crear hábito"
+          className="fixed bottom-28 right-4 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-primary-hover text-primary-contrast shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:from-primary-hover hover:to-primary transition-colors duration-150 active:scale-95"
         >
           <Plus size={24} />
         </button>,
@@ -340,8 +359,8 @@ export function HabitsPage() {
       {createPortal(
         <button
           onClick={() => setShowGenerator(true)}
-          className="fixed bottom-44 right-4 w-12 h-12 rounded-full bg-surface border border-primary/30 text-primary shadow-md flex items-center justify-center z-30 hover:bg-primary/10 transition-colors active:scale-90"
-          title="Generar hábitos con IA"
+          aria-label="Generar hábitos con IA"
+          className="fixed bottom-44 right-4 w-12 h-12 rounded-full bg-surface border border-primary/30 text-primary shadow-md flex items-center justify-center z-30 hover:bg-primary/10 transition-colors duration-150 active:scale-95"
         >
           <Sparkles size={20} />
         </button>,

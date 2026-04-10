@@ -1,6 +1,22 @@
-import { useState, useMemo, useEffect } from 'react';
-import { LogOut, Link, Download, User, Flame, Footprints, Trophy, Smartphone, Volume2, VolumeX, ChevronDown, Bell, BellOff, RefreshCw } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import {
+  LogOut,
+  Link as LinkIcon,
+  Download,
+  User,
+  Flame,
+  Footprints,
+  Trophy,
+  Smartphone,
+  Volume2,
+  VolumeX,
+  Bell,
+  BellOff,
+  RefreshCw,
+  Rows3,
+  Rows4,
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useStreaks } from '../hooks/useStreaks';
@@ -8,20 +24,21 @@ import { useRunning } from '../hooks/useRunning';
 import { useAchievements, getProgress } from '../hooks/useAchievements';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useDensity } from '../contexts/DensityContext';
 import { usePWA } from '../hooks/usePWA';
 import { updateUserSettings } from '../services/user.service';
 import { requestPushPermission, disablePushNotifications } from '../lib/notifications';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
-import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
+import { Dialog } from '../components/ui/Dialog';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { SettingToggle } from '../components/ui/SettingToggle';
 import { ThemeSelector } from '../components/profile/ThemeSelector';
-import { ACHIEVEMENT_DEFINITIONS, ACHIEVEMENT_CATEGORY_LABELS } from '../config/constants';
-import type { AchievementDef, AchievementCategory } from '../types/shared';
+import { AchievementsSection } from '../components/profile/AchievementsSection';
+import type { AchievementDef } from '../types/shared';
 
 export function ProfilePage() {
   const { profile, logout, linkPartner, error, isSubmitting } = useAuth();
@@ -30,6 +47,7 @@ export function ProfilePage() {
   const { progress } = useRunning();
   const { couple, partnerName } = useCoupleContext();
   const { canInstall, install, isInstalled } = usePWA();
+  const { isCompact, toggleDensity } = useDensity();
   const [partnerEmail, setPartnerEmail] = useState('');
   const { unlockedAchievements, evalCtx } = useAchievements();
   const { currentTheme, setTheme, themes } = useTheme();
@@ -46,7 +64,11 @@ export function ProfilePage() {
       toast('Notificaciones desactivadas');
     } else {
       const success = await requestPushPermission(user.uid);
-      if (!success) toast.error('No se pudo activar las notificaciones. Revisá los permisos del navegador.');
+      if (!success) {
+        toast.error(
+          'No se pudo activar las notificaciones. Revisá los permisos del navegador.',
+        );
+      }
     }
   }
 
@@ -84,54 +106,89 @@ export function ProfilePage() {
 
   // Use profile.coupleId OR couple from CoupleContext (cached in localStorage)
   const hasPartner = !!profile?.coupleId || !!couple;
-  // Only show "vincular pareja" when profile explicitly loaded without coupleId
   const profileLoaded = !!profile;
+
+  const statCards: Array<{
+    icon: React.ReactNode;
+    value: number | string;
+    label: string;
+  }> = [
+    {
+      icon: <Flame size={18} className="text-secondary" />,
+      value: bestStreak,
+      label: 'Mejor racha',
+    },
+    {
+      icon: <Footprints size={18} className="text-primary" />,
+      value: progress?.totalRuns || 0,
+      label: 'Carreras',
+    },
+    {
+      icon: <Trophy size={18} className="text-accent" />,
+      value: totalStreaks,
+      label: 'Racha total',
+    },
+  ];
 
   return (
     <div className="space-y-4 py-4">
       <h1 className="sr-only">Perfil</h1>
-      {/* Profile header */}
-      <Card>
+
+      {/* Profile header — compacto */}
+      <section
+        className="rounded-2xl border border-border/60 bg-surface p-4 shadow-sm"
+        aria-label="Información de usuario"
+      >
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-md">
-            <User size={30} className="text-primary" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-soft to-accent-soft ring-1 ring-primary/20">
+            <User size={26} className="text-primary" />
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-text-primary">{profile?.displayName || user?.displayName || 'Usuario'}</h2>
-            <p className="text-sm text-text-muted">{profile?.email || user?.email}</p>
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-base font-semibold text-text-primary">
+              {profile?.displayName || user?.displayName || 'Usuario'}
+            </h2>
+            <p className="truncate text-xs text-text-muted">
+              {profile?.email || user?.email}
+            </p>
           </div>
         </div>
-      </Card>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { icon: <Flame size={20} className="mx-auto text-secondary mb-1" />, value: bestStreak, label: 'Mejor racha', bg: 'from-secondary/5' },
-          { icon: <Footprints size={20} className="mx-auto text-primary mb-1" />, value: progress?.totalRuns || 0, label: 'Carreras', bg: 'from-primary/5' },
-          { icon: <Trophy size={20} className="mx-auto text-accent mb-1" />, value: totalStreaks, label: 'Racha total', bg: 'from-accent/5' },
-        ].map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.07, duration: 0.3 }}
-          >
-            <Card className={`text-center bg-gradient-to-b ${stat.bg} to-transparent`}>
-              {stat.icon}
-              <p className="text-lg font-bold font-mono text-text-primary">{stat.value}</p>
-              <p className="text-[10px] text-text-muted">{stat.label}</p>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+        {/* Stats row dentro del header para compactar */}
+        <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border/60 pt-4">
+          {statCards.map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05, duration: 0.25, ease: 'easeOut' }}
+              className="text-center"
+            >
+              <div className="mb-1 flex justify-center">{stat.icon}</div>
+              <p className="text-xl font-bold tabular-nums text-text-primary leading-none">
+                {stat.value}
+              </p>
+              <p className="mt-1 text-2xs uppercase tracking-wide text-text-muted">
+                {stat.label}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
 
-      {/* Partner linking — only show "vincular" when profile loaded and no couple */}
+      {/* Partner linking */}
       {profileLoaded && !hasPartner && (
-        <Card>
-          <div className="flex items-center gap-3 mb-3">
-            <Link size={20} className="text-accent" />
-            <div>
-              <h3 className="text-sm font-bold text-text-primary">Vincular pareja</h3>
+        <section
+          className="rounded-2xl border border-border/60 bg-surface p-4 shadow-sm"
+          aria-label="Vincular pareja"
+        >
+          <div className="mb-3 flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft ring-1 ring-accent/20">
+              <LinkIcon size={18} className="text-accent" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-semibold text-text-primary">
+                Vincular pareja
+              </h3>
               <p className="text-xs text-text-muted">Ingresá el email de tu pareja</p>
             </div>
           </div>
@@ -150,68 +207,104 @@ export function ProfilePage() {
               Vincular
             </Button>
           </div>
-        </Card>
+        </section>
       )}
 
       {hasPartner && (
-        <Card className="bg-gradient-to-r from-primary/5 to-transparent">
+        <section
+          className="rounded-2xl border border-primary/30 bg-gradient-to-r from-primary-soft/40 to-surface p-4 shadow-sm"
+          aria-label="Estado de pareja"
+        >
           <div className="flex items-center gap-3">
-            <Link size={20} className="text-primary" />
-            <div>
-              <h3 className="text-sm font-bold text-text-primary">Pareja vinculada</h3>
-              <p className="text-xs text-text-muted">Con {partnerName || 'tu pareja'}</p>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft ring-1 ring-primary/20">
+              <LinkIcon size={18} className="text-primary" />
             </div>
-            <span className="ml-auto text-primary text-xs font-semibold">Conectados</span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-semibold text-text-primary">
+                Pareja vinculada
+              </h3>
+              <p className="text-xs text-text-muted">
+                Con {partnerName || 'tu pareja'}
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full bg-primary-soft px-2.5 py-1 text-2xs font-bold uppercase tracking-wide text-primary">
+              Conectados
+            </span>
           </div>
-        </Card>
+        </section>
       )}
 
-      {/* Install PWA */}
+      {/* PWA state */}
       {canInstall && !isInstalled && (
-        <Card variant="interactive" onClick={install}>
-          <div className="flex items-center gap-3">
-            <Download size={20} className="text-primary" />
-            <div>
-              <h3 className="text-sm font-bold text-text-primary">Instalar app</h3>
-              <p className="text-xs text-text-muted">Agregala a tu pantalla de inicio</p>
-            </div>
+        <button
+          type="button"
+          onClick={install}
+          className="group flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-surface p-4 text-left shadow-sm transition-colors duration-150 hover:border-border-light hover:bg-surface-hover active:scale-[0.99]"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft ring-1 ring-primary/20">
+            <Download size={18} className="text-primary" />
           </div>
-        </Card>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold text-text-primary">Instalar app</h3>
+            <p className="text-xs text-text-muted">Agregala a tu pantalla de inicio</p>
+          </div>
+        </button>
       )}
 
       {isInstalled && (
-        <Card>
-          <div className="flex items-center gap-3">
-            <Smartphone size={20} className="text-primary" />
-            <div>
-              <h3 className="text-sm font-bold text-text-primary">App instalada</h3>
-              <p className="text-xs text-text-muted">Ya tenés Gestionarse en tu dispositivo</p>
-            </div>
+        <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-surface p-4 shadow-sm">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft ring-1 ring-primary/20">
+            <Smartphone size={18} className="text-primary" />
           </div>
-        </Card>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold text-text-primary">App instalada</h3>
+            <p className="text-xs text-text-muted">
+              Ya tenés Motivarse en tu dispositivo
+            </p>
+          </div>
+        </div>
       )}
 
-      {/* Sound toggle */}
-      <SettingToggle
-        icon={<Volume2 size={20} className="text-primary" />}
-        iconOff={<VolumeX size={20} className="text-text-muted" />}
-        title="Sonidos"
-        description={soundEnabled ? 'Activados' : 'Desactivados'}
-        enabled={soundEnabled}
-        onToggle={toggleSound}
-      />
+      {/* Settings group */}
+      <div className="space-y-2">
+        <p className="px-1 text-2xs font-semibold uppercase tracking-wide text-text-muted">
+          Preferencias
+        </p>
+        <div className="space-y-2">
+          <SettingToggle
+            icon={<Volume2 size={18} className="text-primary" />}
+            iconOff={<VolumeX size={18} className="text-text-muted" />}
+            title="Sonidos"
+            description={soundEnabled ? 'Activados' : 'Desactivados'}
+            enabled={soundEnabled}
+            onToggle={toggleSound}
+          />
 
-      {/* Notifications toggle */}
-      <SettingToggle
-        icon={<Bell size={20} className="text-primary" />}
-        iconOff={<BellOff size={20} className="text-text-muted" />}
-        title="Notificaciones"
-        description={notificationsEnabled ? 'Activadas — recordatorio diario a las 22:00' : 'Desactivadas'}
-        enabled={notificationsEnabled}
-        onToggle={toggleNotifications}
-      />
+          <SettingToggle
+            icon={<Bell size={18} className="text-primary" />}
+            iconOff={<BellOff size={18} className="text-text-muted" />}
+            title="Notificaciones"
+            description={
+              notificationsEnabled
+                ? 'Activadas · recordatorio diario a las 22:00'
+                : 'Desactivadas'
+            }
+            enabled={notificationsEnabled}
+            onToggle={toggleNotifications}
+          />
 
-      {/* Achievements — collapsible */}
+          <SettingToggle
+            icon={<Rows4 size={18} className="text-primary" />}
+            iconOff={<Rows3 size={18} className="text-text-muted" />}
+            title="Modo compacto"
+            description="Ver más items por pantalla en las listas"
+            enabled={isCompact}
+            onToggle={toggleDensity}
+          />
+        </div>
+      </div>
+
+      {/* Achievements */}
       <AchievementsSection
         showAchievements={showAchievements}
         setShowAchievements={setShowAchievements}
@@ -224,23 +317,32 @@ export function ProfilePage() {
       {/* Theme selector */}
       <ThemeSelector currentTheme={currentTheme} themes={themes} setTheme={setTheme} />
 
-      {/* Force update */}
-      <Button variant="ghost" className="w-full text-text-muted" onClick={forceUpdate}>
-        <RefreshCw size={18} />
-        Actualizar app
-      </Button>
+      {/* Danger/meta zone */}
+      <div className="space-y-1.5 pt-2">
+        <Button
+          variant="ghost"
+          className="w-full justify-center text-text-muted"
+          onClick={forceUpdate}
+        >
+          <RefreshCw size={16} />
+          Actualizar app
+        </Button>
 
-      {/* Logout */}
-      <Button variant="ghost" className="w-full text-danger" onClick={handleLogout}>
-        <LogOut size={18} />
-        Cerrar sesion
-      </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-center text-danger hover:bg-danger/10"
+          onClick={handleLogout}
+        >
+          <LogOut size={16} />
+          Cerrar sesión
+        </Button>
+      </div>
 
       <ConfirmDialog
         open={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}
         onConfirm={confirmLogout}
-        title="Cerrar sesion"
+        title="Cerrar sesión"
         description="Vas a salir de tu cuenta. Tus datos no se pierden."
         confirmLabel="Salir"
         variant="danger"
@@ -253,127 +355,6 @@ export function ProfilePage() {
         evalCtx={evalCtx}
         onClose={() => setSelectedAchievement(null)}
       />
-    </div>
-  );
-}
-
-// --- Achievements Section Component ---
-
-interface AchievementsSectionProps {
-  showAchievements: boolean;
-  setShowAchievements: (v: boolean) => void;
-  unlockedAchievements: import('../types/shared').Achievement[];
-  evalCtx: ReturnType<typeof import('../hooks/useAchievements').useAchievements>['evalCtx'];
-  selectedAchievement: AchievementDef | null;
-  setSelectedAchievement: (v: AchievementDef | null) => void;
-}
-
-function AchievementsSection({
-  showAchievements,
-  setShowAchievements,
-  unlockedAchievements,
-  evalCtx,
-  setSelectedAchievement,
-}: AchievementsSectionProps) {
-  const unlockedIds = useMemo(
-    () => new Set(unlockedAchievements.map((a) => a.achievementId)),
-    [unlockedAchievements]
-  );
-  const unlockedCount = unlockedIds.size;
-  const totalCount = ACHIEVEMENT_DEFINITIONS.length;
-
-  // Group by category
-  const grouped = useMemo(() => {
-    const map = new Map<AchievementCategory, AchievementDef[]>();
-    for (const def of ACHIEVEMENT_DEFINITIONS) {
-      const list = map.get(def.category) || [];
-      list.push(def);
-      map.set(def.category, list);
-    }
-    return map;
-  }, []);
-
-  return (
-    <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden" role="region" aria-label="Logros">
-      <button
-        onClick={() => setShowAchievements(!showAchievements)}
-        className="w-full flex items-center justify-between p-4 hover:bg-surface-hover transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <Trophy size={20} className="text-accent" />
-          <div className="text-left">
-            <p className="text-sm font-bold text-text-primary">Logros</p>
-            <p className="text-xs text-text-muted">
-              {unlockedCount}/{totalCount} desbloqueados
-            </p>
-          </div>
-        </div>
-        <ChevronDown
-          size={18}
-          className={cn(
-            'text-text-muted transition-transform duration-200',
-            showAchievements && 'rotate-180'
-          )}
-        />
-      </button>
-
-      {showAchievements && (
-        <div className="border-t border-border px-4 py-3 space-y-4">
-          {/* Progress bar */}
-          <div>
-            <div className="w-full h-2 bg-surface-light rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${totalCount > 0 ? (unlockedCount / totalCount) * 100 : 0}%` }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
-              />
-            </div>
-          </div>
-
-          {/* Grid by category */}
-          {Array.from(grouped.entries()).map(([category, defs]) => (
-            <div key={category}>
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
-                {ACHIEVEMENT_CATEGORY_LABELS[category] || category}
-              </p>
-              <div className="grid grid-cols-4 gap-2">
-                {defs.map((def) => {
-                  const isUnlocked = unlockedIds.has(def.id);
-                  const progress = getProgress(def.condition, evalCtx);
-                  return (
-                    <button
-                      key={def.id}
-                      onClick={() => setSelectedAchievement(def)}
-                      className={cn(
-                        'flex flex-col items-center gap-1 p-2 rounded-xl transition-all',
-                        isUnlocked
-                          ? 'bg-primary/5 hover:bg-primary/10'
-                          : 'bg-surface-light/50 hover:bg-surface-light opacity-60'
-                      )}
-                    >
-                      <span className={cn('text-2xl', !isUnlocked && 'grayscale')}>
-                        {isUnlocked ? def.icon : '?'}
-                      </span>
-                      <span className="text-[10px] font-medium text-text-primary leading-tight text-center line-clamp-2">
-                        {isUnlocked ? def.name : '???'}
-                      </span>
-                      {!isUnlocked && progress !== null && progress > 0 && (
-                        <div className="w-full h-1 bg-surface-light rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary/50 rounded-full"
-                            style={{ width: `${Math.round(progress * 100)}%` }}
-                          />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -391,79 +372,88 @@ function AchievementModal({
   evalCtx: ReturnType<typeof import('../hooks/useAchievements').useAchievements>['evalCtx'];
   onClose: () => void;
 }) {
-  useEffect(() => {
-    if (!selectedAchievement) return;
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
-    }
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedAchievement, onClose]);
+  const isUnlocked = selectedAchievement
+    ? unlockedAchievements.some((a) => a.achievementId === selectedAchievement.id)
+    : false;
+  const progress = selectedAchievement
+    ? getProgress(selectedAchievement.condition, evalCtx)
+    : null;
 
   return (
-    <AnimatePresence>
+    <Dialog
+      open={!!selectedAchievement}
+      onClose={onClose}
+      title={
+        selectedAchievement
+          ? isUnlocked
+            ? selectedAchievement.name
+            : 'Logro bloqueado'
+          : ''
+      }
+      size="sm"
+      footer={
+        <Button type="button" variant="outline" size="lg" onClick={onClose} className="w-full">
+          Cerrar
+        </Button>
+      }
+    >
       {selectedAchievement && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="achievement-title"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-          <motion.div
-            className="relative bg-surface rounded-2xl border border-border shadow-xl p-6 max-w-[300px] w-full text-center"
-            initial={{ scale: 0.9, y: 20, opacity: 0 }}
-            animate={{ scale: 1, y: 0, opacity: 1 }}
-            exit={{ scale: 0.9, y: 20, opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            onClick={(e) => e.stopPropagation()}
+        <div className="py-2 text-center">
+          <div
+            className={cn(
+              'mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-3xl ring-1',
+              isUnlocked
+                ? 'bg-gradient-to-br from-primary-soft to-accent-soft ring-primary/30'
+                : 'bg-surface-light ring-border/60',
+            )}
           >
-            {(() => {
-              const isUnlocked = unlockedAchievements.some(
-                (a) => a.achievementId === selectedAchievement.id
-              );
-              const progress = getProgress(selectedAchievement.condition, evalCtx);
-              return (
-                <>
-                  <span className={cn('text-5xl block mb-3', !isUnlocked && 'grayscale opacity-50')}>
-                    {isUnlocked ? selectedAchievement.icon : '?'}
-                  </span>
-                  <p id="achievement-title" className="text-lg font-bold text-text-primary mb-1">
-                    {selectedAchievement.name}
-                  </p>
-                  <Badge variant={selectedAchievement.type === 'couple' ? 'accent' : 'default'} className="mb-2">
-                    {selectedAchievement.type === 'couple' ? 'Pareja' : 'Individual'}
-                  </Badge>
-                  <p className="text-sm text-text-muted mb-3">
-                    {selectedAchievement.description}
-                  </p>
-                  {isUnlocked ? (
-                    <p className="text-xs text-primary font-semibold">Desbloqueado</p>
-                  ) : progress !== null ? (
-                    <div>
-                      <div className="w-full h-2 bg-surface-light rounded-full overflow-hidden mb-1">
-                        <div
-                          className="h-full bg-primary rounded-full transition-all duration-500"
-                          style={{ width: `${Math.round(progress * 100)}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-text-muted">
-                        {Math.round(progress * 100)}% completado
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-text-muted">Bloqueado</p>
-                  )}
-                </>
-              );
-            })()}
-          </motion.div>
-        </motion.div>
+            <span
+              className={cn('text-5xl', !isUnlocked && 'grayscale opacity-50')}
+              aria-hidden="true"
+            >
+              {isUnlocked ? selectedAchievement.icon : '?'}
+            </span>
+          </div>
+
+          <div className="mb-3 flex justify-center">
+            <Badge variant={selectedAchievement.type === 'couple' ? 'accent' : 'default'}>
+              {selectedAchievement.type === 'couple' ? 'Pareja' : 'Individual'}
+            </Badge>
+          </div>
+
+          <p className="mb-5 text-sm leading-relaxed text-text-secondary">
+            {selectedAchievement.description}
+          </p>
+
+          {isUnlocked ? (
+            <div className="inline-flex items-center gap-2 rounded-full bg-success-soft px-3 py-1.5 text-xs font-semibold text-success">
+              <Trophy size={14} />
+              Desbloqueado
+            </div>
+          ) : progress !== null ? (
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <span className="text-2xs uppercase tracking-wide text-text-muted">
+                  Progreso
+                </span>
+                <span className="text-xs font-semibold tabular-nums text-text-primary">
+                  {Math.round(progress * 100)}%
+                </span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-light">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.round(progress * 100)}%` }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                />
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-text-muted">Bloqueado</p>
+          )}
+        </div>
       )}
-    </AnimatePresence>
+    </Dialog>
   );
 }

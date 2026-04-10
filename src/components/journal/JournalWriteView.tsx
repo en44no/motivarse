@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight, Check, Save, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatDisplayDate } from '../../lib/date-utils';
 import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
+import { IconButton } from '../ui/IconButton';
 import { MoodSelector } from './MoodSelector';
 import { MOOD_OPTIONS } from '../../config/constants';
 
@@ -44,63 +46,73 @@ export function JournalWriteView({
     }
   }, [content]);
 
-  // Focus textarea when entering write mode
-  useEffect(() => {
-    if (textareaRef.current) {
-      setTimeout(() => textareaRef.current?.focus(), 300);
-    }
-  }, []);
-
   return (
     <motion.div
       key="write"
-      initial={{ opacity: 0, x: 10 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 10 }}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 6 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
       className="space-y-4"
     >
       {/* Date navigation */}
-      <div className="flex items-center justify-between bg-surface rounded-2xl border border-border p-2">
-        <button
+      <Card className="p-2 flex items-center justify-between">
+        <IconButton
+          variant="ghost"
+          size="md"
+          aria-label="Dia anterior"
           onClick={onPrevDay}
-          className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
         >
           <ChevronLeft size={20} />
-        </button>
-        <span className="text-sm font-semibold text-text-primary">
-          {formatDisplayDate(writeDate)}
-        </span>
-        <button
+        </IconButton>
+        <div className="text-center">
+          <p className="text-sm font-semibold text-text-primary capitalize">
+            {formatDisplayDate(writeDate)}
+          </p>
+          {isToday && (
+            <p className="text-2xs text-primary font-semibold uppercase tracking-wide">
+              Hoy
+            </p>
+          )}
+        </div>
+        <IconButton
+          variant="ghost"
+          size="md"
+          aria-label="Dia siguiente"
           onClick={onNextDay}
           disabled={isToday}
-          className={cn(
-            'p-2 rounded-xl transition-colors',
-            isToday
-              ? 'text-text-muted/30 cursor-not-allowed'
-              : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
-          )}
         >
           <ChevronRight size={20} />
-        </button>
-      </div>
+        </IconButton>
+      </Card>
 
       {/* Mood selector */}
       <MoodSelector mood={mood} onSelect={onMoodSelect} options={MOOD_OPTIONS} />
 
-      {/* Textarea */}
-      <textarea
-        ref={textareaRef}
-        value={content}
-        onChange={(e) => onContentChange(e.target.value)}
-        placeholder="¿Cómo fue tu día?"
-        className={cn(
-          'w-full min-h-[200px] max-h-[400px] resize-none rounded-2xl',
-          'bg-surface border border-border p-4 text-sm text-text-primary leading-relaxed',
-          'placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30',
-          'transition-all',
+      {/* Paper-like textarea */}
+      <div className="relative">
+        <textarea
+          ref={textareaRef}
+          value={content}
+          onChange={(e) => onContentChange(e.target.value)}
+          placeholder="Como fue tu dia?"
+          className={cn(
+            'w-full min-h-[240px] max-h-[480px] resize-none rounded-2xl',
+            'bg-surface border border-border/60 p-5 text-sm text-text-primary leading-relaxed',
+            'placeholder:text-text-muted/60',
+            'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40',
+            'transition-colors duration-150 ease-out',
+            'shadow-sm',
+          )}
+          rows={8}
+        />
+        {/* Char count */}
+        {content.length > 0 && (
+          <div className="absolute bottom-3 right-4 text-2xs text-text-muted/60 tabular-nums pointer-events-none">
+            {content.length} {content.length === 1 ? 'caracter' : 'caracteres'}
+          </div>
         )}
-        rows={6}
-      />
+      </div>
 
       {/* Save button */}
       <Button
@@ -110,7 +122,7 @@ export function JournalWriteView({
         size="lg"
         className={cn(
           'w-full',
-          saveStatus === 'saved' && 'bg-primary/10 text-primary',
+          saveStatus === 'saved' && 'bg-primary-soft text-primary',
         )}
       >
         {saveStatus === 'saving' ? (

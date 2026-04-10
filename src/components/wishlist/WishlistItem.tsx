@@ -3,6 +3,7 @@ import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { Check, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatRelativeTime } from '../../lib/date-utils';
+import { useDensity } from '../../contexts/DensityContext';
 import type { WishlistItem as WishlistItemType } from '../../types/wishlist';
 import type { CoupleCategory } from '../../types/category';
 
@@ -21,6 +22,8 @@ export const WishlistItem = memo(function WishlistItem({
   onDelete,
   memberNames,
 }: WishlistItemProps) {
+  const { isCompact } = useDensity();
+
   const categoryDef = item.category ? categories.find((c) => c.id === item.category) : undefined;
   const createdByName = memberNames[item.createdBy] || 'Alguien';
   const completedByName = item.completedBy
@@ -53,7 +56,8 @@ export const WishlistItem = memo(function WishlistItem({
       {/* Card content */}
       <motion.div
         className={cn(
-          'flex items-center gap-3 bg-surface rounded-xl border border-border p-3 shadow-sm relative',
+          'flex items-center gap-3 bg-surface rounded-xl border border-border/60 shadow-sm relative',
+          isCompact ? 'p-3' : 'p-4',
           item.completed && 'opacity-60',
         )}
         style={{ x }}
@@ -69,12 +73,13 @@ export const WishlistItem = memo(function WishlistItem({
         <button
           onClick={() => onToggle(!item.completed)}
           className={cn(
-            'w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all',
+            'rounded-full flex items-center justify-center shrink-0 transition-colors',
+            isCompact ? 'w-7 h-7' : 'w-8 h-8',
             item.completed
-              ? 'bg-primary text-white'
+              ? 'bg-primary text-primary-contrast'
               : 'border-2 border-border hover:border-primary/50',
           )}
-          aria-label={item.completed ? "Desmarcar deseo" : "Completar deseo"}
+          aria-label={item.completed ? 'Desmarcar deseo' : 'Completar deseo'}
           role="checkbox"
           aria-checked={item.completed}
         >
@@ -83,10 +88,10 @@ export const WishlistItem = memo(function WishlistItem({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            {categoryDef && <span className="text-sm">{categoryDef.emoji}</span>}
+            {categoryDef && <span className="text-sm leading-none">{categoryDef.emoji}</span>}
             <p
               className={cn(
-                'text-sm font-medium',
+                'text-sm font-semibold',
                 item.completed
                   ? 'text-text-muted line-through'
                   : 'text-text-primary',
@@ -96,17 +101,19 @@ export const WishlistItem = memo(function WishlistItem({
             </p>
           </div>
 
-          {item.description && (
-            <p className="text-xs text-text-muted mt-0.5 line-clamp-2">
+          {!isCompact && item.description && (
+            <p className="text-xs text-text-muted mt-1 line-clamp-2">
               {item.description}
             </p>
           )}
 
-          <p className="text-[10px] text-text-muted mt-0.5">
-            {item.completed
-              ? `Completado por ${completedByName}${item.completedAt ? ` \u00B7 ${formatRelativeTime(item.completedAt)}` : ''}`
-              : `Agregado por ${createdByName} \u00B7 ${formatRelativeTime(item.createdAt)}`}
-          </p>
+          {!isCompact && (
+            <p className="text-2xs text-text-muted mt-1">
+              {item.completed
+                ? `Completado por ${completedByName}${item.completedAt ? ` \u00B7 ${formatRelativeTime(item.completedAt)}` : ''}`
+                : `Agregado por ${createdByName} \u00B7 ${formatRelativeTime(item.createdAt)}`}
+            </p>
+          )}
         </div>
       </motion.div>
     </motion.div>

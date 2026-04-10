@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShoppingBag, ChevronDown, ShoppingCart, Heart, Eye, EyeOff } from 'lucide-react';
+import { ShoppingBag, ChevronDown } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useSharedTodos } from '../hooks/useSharedTodos';
@@ -78,10 +78,10 @@ export function SharedPage() {
               <button
                 onClick={() => setActiveCategory(null)}
                 className={cn(
-                  'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
+                  'shrink-0 px-3 h-8 inline-flex items-center rounded-full text-xs font-medium transition-colors',
                   activeCategory === null
-                    ? 'bg-primary text-white shadow-sm shadow-primary/30'
-                    : 'bg-surface-hover text-text-muted hover:text-text-secondary'
+                    ? 'bg-primary text-primary-contrast'
+                    : 'bg-surface-hover text-text-muted hover:text-text-secondary',
                 )}
               >
                 Todos
@@ -91,10 +91,10 @@ export function SharedPage() {
                   key={cat.id}
                   onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
                   className={cn(
-                    'shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all',
+                    'shrink-0 inline-flex items-center gap-1 px-3 h-8 rounded-full text-xs font-medium transition-colors',
                     activeCategory === cat.id
-                      ? 'bg-primary text-white shadow-sm shadow-primary/30'
-                      : 'bg-surface-hover text-text-muted hover:text-text-secondary'
+                      ? 'bg-primary text-primary-contrast'
+                      : 'bg-surface-hover text-text-muted hover:text-text-secondary',
                   )}
                 >
                   <span>{cat.emoji}</span>
@@ -105,8 +105,8 @@ export function SharedPage() {
           )}
 
           {filteredPending.length > 0 && (
-            <div>
-              <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-1">
+            <div className="space-y-2">
+              <h3 className="text-2xs font-semibold text-text-muted uppercase tracking-wider px-1">
                 Pendientes ({filteredPending.length})
               </h3>
               <TodoList
@@ -121,13 +121,20 @@ export function SharedPage() {
           )}
 
           {filteredRecent.length > 0 && (
-            <div>
+            <div className="space-y-2">
               <button
                 onClick={() => setShowCompleted(!showCompleted)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-1 hover:text-text-secondary transition-colors"
+                aria-expanded={showCompleted}
+                className="flex w-full items-center justify-between gap-1.5 px-1 text-2xs font-semibold text-text-muted uppercase tracking-wider hover:text-text-secondary transition-colors"
               >
-                {showCompleted ? <EyeOff size={13} /> : <Eye size={13} />}
-                Completados ({filteredRecent.length})
+                <span>Completados ({filteredRecent.length})</span>
+                <ChevronDown
+                  size={14}
+                  className={cn(
+                    'transition-transform duration-200',
+                    showCompleted ? 'rotate-0' : '-rotate-90',
+                  )}
+                />
               </button>
               {showCompleted && (
                 <TodoList
@@ -143,16 +150,20 @@ export function SharedPage() {
           )}
 
           {filteredArchived.length > 0 && (
-            <div>
+            <div className="space-y-2">
               <button
                 onClick={() => setShowArchived(!showArchived)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-1 hover:text-text-secondary transition-colors"
+                aria-expanded={showArchived}
+                className="flex w-full items-center justify-between gap-1.5 px-1 text-2xs font-semibold text-text-muted uppercase tracking-wider hover:text-text-secondary transition-colors"
               >
+                <span>Archivados ({filteredArchived.length})</span>
                 <ChevronDown
                   size={14}
-                  className={`transition-transform duration-200 ${showArchived ? 'rotate-0' : '-rotate-90'}`}
+                  className={cn(
+                    'transition-transform duration-200',
+                    showArchived ? 'rotate-0' : '-rotate-90',
+                  )}
                 />
-                Archivados ({filteredArchived.length})
               </button>
               {showArchived && (
                 <TodoList

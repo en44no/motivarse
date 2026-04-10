@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Lock, ChevronRight } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { Lock, ChevronRight, BookOpen } from 'lucide-react';
 import { useJournal } from '../../hooks/useJournal';
+import { Card } from '../ui/Card';
 import { JournalSheet } from './JournalSheet';
 
 export function JournalCard() {
@@ -10,53 +9,44 @@ export function JournalCard() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const preview = todayEntry?.content
-    ? todayEntry.content.length > 60
-      ? todayEntry.content.slice(0, 60) + '...'
+    ? todayEntry.content.length > 70
+      ? todayEntry.content.slice(0, 70) + '...'
       : todayEntry.content
     : null;
 
   return (
     <>
-      <motion.button
-        className={cn(
-          'w-full text-left bg-surface rounded-2xl border border-border p-4',
-          'flex items-center gap-3 shadow-sm',
-          'hover:bg-surface-hover transition-colors active:scale-[0.98]',
-        )}
-        whileTap={{ scale: 0.98 }}
+      <Card
+        variant="interactive"
         onClick={() => setSheetOpen(true)}
+        className="flex items-center gap-3 p-4"
       >
         {/* Icon */}
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-          <span className="text-lg">📝</span>
+        <div className="w-11 h-11 rounded-xl bg-primary-soft flex items-center justify-center shrink-0">
+          <BookOpen size={20} className="text-primary" />
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <p className="text-sm font-semibold text-text-primary">Mi diario</p>
+            {todayEntry?.mood && (
+              <span className="text-sm leading-none">{todayEntry.mood}</span>
+            )}
+          </div>
           {preview ? (
-            <>
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <p className="text-sm font-semibold text-text-primary">Mi diario</p>
-                {todayEntry?.mood && (
-                  <span className="text-sm">{todayEntry.mood}</span>
-                )}
-              </div>
-              <p className="text-xs text-text-muted truncate">{preview}</p>
-            </>
+            <p className="text-xs text-text-muted truncate leading-relaxed">{preview}</p>
           ) : (
-            <>
-              <p className="text-sm font-semibold text-text-primary">Mi diario</p>
-              <p className="text-xs text-text-muted">Tocá para escribir</p>
-            </>
+            <p className="text-xs text-text-muted">Toca para escribir</p>
           )}
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-1 shrink-0">
-          <Lock size={12} className="text-text-muted/50" />
-          <ChevronRight size={16} className="text-text-muted/40" />
+        <div className="flex items-center gap-1 shrink-0 text-text-muted/50">
+          <Lock size={12} />
+          <ChevronRight size={16} />
         </div>
-      </motion.button>
+      </Card>
 
       <JournalSheet
         open={sheetOpen}

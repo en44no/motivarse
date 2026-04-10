@@ -140,22 +140,24 @@ export const UnifiedCalendar = memo(function UnifiedCalendar({
   return (
     <div className="space-y-3">
       {/* Calendar card */}
-      <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm space-y-3">
+      <div className="bg-surface rounded-2xl border border-border/60 p-4 shadow-sm border-t-white/[0.04] space-y-3">
         {/* Header with month navigation */}
         <div className="flex items-center justify-between">
           <button
             onClick={goToPrevMonth}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+            aria-label="Mes anterior"
+            className="w-9 h-9 inline-flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors duration-150"
           >
             <ChevronLeft size={18} />
           </button>
-          <h3 className="text-sm font-semibold text-text-primary capitalize">
+          <h3 className="text-base font-semibold text-text-primary capitalize">
             {monthLabel}
           </h3>
           <button
             onClick={goToNextMonth}
             disabled={isCurrentMonth}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            aria-label="Mes siguiente"
+            className="w-9 h-9 inline-flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors duration-150 disabled:opacity-30 disabled:pointer-events-none"
           >
             <ChevronRight size={18} />
           </button>
@@ -166,7 +168,7 @@ export const UnifiedCalendar = memo(function UnifiedCalendar({
           {DAY_LABELS.map((d) => (
             <div
               key={d}
-              className="text-center text-[10px] text-text-muted font-medium py-0.5"
+              className="text-center text-2xs text-text-muted font-semibold uppercase tracking-wider py-0.5"
             >
               {d}
             </div>
@@ -201,15 +203,16 @@ export const UnifiedCalendar = memo(function UnifiedCalendar({
                 key={date}
                 type="button"
                 disabled={isFuture}
+                aria-label={`Día ${day.getDate()}${allDone ? ', hábitos completos' : someDone ? ', hábitos parciales' : ''}`}
                 onClick={() =>
                   !isFuture &&
                   setSelectedDate((prev) => (prev === date ? null : date))
                 }
                 className={cn(
-                  'aspect-square rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all relative',
+                  'min-h-11 h-11 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-colors duration-150 relative',
                   isFuture && 'opacity-30 cursor-default',
-                  !isFuture && 'cursor-pointer active:scale-90',
-                  isSelected && 'ring-2 ring-primary bg-primary/10',
+                  !isFuture && 'cursor-pointer active:scale-95',
+                  isSelected && 'ring-2 ring-primary bg-primary-soft',
                   !isSelected && isToday && 'ring-1 ring-primary/50',
                   !isSelected && !isToday && !isFuture && 'hover:bg-surface-hover',
                 )}
@@ -217,12 +220,12 @@ export const UnifiedCalendar = memo(function UnifiedCalendar({
                 {/* Day number */}
                 <span
                   className={cn(
-                    'text-[11px] font-medium leading-none',
+                    'text-2xs font-semibold leading-none tabular-nums',
                     isSelected
-                      ? 'text-primary font-bold'
+                      ? 'text-primary'
                       : isToday
-                        ? 'text-text-primary font-bold'
-                        : 'text-text-muted',
+                        ? 'text-text-primary'
+                        : 'text-text-secondary',
                   )}
                 >
                   {day.getDate()}
@@ -230,35 +233,47 @@ export const UnifiedCalendar = memo(function UnifiedCalendar({
 
                 {/* Indicators row */}
                 {!isFuture && (
-                  <div className="flex items-center gap-px justify-center">
+                  <div className="flex items-center gap-0.5 justify-center h-1">
                     {/* Habit status dot */}
                     {scheduledCount > 0 && (
                       <div
                         className={cn(
-                          'w-[5px] h-[5px] rounded-full',
+                          'w-1 h-1 rounded-full',
                           allDone && 'bg-primary',
-                          someDone && 'bg-amber-500',
-                          !allDone && !someDone && 'bg-border',
+                          someDone && 'bg-warning',
+                          !allDone && !someDone && 'bg-border-light',
                         )}
                       />
                     )}
                     {/* Run indicator */}
                     {hasRun && (
-                      <span className="text-[7px] leading-none">
-                        {'\u{1F3C3}'}
-                      </span>
+                      <div className="w-1 h-1 rounded-full bg-accent" />
                     )}
                     {/* Todo indicator */}
                     {hasTodo && (
-                      <span className="text-[7px] leading-none">
-                        {'\u{1F6D2}'}
-                      </span>
+                      <div className="w-1 h-1 rounded-full bg-secondary" />
                     )}
                   </div>
                 )}
               </button>
             );
           })}
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-3 pt-1 text-2xs text-text-muted">
+          <div className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+            <span>Hábitos</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+            <span>Carreras</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
+            <span>Mandados</span>
+          </div>
         </div>
       </div>
 
@@ -273,27 +288,27 @@ export const UnifiedCalendar = memo(function UnifiedCalendar({
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm space-y-3">
+            <div className="bg-surface rounded-2xl border border-border/60 p-4 shadow-sm border-t-white/[0.04] space-y-3">
               {/* Date header */}
-              <h4 className="text-xs font-semibold text-text-muted uppercase tracking-wider capitalize">
+              <h4 className="text-2xs font-semibold text-text-muted uppercase tracking-wider capitalize">
                 {selectedDetail.label}
               </h4>
 
               {selectedDetail.isFuture ? (
                 <p className="text-xs text-text-muted">
-                  Este dia todavia no llego.
+                  Este día todavía no llegó.
                 </p>
               ) : !selectedDetail.hasActivity ? (
                 <p className="text-xs text-text-muted">
-                  Sin actividad este dia
+                  Sin actividad este día
                 </p>
               ) : (
                 <div className="space-y-3">
                   {/* Habits section */}
                   {selectedDetail.scheduledHabits.length > 0 && (
                     <div className="space-y-1.5">
-                      <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
-                        Habitos
+                      <p className="text-2xs font-semibold text-text-muted uppercase tracking-wider">
+                        Hábitos
                       </p>
                       {selectedDetail.scheduledHabits.map((habit) => {
                         const done =
@@ -337,8 +352,8 @@ export const UnifiedCalendar = memo(function UnifiedCalendar({
                         );
                       })}
                       {/* Summary */}
-                      <div className="pt-1 border-t border-border/50">
-                        <span className="text-[10px] text-text-muted">
+                      <div className="pt-1 border-t border-border/60">
+                        <span className="text-2xs text-text-muted tabular-nums">
                           {
                             selectedDetail.scheduledHabits.filter((h) =>
                               selectedDetail.completedHabitIds?.has(h.id)
@@ -353,7 +368,7 @@ export const UnifiedCalendar = memo(function UnifiedCalendar({
                   {/* Runs section */}
                   {selectedDetail.dayRuns.length > 0 && (
                     <div className="space-y-1.5">
-                      <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+                      <p className="text-2xs font-semibold text-text-muted uppercase tracking-wider">
                         Carreras
                       </p>
                       {selectedDetail.dayRuns.map((run) => {
@@ -382,7 +397,7 @@ export const UnifiedCalendar = memo(function UnifiedCalendar({
                   {/* Todos section */}
                   {selectedDetail.dayTodos.length > 0 && (
                     <div className="space-y-1.5">
-                      <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+                      <p className="text-2xs font-semibold text-text-muted uppercase tracking-wider">
                         Mandados
                       </p>
                       {selectedDetail.dayTodos.map((todo) => (

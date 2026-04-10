@@ -4,6 +4,7 @@ import { Trash2, CreditCard, AlertTriangle, User } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatCurrency } from '../../lib/currency-utils';
 import { hasPaymentMismatch } from '../../lib/expense-utils';
+import { useDensity } from '../../contexts/DensityContext';
 import { ProgressBar } from '../ui/ProgressBar';
 import { Badge } from '../ui/Badge';
 import type { Expense, ExpenseCard, ExpenseCategory } from '../../types/expense';
@@ -25,6 +26,8 @@ export const ExpenseItem = memo(function ExpenseItem({
   onSelect,
   onDelete,
 }: ExpenseItemProps) {
+  const { isCompact } = useDensity();
+
   const x = useMotionValue(0);
   const deleteOpacity = useTransform(x, [-100, -60], [1, 0]);
   const deleteScale = useTransform(x, [-100, -60], [1, 0.8]);
@@ -60,8 +63,9 @@ export const ExpenseItem = memo(function ExpenseItem({
       {/* Card content */}
       <motion.div
         className={cn(
-          'bg-surface rounded-xl border p-3.5 shadow-sm relative cursor-pointer active:bg-surface-hover transition-colors',
-          mismatch ? 'border-amber-500/40' : 'border-border',
+          'bg-surface rounded-xl border shadow-sm relative cursor-pointer active:bg-surface-hover transition-colors',
+          isCompact ? 'p-3' : 'p-4',
+          mismatch ? 'border-warning/40' : 'border-border/60',
           isCompleted && 'opacity-60',
         )}
         style={{ x }}
@@ -74,12 +78,12 @@ export const ExpenseItem = memo(function ExpenseItem({
         onClick={onSelect}
       >
         {/* Title row */}
-        <div className="flex items-start justify-between gap-3 mb-2">
+        <div className={cn('flex items-start justify-between gap-3', isCompact ? 'mb-1.5' : 'mb-2')}>
           <div className="flex items-center gap-1.5 min-w-0 flex-1">
             {mismatch && (
               <span
                 title="Hay cuotas que no las pago quien correspondia"
-                className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500/20 text-amber-500 shrink-0"
+                className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-warning-soft text-warning shrink-0"
               >
                 <AlertTriangle size={10} />
               </span>
@@ -104,23 +108,23 @@ export const ExpenseItem = memo(function ExpenseItem({
         </div>
 
         {/* Progress */}
-        <div className="flex items-center gap-2 mb-2">
+        <div className={cn('flex items-center gap-2', isCompact ? 'mb-1.5' : 'mb-2')}>
           <ProgressBar value={progress} size="sm" className="flex-1" />
-          <span className="text-[11px] font-medium text-text-muted shrink-0 tabular-nums">
+          <span className="text-2xs font-medium text-text-muted shrink-0 tabular-nums">
             {currentInstallment}/{expense.totalInstallments}
           </span>
         </div>
 
-        {/* Amounts row */}
-        {!isCompleted && (
+        {/* Amounts row — hidden in compact */}
+        {!isCompleted && !isCompact && (
           <div className="flex items-center justify-between mb-2.5 gap-2">
-            <span className="text-[11px] text-text-muted truncate">
+            <span className="text-2xs text-text-muted truncate">
               Pagado{' '}
               <span className="font-semibold text-text-secondary tabular-nums">
                 {formatCurrency(paidAmount, expense.currency)}
               </span>
             </span>
-            <span className="text-[11px] text-text-muted truncate">
+            <span className="text-2xs text-text-muted truncate">
               Restante{' '}
               <span className="font-semibold text-accent tabular-nums">
                 {formatCurrency(totalPrice - paidAmount, expense.currency)}
@@ -129,30 +133,32 @@ export const ExpenseItem = memo(function ExpenseItem({
           </div>
         )}
 
-        {/* Tags row — todos como badges consistentes */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {category && (
-            <Badge variant="secondary" className="text-[10px] py-0.5">
-              <span className="text-[11px] leading-none">{category.emoji}</span>
-              {category.label}
+        {/* Tags row — hidden in compact for more density */}
+        {!isCompact && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {category && (
+              <Badge variant="secondary" className="text-2xs py-0.5">
+                <span className="text-2xs leading-none">{category.emoji}</span>
+                {category.label}
+              </Badge>
+            )}
+            {card && (
+              <Badge variant="default" className="text-2xs py-0.5">
+                <CreditCard size={10} />
+                {card.name}
+              </Badge>
+            )}
+            {assignedToLabel && (
+              <Badge variant="default" className="text-2xs py-0.5">
+                <User size={10} />
+                {assignedToLabel}
+              </Badge>
+            )}
+            <Badge variant="default" className="text-2xs py-0.5 tabular-nums">
+              {formatCurrency(expense.installmentPrice, expense.currency)}/cuota
             </Badge>
-          )}
-          {card && (
-            <Badge variant="default" className="text-[10px] py-0.5">
-              <CreditCard size={10} />
-              {card.name}
-            </Badge>
-          )}
-          {assignedToLabel && (
-            <Badge variant="default" className="text-[10px] py-0.5">
-              <User size={10} />
-              {assignedToLabel}
-            </Badge>
-          )}
-          <Badge variant="default" className="text-[10px] py-0.5 tabular-nums">
-            {formatCurrency(expense.installmentPrice, expense.currency)}/cuota
-          </Badge>
-        </div>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );

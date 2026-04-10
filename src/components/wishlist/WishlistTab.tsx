@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Heart, Eye, EyeOff } from 'lucide-react';
+import { Heart, ChevronDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useCoupleContext } from '../../contexts/CoupleContext';
@@ -63,9 +63,9 @@ export function WishlistTab() {
           <button
             onClick={() => setActiveFilter(null)}
             className={cn(
-              'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
+              'shrink-0 px-3 h-8 inline-flex items-center rounded-full text-xs font-medium transition-colors',
               activeFilter === null
-                ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                ? 'bg-primary text-primary-contrast'
                 : 'bg-surface-hover text-text-muted hover:text-text-secondary',
             )}
           >
@@ -78,9 +78,9 @@ export function WishlistTab() {
                 setActiveFilter(activeFilter === cat.id ? null : cat.id)
               }
               className={cn(
-                'shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all',
+                'shrink-0 inline-flex items-center gap-1 px-3 h-8 rounded-full text-xs font-medium transition-colors',
                 activeFilter === cat.id
-                  ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                  ? 'bg-primary text-primary-contrast'
                   : 'bg-surface-hover text-text-muted hover:text-text-secondary',
               )}
             >
@@ -93,8 +93,8 @@ export function WishlistTab() {
 
       {/* Pending items */}
       {filteredPending.length > 0 && (
-        <div>
-          <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-1">
+        <div className="space-y-2">
+          <h3 className="text-2xs font-semibold text-text-muted uppercase tracking-wider px-1">
             Pendientes ({filteredPending.length})
           </h3>
           <div className="space-y-2">
@@ -105,7 +105,7 @@ export function WishlistTab() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: 10 }}
-                  transition={{ delay: i * 0.03, duration: 0.3 }}
+                  transition={{ delay: i * 0.03, duration: 0.25 }}
                 >
                   <WishlistItem
                     item={item}
@@ -123,13 +123,20 @@ export function WishlistTab() {
 
       {/* Completed items */}
       {filteredCompleted.length > 0 && (
-        <div>
+        <div className="space-y-2">
           <button
             onClick={() => setShowCompleted(!showCompleted)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-1 hover:text-text-secondary transition-colors"
+            aria-expanded={showCompleted}
+            className="flex w-full items-center justify-between gap-1.5 px-1 text-2xs font-semibold text-text-muted uppercase tracking-wider hover:text-text-secondary transition-colors"
           >
-            {showCompleted ? <EyeOff size={13} /> : <Eye size={13} />}
-            Completados ({filteredCompleted.length})
+            <span>Completados ({filteredCompleted.length})</span>
+            <ChevronDown
+              size={14}
+              className={cn(
+                'transition-transform duration-200',
+                showCompleted ? 'rotate-0' : '-rotate-90',
+              )}
+            />
           </button>
           {showCompleted && (
             <div className="space-y-2">
@@ -140,7 +147,7 @@ export function WishlistTab() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: 10 }}
-                    transition={{ delay: i * 0.03, duration: 0.3 }}
+                    transition={{ delay: i * 0.03, duration: 0.25 }}
                   >
                     <WishlistItem
                       item={item}
@@ -160,10 +167,10 @@ export function WishlistTab() {
       {/* Empty state */}
       {pending.length === 0 && completed.length === 0 && (
         <EmptyState
-          icon={<Heart size={48} />}
+          icon={<Heart size={40} />}
           title="Sin deseos"
-          description="Agrega cosas que quieran hacer juntos: viajes, pelis, restaurantes..."
-          containerClassName="py-10"
+          description="Agregá cosas que quieran hacer juntos: viajes, pelis, restaurantes..."
+          className="py-10"
         />
       )}
     </div>

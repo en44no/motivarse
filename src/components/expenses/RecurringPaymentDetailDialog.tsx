@@ -1,8 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Check, CreditCard, Calendar, DollarSign, Trash2, Pencil, Bell, User } from 'lucide-react';
+import {
+  Check,
+  CreditCard,
+  Calendar,
+  DollarSign,
+  Trash2,
+  Pencil,
+  Bell,
+  User,
+  X as XIcon,
+} from 'lucide-react';
 import { Dialog } from '../ui/Dialog';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { IconButton } from '../ui/IconButton';
 import { formatCurrency } from '../../lib/currency-utils';
 import { cn } from '../../lib/utils';
 import {
@@ -141,39 +152,68 @@ export function RecurringPaymentDetailDialog({
     setShowPaymentForm(true);
   }
 
+  // Subtitle: info util sin repetirla en el body
+  const subtitle = `${formatCurrency(item.suggestedAmount, item.currency)} · día ${item.dayOfMonth} del mes`;
+
   return (
-    <Dialog open={item !== null} onClose={onClose} title={item.name}>
-      {/* Info section */}
-      <div className="space-y-3 mb-5">
+    <Dialog
+      open={item !== null}
+      onClose={onClose}
+      title={item.name}
+      subtitle={subtitle}
+      footer={
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="md"
+            className="flex-1"
+            onClick={() => {
+              onEdit(item);
+              onClose();
+            }}
+          >
+            <Pencil size={16} />
+            Editar
+          </Button>
+          <Button
+            variant="danger"
+            size="md"
+            className="flex-1"
+            onClick={async () => {
+              await onDelete(item.id);
+              onClose();
+            }}
+          >
+            <Trash2 size={16} />
+            Eliminar
+          </Button>
+        </div>
+      }
+    >
+      <div className="space-y-5">
+        {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-surface-light rounded-xl p-3">
-            <p className="text-xs text-text-muted mb-0.5">Monto sugerido</p>
-            <p className="text-sm font-bold text-text-primary">
-              {formatCurrency(item.suggestedAmount, item.currency)}
+          <div className="bg-primary-soft rounded-2xl p-4">
+            <p className="text-2xs uppercase tracking-wide text-text-muted mb-1">
+              Total pagado
             </p>
-          </div>
-          <div className="bg-surface-light rounded-xl p-3">
-            <p className="text-xs text-text-muted mb-0.5">Vence</p>
-            <p className="text-sm font-bold text-text-primary">
-              Día {item.dayOfMonth} / mes
-            </p>
-          </div>
-          <div className="bg-primary/10 rounded-xl p-3">
-            <p className="text-xs text-text-muted mb-0.5">Total pagado</p>
-            <p className="text-sm font-bold text-primary">
+            <p className="text-lg font-bold text-primary">
               {formatCurrency(totalPaid, item.currency)}
             </p>
           </div>
-          <div className="bg-accent/10 rounded-xl p-3">
-            <p className="text-xs text-text-muted mb-0.5">Meses pagados</p>
-            <p className="text-sm font-bold text-accent">{paidCount}</p>
+          <div className="bg-accent-soft rounded-2xl p-4">
+            <p className="text-2xs uppercase tracking-wide text-text-muted mb-1">
+              Meses pagados
+            </p>
+            <p className="text-lg font-bold text-accent">{paidCount}</p>
           </div>
         </div>
 
+        {/* Metadata chips */}
         <div className="flex flex-wrap items-center gap-2">
           {category && (
             <Badge variant="secondary">
-              <span className="text-[13px] leading-none">{category.emoji}</span>
+              <span className="text-xs leading-none">{category.emoji}</span>
               {category.label}
             </Badge>
           )}
@@ -193,13 +233,14 @@ export function RecurringPaymentDetailDialog({
           </Badge>
         </div>
 
+        {/* Recordatorios */}
         {item.reminders.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
-            <Bell size={12} className="text-text-muted" />
+            <Bell size={14} className="text-text-muted" />
             {item.reminders.map((r) => (
               <span
                 key={r}
-                className="text-[11px] font-medium text-text-secondary bg-surface-light rounded-full px-2 py-0.5"
+                className="text-2xs font-medium text-text-secondary bg-surface-light rounded-full px-2.5 py-1"
               >
                 {REMINDER_LABELS[r] ?? `${r}d antes`}
               </span>
@@ -207,31 +248,30 @@ export function RecurringPaymentDetailDialog({
           </div>
         )}
 
-        <div className="flex items-center gap-4 text-xs text-text-muted">
-          <span className="inline-flex items-center gap-1">
-            <Calendar size={12} />
-            Creado {formatDate(item.createdAt)}
-          </span>
+        {/* Fecha de creacion */}
+        <div className="flex items-center gap-1.5 text-xs text-text-muted">
+          <Calendar size={12} />
+          Creado {formatDate(item.createdAt)}
         </div>
-      </div>
 
-      {/* Acción mes actual */}
-      <div className="mb-5">
+        {/* Acción mes actual */}
         <div
           className={cn(
-            'rounded-xl p-4 border',
+            'rounded-2xl p-4 border',
             paidThisMonth
-              ? 'bg-primary/10 border-primary/20'
+              ? 'bg-primary-soft border-primary/20'
               : daysUntil < 0
-              ? 'bg-danger/10 border-danger/20'
+              ? 'bg-danger-soft border-danger/20'
               : daysUntil <= 3
-              ? 'bg-accent/10 border-accent/20'
+              ? 'bg-warning-soft border-warning/20'
               : 'bg-surface-light border-border',
           )}
         >
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-xs text-text-muted mb-0.5">Este mes</p>
+              <p className="text-2xs uppercase tracking-wide text-text-muted mb-0.5">
+                Este mes
+              </p>
               <p className="text-sm font-bold text-text-primary">
                 {formatYearMonth(currentYM)}
               </p>
@@ -245,7 +285,9 @@ export function RecurringPaymentDetailDialog({
                 Vencido hace {Math.abs(daysUntil)}d
               </span>
             ) : daysUntil === 0 ? (
-              <span className="text-xs font-semibold text-accent">Vence hoy</span>
+              <span className="text-xs font-semibold text-warning">
+                Vence hoy
+              </span>
             ) : (
               <span className="text-xs font-semibold text-text-secondary">
                 Vence en {daysUntil}d
@@ -254,7 +296,7 @@ export function RecurringPaymentDetailDialog({
           </div>
 
           {!paidThisMonth && !showPaymentForm && (
-            <Button onClick={openPaymentForm} className="w-full" size="sm">
+            <Button onClick={openPaymentForm} className="w-full" size="md">
               Marcar como pagado
             </Button>
           )}
@@ -272,34 +314,38 @@ export function RecurringPaymentDetailDialog({
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
                   placeholder={String(item.suggestedAmount)}
-                  className="w-full pl-8 pr-3 py-2 text-sm rounded-xl bg-surface border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary"
+                  className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-surface border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                 />
               </div>
-              <Button
-                size="sm"
+              <IconButton
+                aria-label="Confirmar pago"
+                variant="solid"
                 onClick={handleMarkCurrentMonth}
-                isLoading={loadingMonth === currentYM}
-                disabled={!paymentAmount || parseFloat(paymentAmount) <= 0}
+                disabled={
+                  loadingMonth === currentYM ||
+                  !paymentAmount ||
+                  parseFloat(paymentAmount) <= 0
+                }
               >
-                <Check size={16} />
-              </Button>
-              <Button
-                size="sm"
+                <Check size={18} />
+              </IconButton>
+              <IconButton
+                aria-label="Cancelar"
                 variant="ghost"
                 onClick={() => {
                   setShowPaymentForm(false);
                   setPaymentAmount('');
                 }}
               >
-                Cancelar
-              </Button>
+                <XIcon size={18} />
+              </IconButton>
             </div>
           )}
 
           {paidThisMonth && (
             <Button
               variant="outline"
-              size="sm"
+              size="md"
               className="w-full"
               onClick={() => handleToggleMonth(currentYM)}
               isLoading={loadingMonth === currentYM}
@@ -308,78 +354,56 @@ export function RecurringPaymentDetailDialog({
             </Button>
           )}
         </div>
-      </div>
 
-      {/* Historial mensual */}
-      <div className="mb-5">
-        <h3 className="text-sm font-semibold text-text-primary mb-3">Últimos 12 meses</h3>
-        <div className="grid grid-cols-4 gap-1.5">
-          {monthsToShow.map((ym) => {
-            const record = paidMonthsMap.get(ym);
-            const paid = !!record;
-            const loading = loadingMonth === ym;
-            const isCurrent = ym === currentYM;
+        {/* Historial mensual */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-text-primary">
+              Últimos 12 meses
+            </h3>
+            <span className="text-2xs text-text-muted">
+              Tocá para marcar/desmarcar
+            </span>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {monthsToShow.map((ym) => {
+              const record = paidMonthsMap.get(ym);
+              const paid = !!record;
+              const loading = loadingMonth === ym;
+              const isCurrent = ym === currentYM;
 
-            return (
-              <button
-                key={ym}
-                onClick={() => handleToggleMonth(ym)}
-                disabled={loading}
-                className={cn(
-                  'relative flex flex-col items-center justify-center rounded-lg py-2 px-1 border transition-all',
-                  paid
-                    ? 'bg-primary/15 border-primary/30 text-primary'
-                    : 'bg-surface-light border-border text-text-muted hover:border-primary/20',
-                  isCurrent && 'ring-1 ring-primary/40',
-                  loading && 'opacity-50',
-                )}
-              >
-                <span className="text-[10px] font-medium">{formatYearMonth(ym)}</span>
-                {paid ? (
-                  <Check size={12} className="mt-0.5" />
-                ) : (
-                  <span className="h-3 w-3 mt-0.5" />
-                )}
-                {paid && record && (
-                  <span className="text-[9px] mt-0.5 font-semibold">
-                    {formatCurrency(record.amount, item.currency)}
+              return (
+                <button
+                  key={ym}
+                  onClick={() => handleToggleMonth(ym)}
+                  disabled={loading}
+                  className={cn(
+                    'relative flex flex-col items-center justify-center rounded-xl py-2.5 px-1 border transition-colors duration-150 min-h-[58px]',
+                    paid
+                      ? 'bg-primary-soft border-primary/30 text-primary'
+                      : 'bg-surface-light border-border text-text-muted hover:border-primary/20 hover:text-text-secondary',
+                    isCurrent && 'ring-1 ring-primary/40',
+                    loading && 'opacity-50',
+                  )}
+                >
+                  <span className="text-2xs font-medium">
+                    {formatYearMonth(ym)}
                   </span>
-                )}
-              </button>
-            );
-          })}
+                  {paid ? (
+                    <Check size={12} className="mt-0.5" />
+                  ) : (
+                    <span className="h-3 w-3 mt-0.5" />
+                  )}
+                  {paid && record && (
+                    <span className="text-2xs mt-0.5 font-semibold truncate max-w-full px-1">
+                      {formatCurrency(record.amount, item.currency)}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <p className="text-[11px] text-text-muted mt-2">
-          Tocá un mes para marcar/desmarcar como pagado
-        </p>
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-2 pt-4 border-t border-border">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1"
-          onClick={() => {
-            onEdit(item);
-            onClose();
-          }}
-        >
-          <Pencil size={14} />
-          Editar
-        </Button>
-        <Button
-          variant="danger"
-          size="sm"
-          className="flex-1"
-          onClick={async () => {
-            await onDelete(item.id);
-            onClose();
-          }}
-        >
-          <Trash2 size={14} />
-          Eliminar
-        </Button>
       </div>
     </Dialog>
   );

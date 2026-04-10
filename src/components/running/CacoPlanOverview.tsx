@@ -8,31 +8,48 @@ interface CacoPlanOverviewProps {
 
 export function CacoPlanOverview({ currentWeek }: CacoPlanOverviewProps) {
   const overallProgress = getWeekProgress(currentWeek);
+  const weeksLeft = Math.max(CACO_PLAN.length - currentWeek, 0);
 
   return (
-    <div className="space-y-4">
-      <div className="bg-surface rounded-2xl border border-border p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-bold text-text-primary">Progreso general</h3>
-          <span className="text-sm font-mono font-bold text-primary">{overallProgress}%</span>
+    <section className="space-y-4" aria-label="Plan CaCo completo">
+      <div className="rounded-2xl border border-border/60 bg-surface p-4 shadow-sm">
+        <div className="mb-2.5 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-2xs uppercase tracking-wide text-text-muted">
+              Progreso del plan
+            </p>
+            <h3 className="mt-1 text-base font-semibold text-text-primary">
+              Semana {currentWeek} de {CACO_PLAN.length}
+            </h3>
+          </div>
+          <span className="text-2xl font-bold tabular-nums text-primary leading-none">
+            {overallProgress}%
+          </span>
         </div>
         <ProgressBar value={overallProgress} color="primary" size="md" />
-        <p className="text-xs text-text-muted mt-2">
-          Semana {currentWeek} de {CACO_PLAN.length} · {CACO_PLAN.length - currentWeek} semanas restantes
+        <p className="mt-2 text-xs text-text-muted">
+          {weeksLeft === 0
+            ? '¡Ultima semana del plan!'
+            : `${weeksLeft} ${weeksLeft === 1 ? 'semana restante' : 'semanas restantes'}`}
         </p>
       </div>
 
-      <div className="space-y-2">
-        {CACO_PLAN.map((week) => (
-          <CacoSessionCard
-            key={week.week}
-            week={week}
-            isCurrent={week.week === currentWeek}
-            isCompleted={week.week < currentWeek}
-            isLocked={week.week > currentWeek + 1}
-          />
-        ))}
+      <div>
+        <p className="mb-2 px-1 text-2xs font-semibold uppercase tracking-wide text-text-muted">
+          Todas las semanas
+        </p>
+        <div className="space-y-2">
+          {CACO_PLAN.map((week) => (
+            <CacoSessionCard
+              key={week.week}
+              week={week}
+              isCurrent={week.week === currentWeek}
+              isCompleted={week.week < currentWeek}
+              isLocked={week.week > currentWeek + 1}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

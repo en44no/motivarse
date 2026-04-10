@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Trophy, BookOpen, Flame, Footprints, Sparkles, Calendar } from 'lucide-react';
 import {
@@ -9,40 +9,86 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useMonthlyInsights } from '../hooks/useMonthlyInsights';
 import { useCoupleContext } from '../contexts/CoupleContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { Card } from '../components/ui/Card';
+import { IconButton } from '../components/ui/IconButton';
 import { cn } from '../lib/utils';
 import { MOOD_OPTIONS } from '../config/constants';
 
 const sectionVariants = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 10 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.07, duration: 0.4, ease: 'easeOut' },
+    transition: { delay: i * 0.05, duration: 0.2, ease: 'easeOut' },
   }),
 };
 
-function getBarColor(percent: number) {
-  if (percent >= 80) return 'var(--color-primary)';
-  if (percent >= 50) return '#f59e0b';
-  return '#ef4444';
+// Read live CSS variables so charts match current theme
+function useThemeColors() {
+  const { currentTheme } = useTheme();
+  return useMemo(() => {
+    if (typeof window === 'undefined') {
+      return {
+        primary: '#22c55e',
+        accent: '#8b5cf6',
+        warning: '#f59e0b',
+        danger: '#ef4444',
+        surface: '#1a2332',
+        border: '#2a3a50',
+        textMuted: '#8fa5be',
+        textSecondary: '#94a3b8',
+        textPrimary: '#f1f5f9',
+      };
+    }
+    const root = getComputedStyle(document.documentElement);
+    const read = (name: string, fallback: string) =>
+      root.getPropertyValue(name).trim() || fallback;
+    return {
+      primary: read('--color-primary', '#22c55e'),
+      accent: read('--color-accent', '#8b5cf6'),
+      warning: read('--color-warning', '#f59e0b'),
+      danger: read('--color-danger', '#ef4444'),
+      surface: read('--color-surface', '#1a2332'),
+      border: read('--color-border', '#2a3a50'),
+      textMuted: read('--color-text-muted', '#8fa5be'),
+      textSecondary: read('--color-text-secondary', '#94a3b8'),
+      textPrimary: read('--color-text-primary', '#f1f5f9'),
+    };
+    // recompute when theme changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTheme.id]);
 }
-
-const tooltipStyle = {
-  backgroundColor: '#1a2332',
-  border: '1px solid #2a3a50',
-  borderRadius: '12px',
-  fontSize: '12px',
-  color: '#f1f5f9',
-};
 
 export function MonthlyInsightsPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const { partnerName } = useCoupleContext();
+  const colors = useThemeColors();
 
   const insights = useMonthlyInsights(year, month);
+
+  const getBarColor = useCallback((percent: number) => {
+    if (percent >= 80) return colors.primary;
+    if (percent >= 50) return colors.warning;
+    return colors.danger;
+  }, [colors]);
+
+  const tooltipStyle = useMemo(() => ({
+    backgroundColor: colors.surface,
+    border: `1px solid ${colors.border}`,
+    borderRadius: '12px',
+    fontSize: '12px',
+    color: colors.textPrimary,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+  }), [colors]);
+
+  // Small workaround: force re-render of ResponsiveContainer when theme changes
+  const [themeKey, setThemeKey] = useState(0);
+  useEffect(() => {
+    setThemeKey((k) => k + 1);
+  }, [colors.primary, colors.accent]);
 
   function navigateMonth(delta: number) {
     const d = new Date(year, month + delta);
@@ -62,28 +108,31 @@ export function MonthlyInsightsPage() {
         animate="visible"
         className="flex items-center justify-between"
       >
-        <button
+        <IconButton
+          variant="outline"
+          size="md"
+          aria-label="Mes anterior"
           onClick={() => navigateMonth(-1)}
-          className="p-2 rounded-xl bg-surface border border-border hover:bg-surface-hover transition-colors active:scale-95"
         >
-          <ChevronLeft size={20} className="text-text-secondary" />
-        </button>
+          <ChevronLeft size={20} />
+        </IconButton>
         <div className="text-center">
-          <h1 className="text-lg font-bold text-text-primary capitalize">
+          <h1 className="text-lg font-bold text-text-primary capitalize leading-tight">
             {insights.monthLabel} {insights.year}
           </h1>
-          <p className="text-xs text-text-muted">Resumen mensual</p>
+          <p className="text-2xs text-text-muted uppercase tracking-wide mt-0.5">
+            Resumen mensual
+          </p>
         </div>
-        <button
+        <IconButton
+          variant="outline"
+          size="md"
+          aria-label="Mes siguiente"
           onClick={() => navigateMonth(1)}
           disabled={isCurrentMonth}
-          className={cn(
-            'p-2 rounded-xl bg-surface border border-border transition-colors active:scale-95',
-            isCurrentMonth ? 'opacity-30 cursor-not-allowed' : 'hover:bg-surface-hover'
-          )}
         >
-          <ChevronRight size={20} className="text-text-secondary" />
-        </button>
+          <ChevronRight size={20} />
+        </IconButton>
       </motion.div>
 
       {!insights.hasData ? (
@@ -94,10 +143,14 @@ export function MonthlyInsightsPage() {
           animate="visible"
         >
           <Card className="text-center py-12">
-            <Calendar size={40} className="mx-auto text-text-muted mb-3 opacity-40" />
-            <p className="text-sm text-text-muted">Sin datos para este mes</p>
-            <p className="text-xs text-text-muted mt-1 opacity-70">
-              Completa habitos, corre o escribe en tu diario para ver el resumen
+            <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-primary-soft flex items-center justify-center">
+              <Calendar size={24} className="text-primary" />
+            </div>
+            <p className="text-base font-semibold text-text-primary mb-1">
+              Sin datos este mes
+            </p>
+            <p className="text-sm text-text-muted leading-relaxed max-w-xs mx-auto">
+              Completa habitos, corre o escribi en tu diario para ver tu resumen mensual.
             </p>
           </Card>
         </motion.div>
@@ -136,10 +189,10 @@ export function MonthlyInsightsPage() {
             />
             <StatCard
               icon={<Flame size={18} />}
-              iconBg="bg-amber-500/10 text-amber-500"
+              iconBg="bg-warning-soft text-warning"
               label="Mejor racha"
               value={`${insights.bestStreak}`}
-              subValue={insights.bestStreak > 0 ? 'días' : undefined}
+              subValue={insights.bestStreak > 0 ? 'dias' : undefined}
             />
           </motion.div>
 
@@ -152,38 +205,38 @@ export function MonthlyInsightsPage() {
               animate="visible"
             >
               <Card>
-                <h3 className="text-sm font-bold text-text-secondary mb-3">
-                  Consistencia por hábito
+                <h3 className="text-base font-semibold text-text-primary mb-3">
+                  Consistencia por habito
                 </h3>
                 <div className="space-y-3">
                   {insights.habitConsistency.map((habit) => (
                     <div key={habit.name}>
-                      <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center justify-between mb-1.5">
                         <span className="text-sm text-text-primary truncate mr-2">
                           {habit.icon} {habit.name}
                         </span>
-                        <span className="text-xs font-semibold text-text-secondary shrink-0">
+                        <span className="text-xs font-semibold text-text-secondary shrink-0 tabular-nums">
                           {habit.myPercent}%
                         </span>
                       </div>
                       <div className="h-2 bg-surface-hover rounded-full overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all duration-500"
+                          className="h-full rounded-full transition-all duration-300 ease-out"
                           style={{
                             width: `${habit.myPercent}%`,
                             backgroundColor: getBarColor(habit.myPercent),
-                            opacity: 0.85,
+                            opacity: 0.9,
                           }}
                         />
                       </div>
                       {partnerName && habit.partnerPercent > 0 && (
                         <div className="h-1.5 bg-surface-hover rounded-full overflow-hidden mt-1">
                           <div
-                            className="h-full rounded-full transition-all duration-500"
+                            className="h-full rounded-full transition-all duration-300 ease-out"
                             style={{
                               width: `${habit.partnerPercent}%`,
                               backgroundColor: getBarColor(habit.partnerPercent),
-                              opacity: 0.4,
+                              opacity: 0.45,
                             }}
                           />
                         </div>
@@ -192,14 +245,14 @@ export function MonthlyInsightsPage() {
                   ))}
                 </div>
                 {partnerName && (
-                  <div className="flex items-center gap-3 mt-3 pt-2 border-t border-border/50">
+                  <div className="flex items-center gap-3 mt-4 pt-3 border-t border-border/60">
                     <div className="flex items-center gap-1.5">
                       <span className="w-2.5 h-1.5 rounded-full bg-primary" />
-                      <span className="text-[10px] text-text-muted">Yo</span>
+                      <span className="text-2xs text-text-muted">Yo</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2.5 h-1 rounded-full bg-text-muted/40" />
-                      <span className="text-[10px] text-text-muted">{partnerName}</span>
+                      <span className="text-2xs text-text-muted">{partnerName}</span>
                     </div>
                   </div>
                 )}
@@ -216,9 +269,11 @@ export function MonthlyInsightsPage() {
           >
             <Card>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-text-secondary">Tendencia de animo</h3>
+                <h3 className="text-base font-semibold text-text-primary">
+                  Tendencia de animo
+                </h3>
                 {insights.averageMood !== null && (
-                  <span className="text-xs text-text-muted">
+                  <span className="text-xs text-text-muted tabular-nums">
                     Promedio: {MOOD_OPTIONS.find((m) => m.value === Math.round(insights.averageMood!))?.emoji || ''}{' '}
                     {insights.averageMood.toFixed(1)}
                   </span>
@@ -226,12 +281,12 @@ export function MonthlyInsightsPage() {
               </div>
               {insights.moodData.length > 0 ? (
                 <div className="h-40">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={insights.moodData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <ResponsiveContainer key={`mood-${themeKey}`} width="100%" height="100%">
+                    <LineChart data={insights.moodData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={colors.border} strokeOpacity={0.4} />
                       <XAxis
                         dataKey="label"
-                        tick={{ fontSize: 9, fill: '#64748b' }}
+                        tick={{ fontSize: 11, fill: colors.textMuted }}
                         axisLine={false}
                         tickLine={false}
                         interval="preserveStartEnd"
@@ -239,7 +294,7 @@ export function MonthlyInsightsPage() {
                       <YAxis
                         domain={[1, 5]}
                         ticks={[1, 2, 3, 4, 5]}
-                        tick={{ fontSize: 16, fill: '#64748b' }}
+                        tick={{ fontSize: 16, fill: colors.textMuted }}
                         axisLine={false}
                         tickLine={false}
                         tickFormatter={(v) => MOOD_OPTIONS.find((m) => m.value === v)?.emoji || ''}
@@ -255,17 +310,17 @@ export function MonthlyInsightsPage() {
                       <Line
                         type="monotone"
                         dataKey="mood"
-                        stroke="#a78bfa"
+                        stroke={colors.accent}
                         strokeWidth={2}
-                        dot={{ r: 4, fill: '#a78bfa', strokeWidth: 0 }}
-                        activeDot={{ r: 6, fill: '#a78bfa' }}
+                        dot={{ r: 4, fill: colors.accent, strokeWidth: 0 }}
+                        activeDot={{ r: 6, fill: colors.accent }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-xs text-text-muted">Sin datos de diario este mes</p>
+                  <p className="text-sm text-text-muted">Sin datos de diario este mes</p>
                 </div>
               )}
             </Card>
@@ -280,34 +335,44 @@ export function MonthlyInsightsPage() {
               animate="visible"
             >
               <Card>
-                <h3 className="text-sm font-bold text-text-secondary mb-3">Resumen de carrera</h3>
+                <h3 className="text-base font-semibold text-text-primary mb-3">
+                  Resumen de carrera
+                </h3>
                 <div className="grid grid-cols-3 gap-3 mb-3">
                   <div className="text-center">
-                    <p className="text-xl font-bold text-text-primary">{insights.runningSessions}</p>
-                    <p className="text-[10px] text-text-muted">Sesiones</p>
+                    <p className="text-2xl font-bold text-text-primary tabular-nums leading-none">
+                      {insights.runningSessions}
+                    </p>
+                    <p className="text-2xs text-text-muted mt-1 uppercase tracking-wide">Sesiones</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xl font-bold text-text-primary">{insights.runningTotalKm}</p>
-                    <p className="text-[10px] text-text-muted">Km totales</p>
+                    <p className="text-2xl font-bold text-text-primary tabular-nums leading-none">
+                      {insights.runningTotalKm}
+                    </p>
+                    <p className="text-2xs text-text-muted mt-1 uppercase tracking-wide">Km</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xl font-bold text-text-primary">{insights.runningAvgPace || '-'}</p>
-                    <p className="text-[10px] text-text-muted">Ritmo prom.</p>
+                    <p className="text-2xl font-bold text-text-primary tabular-nums leading-none">
+                      {insights.runningAvgPace || '-'}
+                    </p>
+                    <p className="text-2xs text-text-muted mt-1 uppercase tracking-wide">Ritmo</p>
                   </div>
                 </div>
                 {insights.bestRun && (
-                  <div className="bg-surface-hover rounded-xl p-3 border border-border/50">
-                    <p className="text-[10px] text-text-muted uppercase tracking-wider mb-1">Mejor carrera</p>
-                    <p className="text-sm text-text-primary font-semibold">
+                  <div className="bg-surface-hover rounded-xl p-3 border border-border/60">
+                    <p className="text-2xs text-text-muted uppercase tracking-wide mb-1">
+                      Mejor carrera
+                    </p>
+                    <p className="text-sm text-text-primary font-semibold tabular-nums">
                       {insights.bestRun.distance}km en {insights.bestRun.duration} min
                     </p>
-                    <p className="text-[10px] text-text-muted">
+                    <p className="text-2xs text-text-muted capitalize">
                       {format(new Date(insights.bestRun.date), "d 'de' MMMM", { locale: es })}
                     </p>
                   </div>
                 )}
                 {insights.cacoWeeksCompleted > 0 && (
-                  <p className="text-xs text-text-muted mt-2">
+                  <p className="text-xs text-text-muted mt-3">
                     {insights.cacoWeeksCompleted} {insights.cacoWeeksCompleted === 1 ? 'semana' : 'semanas'} CaCo completadas
                   </p>
                 )}
@@ -324,23 +389,31 @@ export function MonthlyInsightsPage() {
               animate="visible"
             >
               <Card>
-                <h3 className="text-sm font-bold text-text-secondary mb-3">Desglose semanal</h3>
+                <h3 className="text-base font-semibold text-text-primary mb-3">
+                  Desglose semanal
+                </h3>
                 <div className="h-36">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer key={`weekly-${themeKey}`} width="100%" height="100%">
                     <BarChart data={insights.weeklyBreakdown} barCategoryGap="25%">
                       <XAxis
                         dataKey="label"
-                        tick={{ fontSize: 11, fill: '#94a3b8' }}
+                        tick={{ fontSize: 11, fill: colors.textSecondary }}
                         axisLine={false}
                         tickLine={false}
                       />
                       <YAxis hide />
                       <Tooltip
                         contentStyle={tooltipStyle}
-                        formatter={(value: number) => [`${value}`, 'Hábitos']}
-                        cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                        formatter={(value: number) => [`${value}`, 'Habitos']}
+                        cursor={{ fill: colors.border, fillOpacity: 0.25 }}
                       />
-                      <Bar dataKey="completed" radius={[6, 6, 0, 0]} maxBarSize={36} fill="var(--color-primary)" fillOpacity={0.75} />
+                      <Bar
+                        dataKey="completed"
+                        radius={[6, 6, 0, 0]}
+                        maxBarSize={36}
+                        fill={colors.primary}
+                        fillOpacity={0.85}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -358,14 +431,18 @@ export function MonthlyInsightsPage() {
             >
               <Card>
                 <div className="flex items-center gap-2 mb-3">
-                  <Sparkles size={16} className="text-amber-400" />
-                  <h3 className="text-sm font-bold text-text-secondary">Destacados</h3>
+                  <div className="w-7 h-7 rounded-lg bg-warning-soft flex items-center justify-center">
+                    <Sparkles size={14} className="text-warning" />
+                  </div>
+                  <h3 className="text-base font-semibold text-text-primary">
+                    Destacados
+                  </h3>
                 </div>
                 <ul className="space-y-2">
                   {insights.highlights.map((text, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
-                      <span className="text-sm text-text-primary">{text}</span>
+                      <span className="text-sm text-text-primary leading-relaxed">{text}</span>
                     </li>
                   ))}
                 </ul>
@@ -399,21 +476,29 @@ function StatCard({
 }) {
   return (
     <Card className="flex flex-col gap-2">
-      <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', iconBg)}>
+      <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center', iconBg)}>
         {icon}
       </div>
       <div>
-        <p className="text-xl font-bold text-text-primary leading-none">{value}</p>
-        {subValue && <p className="text-[10px] text-text-muted mt-0.5">{subValue}</p>}
+        <p className="text-2xl font-bold text-text-primary tabular-nums leading-none">
+          {value}
+        </p>
+        {subValue && (
+          <p className="text-2xs text-text-muted mt-1 tabular-nums">{subValue}</p>
+        )}
       </div>
-      <p className="text-[10px] text-text-muted leading-tight">{label}</p>
+      <p className="text-2xs text-text-muted leading-tight uppercase tracking-wide">
+        {label}
+      </p>
       {delta !== null && delta !== undefined && (
         <div className={cn(
-          'flex items-center gap-0.5 text-[10px] font-medium',
+          'flex items-center gap-0.5 text-2xs font-semibold',
           delta >= 0 ? 'text-primary' : 'text-danger'
         )}>
           {delta >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-          <span>{delta >= 0 ? '+' : ''}{delta}{deltaUnit === 'km' ? 'km' : 'pp'} vs mes anterior</span>
+          <span className="tabular-nums">
+            {delta >= 0 ? '+' : ''}{delta}{deltaUnit === 'km' ? 'km' : 'pp'} vs mes anterior
+          </span>
         </div>
       )}
     </Card>

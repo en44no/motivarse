@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CoupleProvider } from './contexts/CoupleContext';
 import { DataProvider } from './contexts/DataContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { DensityProvider } from './contexts/DensityContext';
 import { AuthGuard } from './components/layout/AuthGuard';
 import { AppLayout } from './components/layout/AppLayout';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
@@ -76,6 +77,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider>
+        <DensityProvider>
         <CoupleProvider>
         <DataProvider>
           <AppRoutes />
@@ -92,6 +94,7 @@ export default function App() {
           />
         </DataProvider>
         </CoupleProvider>
+        </DensityProvider>
         </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>

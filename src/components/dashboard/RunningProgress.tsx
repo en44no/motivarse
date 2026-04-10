@@ -18,19 +18,27 @@ export function RunningProgress({ progress }: RunningProgressProps) {
 
   return (
     <Card variant="interactive" onClick={() => navigate(ROUTES.RUNNING)}>
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft">
           <Footprints size={20} className="text-primary" />
         </div>
-        <div className="flex-1">
-          <p className="text-sm font-bold text-text-primary">Método CaCo</p>
-          <p className="text-xs text-text-muted">Semana {week} de {CACO_PLAN.length}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-2xs font-semibold uppercase tracking-wide text-text-muted">
+            Método CaCo
+          </p>
+          <p className="mt-0.5 text-sm font-semibold text-text-primary">
+            Semana {week} de {CACO_PLAN.length}
+          </p>
         </div>
-        <ChevronRight size={18} className="text-text-muted" />
+        <ChevronRight size={18} className="shrink-0 text-text-muted" />
       </div>
-      <ProgressBar value={overallProgress} color="primary" showLabel />
-      {plan && (
-        <p className="text-xs text-text-muted mt-2">{plan.description}</p>
+
+      <div className="mt-4">
+        <ProgressBar value={overallProgress} color="primary" showLabel />
+      </div>
+
+      {plan?.description && (
+        <p className="mt-2 text-xs text-text-muted leading-snug">{plan.description}</p>
       )}
     </Card>
   );

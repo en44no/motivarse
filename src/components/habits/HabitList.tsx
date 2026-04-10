@@ -3,6 +3,8 @@ import { AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { HabitCard } from './HabitCard';
 import { WaterCard } from './WaterCard';
 import { useLongPress } from '../../hooks/useLongPress';
+import { useDensity } from '../../contexts/DensityContext';
+import { cn } from '../../lib/utils';
 import type { Habit, HabitLog, HabitStreak } from '../../types/habit';
 
 interface HabitListProps {
@@ -131,8 +133,10 @@ export const HabitList = memo(function HabitList({
   selectedDate,
   isPastDate,
 }: HabitListProps) {
+  const { isCompact } = useDensity();
   const [orderedHabits, setOrderedHabits] = useState<Habit[]>(habits);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const listGap = isCompact ? 'space-y-1.5' : 'space-y-3';
 
   // Sync local state with prop changes
   useEffect(() => {
@@ -185,9 +189,9 @@ export const HabitList = memo(function HabitList({
 
   if (reorderable) {
     return (
-      <div className="space-y-3">
+      <div className={cn('space-y-3')}>
         {title && (
-          <h2 className="text-xs font-semibold text-text-muted uppercase tracking-wider px-1">
+          <h2 className="text-2xs font-semibold text-text-muted uppercase tracking-wider px-1">
             {title}
           </h2>
         )}
@@ -196,7 +200,7 @@ export const HabitList = memo(function HabitList({
           axis="y"
           values={orderedHabits}
           onReorder={handleReorder}
-          className="space-y-3"
+          className={listGap}
         >
           {orderedHabits.map((habit) => (
             <ReorderableItem
@@ -225,10 +229,11 @@ export const HabitList = memo(function HabitList({
   return (
     <div className="space-y-3">
       {title && (
-        <h2 className="text-xs font-semibold text-text-muted uppercase tracking-wider px-1">
+        <h2 className="text-2xs font-semibold text-text-muted uppercase tracking-wider px-1">
           {title}
         </h2>
       )}
+      <div className={listGap}>
       <AnimatePresence>
       {habits.map((habit) => (
         habit.type === 'water' ? (
@@ -262,6 +267,7 @@ export const HabitList = memo(function HabitList({
         )
       ))}
       </AnimatePresence>
+      </div>
     </div>
   );
 });

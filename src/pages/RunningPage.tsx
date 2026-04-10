@@ -26,12 +26,25 @@ export function RunningPage() {
   const [showLogForm, setShowLogForm] = useState(false);
   const [defaultFreeRun, setDefaultFreeRun] = useState(false);
   const { couple } = useCoupleContext();
-  const { cacoLogs, myFreeRuns, partnerFreeRuns, runLogs, progress, currentWeek, currentSession, currentPlan, isCompleted, loading, logRun } = useRunning();
+  const {
+    cacoLogs,
+    myFreeRuns,
+    partnerFreeRuns,
+    runLogs,
+    progress,
+    currentWeek,
+    currentSession,
+    currentPlan,
+    isCompleted,
+    loading,
+    logRun,
+  } = useRunning();
   const memberNames = couple?.memberNames || {};
 
-  const allFreeRuns = useMemo(() =>
-    [...myFreeRuns, ...partnerFreeRuns].sort((a, b) => (b.date > a.date ? 1 : -1)),
-    [myFreeRuns, partnerFreeRuns]
+  const allFreeRuns = useMemo(
+    () =>
+      [...myFreeRuns, ...partnerFreeRuns].sort((a, b) => (b.date > a.date ? 1 : -1)),
+    [myFreeRuns, partnerFreeRuns],
   );
 
   if (loading) {
@@ -64,7 +77,7 @@ export function RunningPage() {
       <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
 
       {activeTab === 'plan' && (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {isCompleted ? (
             <CompletedPlanCard
               totalRuns={progress?.totalRuns || 0}
@@ -72,6 +85,7 @@ export function RunningPage() {
             />
           ) : (
             <>
+              {/* Hero: sesion actual + timer */}
               <CacoWeekDetail
                 currentWeek={currentWeek}
                 currentSession={currentSession}
@@ -79,21 +93,29 @@ export function RunningPage() {
                 onTimerComplete={handleTimerComplete}
               />
 
+              {/* Secondary: registrar manual */}
               <Button
                 onClick={openCacoForm}
-                className="w-full"
+                variant="outline"
                 size="lg"
+                className="w-full"
               >
                 <Plus size={18} />
-                Registrar sesion CaCo
+                Registrar sesión manualmente
               </Button>
             </>
           )}
 
+          {/* Plan completo como referencia */}
           <CacoPlanOverview currentWeek={currentWeek} />
 
+          {/* Historial de sesiones CaCo */}
           {cacoLogs.length > 0 && (
-            <RunHistory logs={cacoLogs} title="Sesiones CaCo" memberNames={memberNames} />
+            <RunHistory
+              logs={cacoLogs}
+              title="Sesiones CaCo"
+              memberNames={memberNames}
+            />
           )}
         </div>
       )}
@@ -102,27 +124,34 @@ export function RunningPage() {
         <div className="space-y-4">
           <Button
             onClick={openFreeRunForm}
-            className="w-full"
-            size="lg"
             variant="secondary"
+            size="lg"
+            className="w-full"
           >
             <Footprints size={18} />
             Registrar carrera libre
           </Button>
 
           {allFreeRuns.length > 0 ? (
-            <RunHistory logs={allFreeRuns} title="Carreras libres" memberNames={memberNames} />
+            <RunHistory
+              logs={allFreeRuns}
+              title="Carreras libres"
+              memberNames={memberNames}
+            />
           ) : (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center py-12 px-4"
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="rounded-2xl border border-dashed border-border/60 bg-surface/40 py-12 px-4 text-center"
             >
-              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                <Footprints size={28} className="text-accent" />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-accent-soft ring-1 ring-accent/20">
+                <Footprints size={26} className="text-accent" />
               </div>
-              <p className="text-text-secondary font-medium mb-1">Sin carreras libres</p>
-              <p className="text-text-muted text-sm">
+              <p className="text-sm font-semibold text-text-secondary">
+                Sin carreras libres
+              </p>
+              <p className="mt-1 text-xs text-text-muted">
                 Registrá tus carreras fuera del plan CaCo
               </p>
             </motion.div>
@@ -134,7 +163,13 @@ export function RunningPage() {
         <div className="space-y-4">
           <RunStatsCards progress={progress} totalLogs={runLogs.length} />
           <RunProgressChart logs={runLogs} />
-          <RunHistory logs={runLogs} title="Todo el historial" allowDelete memberNames={memberNames} showFilters />
+          <RunHistory
+            logs={runLogs}
+            title="Todo el historial"
+            allowDelete
+            memberNames={memberNames}
+            showFilters
+          />
         </div>
       )}
 

@@ -38,10 +38,10 @@ export function ExpenseSummaryFooter({ expenses }: ExpenseSummaryFooterProps) {
 
   return (
     <div className="sticky bottom-20 z-20 mx-auto max-w-lg">
-      <div className="bg-surface/90 backdrop-blur-xl border border-border rounded-2xl px-4 py-3 shadow-lg">
+      <div className="bg-surface/90 backdrop-blur-xl border border-border/60 rounded-2xl px-4 py-3 shadow-lg">
         {/* Header */}
         <div className="flex items-center gap-2 mb-2">
-          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary shrink-0">
+          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary-soft text-primary shrink-0">
             <Wallet size={12} />
           </span>
           <span className="text-xs font-semibold text-text-secondary">
@@ -57,7 +57,7 @@ export function ExpenseSummaryFooter({ expenses }: ExpenseSummaryFooterProps) {
               className="flex items-center justify-between gap-3 text-xs"
             >
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-[10px] font-bold text-text-muted shrink-0">
+                <span className="text-2xs font-bold text-text-muted shrink-0">
                   {s.currency}
                 </span>
                 <span className="text-text-muted truncate">Total</span>

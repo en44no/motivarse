@@ -62,30 +62,62 @@ export function RunLogForm({ open, onClose, onSubmit, suggestedDuration, default
     onClose();
   }
 
+  const formId = 'run-log-form';
+  const canSubmit = (parseInt(duration) || 0) > 0;
+
   return (
-    <Dialog open={open} onClose={onClose} title={isFreeRun ? 'Registrar carrera libre' : 'Registrar sesión CaCo'}>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={isFreeRun ? 'Registrar carrera libre' : 'Registrar sesión CaCo'}
+      subtitle={isFreeRun ? 'Entrada libre sin plan' : 'Sesión del plan Couch a Corredor'}
+      footer={
+        <Button
+          type="submit"
+          form={formId}
+          className="w-full"
+          size="lg"
+          disabled={!canSubmit}
+        >
+          <Play size={18} />
+          {isFreeRun ? 'Registrar carrera libre' : 'Registrar sesión'}
+        </Button>
+      }
+    >
+      <form id={formId} onSubmit={handleSubmit} className="space-y-5">
         {/* Toggle CaCo / Libre */}
-        <div className="flex rounded-xl border border-border bg-surface-hover p-1 gap-1">
+        <div
+          role="tablist"
+          aria-label="Tipo de carrera"
+          className="flex rounded-xl border border-border bg-surface-hover p-1 gap-1"
+        >
           <button
             type="button"
+            role="tab"
+            aria-selected={!isFreeRun}
             onClick={() => setIsFreeRun(false)}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+            className={cn(
+              'flex-1 min-h-11 px-3 rounded-lg text-sm font-semibold transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
               !isFreeRun
-                ? 'bg-primary text-white shadow-sm'
+                ? 'bg-primary text-primary-contrast shadow-sm'
                 : 'text-text-muted hover:text-text-secondary'
-            }`}
+            )}
           >
             Sesión CaCo
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={isFreeRun}
             onClick={() => setIsFreeRun(true)}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+            className={cn(
+              'flex-1 min-h-11 px-3 rounded-lg text-sm font-semibold transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
               isFreeRun
                 ? 'bg-accent text-white shadow-sm'
                 : 'text-text-muted hover:text-text-secondary'
-            }`}
+            )}
           >
             Carrera libre
           </button>
@@ -93,16 +125,25 @@ export function RunLogForm({ open, onClose, onSubmit, suggestedDuration, default
 
         {/* Shared toggle - only for free runs */}
         {isFreeRun && (
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1.5">¿Corriste en pareja?</label>
-            <div className="flex rounded-xl bg-surface-alt p-1 gap-1">
+          <div className="space-y-2">
+            <span className="block text-sm font-medium text-text-secondary">
+              ¿Corriste en pareja?
+            </span>
+            <div
+              role="radiogroup"
+              aria-label="Tipo de compañía"
+              className="flex rounded-xl bg-surface-alt p-1 gap-1"
+            >
               <button
                 type="button"
+                role="radio"
+                aria-checked={isSharedRun}
                 onClick={() => setIsSharedRun(true)}
                 className={cn(
-                  'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
+                  'flex-1 min-h-11 px-3 rounded-lg text-sm font-semibold transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
                   isSharedRun
-                    ? 'bg-primary text-white shadow-sm'
+                    ? 'bg-primary text-primary-contrast shadow-sm'
                     : 'text-text-muted hover:text-text-secondary'
                 )}
               >
@@ -110,11 +151,14 @@ export function RunLogForm({ open, onClose, onSubmit, suggestedDuration, default
               </button>
               <button
                 type="button"
+                role="radio"
+                aria-checked={!isSharedRun}
                 onClick={() => setIsSharedRun(false)}
                 className={cn(
-                  'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
+                  'flex-1 min-h-11 px-3 rounded-lg text-sm font-semibold transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
                   !isSharedRun
-                    ? 'bg-primary text-white shadow-sm'
+                    ? 'bg-primary text-primary-contrast shadow-sm'
                     : 'text-text-muted hover:text-text-secondary'
                 )}
               >
@@ -131,6 +175,8 @@ export function RunLogForm({ open, onClose, onSubmit, suggestedDuration, default
           onChange={(e) => setDuration(e.target.value)}
           required
           placeholder="30"
+          inputMode="numeric"
+          min={1}
         />
 
         {isFreeRun && (
@@ -142,6 +188,7 @@ export function RunLogForm({ open, onClose, onSubmit, suggestedDuration, default
               value={distance}
               onChange={(e) => setDistance(e.target.value)}
               placeholder="3.5"
+              inputMode="decimal"
             />
 
             <Input
@@ -156,23 +203,22 @@ export function RunLogForm({ open, onClose, onSubmit, suggestedDuration, default
 
         <MoodSelector value={mood} onChange={setMood} />
 
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1.5">
+        <div className="space-y-2">
+          <label
+            htmlFor="run-log-note"
+            className="block text-sm font-medium text-text-secondary"
+          >
             Nota (opcional)
           </label>
           <textarea
+            id="run-log-note"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            className="w-full rounded-xl border border-border bg-surface-hover px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-            rows={2}
+            className="w-full rounded-xl border border-border bg-surface-hover px-4 py-3 text-base text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none transition-colors"
+            rows={3}
             placeholder="¿Cómo estuvo la sesión?"
           />
         </div>
-
-        <Button type="submit" className="w-full" size="lg">
-          <Play size={18} />
-          {isFreeRun ? 'Registrar carrera libre' : 'Registrar sesión'}
-        </Button>
       </form>
     </Dialog>
   );

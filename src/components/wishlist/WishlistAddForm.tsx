@@ -3,17 +3,6 @@ import { Plus, Check, X, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { CoupleCategory } from '../../types/category';
 
-const CAT_COLORS = [
-  { base: 'bg-violet-500/10 text-violet-400', active: 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-400/40' },
-  { base: 'bg-sky-500/10 text-sky-400', active: 'bg-sky-500/20 text-sky-400 ring-1 ring-sky-400/40' },
-  { base: 'bg-emerald-500/10 text-emerald-400', active: 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-400/40' },
-  { base: 'bg-amber-500/10 text-amber-400', active: 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-400/40' },
-  { base: 'bg-rose-500/10 text-rose-400', active: 'bg-rose-500/20 text-rose-400 ring-1 ring-rose-400/40' },
-  { base: 'bg-pink-500/10 text-pink-400', active: 'bg-pink-500/20 text-pink-400 ring-1 ring-pink-400/40' },
-  { base: 'bg-teal-500/10 text-teal-400', active: 'bg-teal-500/20 text-teal-400 ring-1 ring-teal-400/40' },
-  { base: 'bg-orange-500/10 text-orange-400', active: 'bg-orange-500/20 text-orange-400 ring-1 ring-orange-400/40' },
-];
-
 type ManagingCat = { id: string; emoji: string; label: string } | null;
 
 interface WishlistAddFormProps {
@@ -73,7 +62,6 @@ export function WishlistAddForm({
     setShowNewCat(true);
     setNewEmoji('');
     setNewLabel('');
-    setTimeout(() => newLabelRef.current?.focus(), 50);
   }
   function cancelNewCat() {
     setShowNewCat(false);
@@ -96,8 +84,10 @@ export function WishlistAddForm({
     }
   }
   function handleNewCatKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Enter') { e.preventDefault(); confirmNewCat(); }
-    else if (e.key === 'Escape') cancelNewCat();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      confirmNewCat();
+    } else if (e.key === 'Escape') cancelNewCat();
   }
 
   // ── Long-press to manage category ─────────────────────────────────────────
@@ -108,7 +98,6 @@ export function WishlistAddForm({
       setShowNewCat(false);
       setManagingCat({ id: cat.id, emoji: cat.emoji, label: cat.label });
       navigator.vibrate?.(40);
-      setTimeout(() => editLabelRef.current?.focus(), 50);
     }, 500);
   }
   function cancelLongPress() {
@@ -135,14 +124,16 @@ export function WishlistAddForm({
     setManagingCat(null);
   }
   function handleEditKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Enter') { e.preventDefault(); saveEdit(); }
-    else if (e.key === 'Escape') setManagingCat(null);
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveEdit();
+    } else if (e.key === 'Escape') setManagingCat(null);
   }
 
   return (
     <>
       {/* Add form */}
-      <form onSubmit={handleSubmit} className="space-y-2.5">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <div className="flex gap-2">
           <input
             value={title}
@@ -155,12 +146,13 @@ export function WishlistAddForm({
             }}
             placeholder="Agregar deseo..."
             enterKeyHint="send"
-            className="flex-1 rounded-xl border border-border bg-surface-hover px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="flex-1 rounded-xl border border-border/60 bg-surface-light px-4 h-11 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/60 transition-colors"
           />
           <button
             type="submit"
             disabled={!title.trim() || adding}
-            className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-hover transition-colors disabled:opacity-40 shrink-0"
+            aria-label="Agregar deseo"
+            className="w-11 h-11 rounded-xl bg-primary text-primary-contrast inline-flex items-center justify-center hover:bg-primary-hover transition-colors disabled:opacity-40 shrink-0"
           >
             {adding ? (
               <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -178,9 +170,9 @@ export function WishlistAddForm({
           <button
             type="button"
             onClick={() => setShowDescription(true)}
-            className="text-xs text-text-muted hover:text-primary transition-colors px-1"
+            className="text-2xs text-text-muted hover:text-primary transition-colors px-1"
           >
-            + Agregar descripcion
+            + Agregar descripción
           </button>
         )}
 
@@ -188,8 +180,8 @@ export function WishlistAddForm({
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Descripcion (opcional)"
-            className="w-full rounded-xl border border-border bg-surface-hover px-4 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
+            placeholder="Descripción (opcional)"
+            className="w-full rounded-xl border border-border/60 bg-surface-light px-4 h-11 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/60 transition-colors"
           />
         )}
 
@@ -200,17 +192,16 @@ export function WishlistAddForm({
             type="button"
             onClick={() => onCategoryChange(undefined)}
             className={cn(
-              'shrink-0 h-7 px-2.5 rounded-lg text-xs font-medium transition-all',
+              'shrink-0 h-8 px-3 inline-flex items-center rounded-full text-xs font-medium transition-colors',
               selectedCategory === undefined
-                ? 'bg-primary/15 text-primary ring-1 ring-primary/40'
+                ? 'bg-primary-soft text-primary ring-1 ring-primary/40'
                 : 'bg-surface-hover text-text-muted hover:text-text-secondary',
             )}
           >
             Sin cat.
           </button>
 
-          {categories.map((cat, i) => {
-            const color = CAT_COLORS[i % CAT_COLORS.length];
+          {categories.map((cat) => {
             const isSelected = selectedCategory === cat.id;
             const isManaging = managingCat?.id === cat.id;
 
@@ -224,12 +215,12 @@ export function WishlistAddForm({
                 onPointerCancel={cancelLongPress}
                 onClick={() => handleChipClick(cat)}
                 className={cn(
-                  'shrink-0 h-7 flex items-center gap-1 px-2.5 rounded-lg text-xs font-medium transition-all select-none',
+                  'shrink-0 h-8 inline-flex items-center gap-1 px-3 rounded-full text-xs font-medium transition-colors select-none',
                   isManaging
-                    ? 'ring-2 ring-offset-1 ring-offset-surface scale-95 ' + color.active
+                    ? 'bg-primary-soft text-primary ring-2 ring-primary/50'
                     : isSelected
-                    ? color.active
-                    : color.base,
+                      ? 'bg-primary-soft text-primary ring-1 ring-primary/40'
+                      : 'bg-surface-hover text-text-muted hover:text-text-secondary',
                 )}
               >
                 <span>{cat.emoji}</span>
@@ -243,7 +234,7 @@ export function WishlistAddForm({
             <button
               type="button"
               onClick={openNewCat}
-              className="shrink-0 h-7 px-2.5 rounded-lg text-xs font-medium bg-surface-hover text-text-muted hover:text-primary hover:bg-primary/10 transition-all border border-dashed border-border flex items-center"
+              className="shrink-0 h-8 px-3 inline-flex items-center rounded-full text-xs font-medium bg-surface-hover text-text-muted hover:text-primary hover:bg-primary-soft transition-colors border border-dashed border-border"
             >
               + Nueva
             </button>
@@ -253,13 +244,13 @@ export function WishlistAddForm({
 
       {/* Edit existing category — shown on long-press */}
       {managingCat && (
-        <div className="flex items-center gap-2 bg-surface-hover rounded-xl p-2 border border-primary/30">
+        <div className="flex items-center gap-2 bg-surface-light rounded-xl p-2 border border-primary/30">
           <input
             value={managingCat.emoji}
             onChange={(e) => setManagingCat({ ...managingCat, emoji: e.target.value })}
             onKeyDown={handleEditKeyDown}
             maxLength={2}
-            className="w-9 h-9 text-center text-base bg-surface rounded-lg border border-border outline-none shrink-0"
+            className="w-11 h-11 text-center text-base bg-surface rounded-lg border border-border/60 outline-none shrink-0"
           />
           <input
             ref={editLabelRef}
@@ -267,27 +258,30 @@ export function WishlistAddForm({
             onChange={(e) => setManagingCat({ ...managingCat, label: e.target.value })}
             onKeyDown={handleEditKeyDown}
             placeholder="Nombre"
-            className="flex-1 h-9 text-sm bg-surface rounded-lg border border-border px-3 outline-none text-text-primary placeholder:text-text-muted min-w-0"
+            className="flex-1 h-11 text-sm bg-surface rounded-lg border border-border/60 px-3 outline-none text-text-primary placeholder:text-text-muted min-w-0"
           />
           <button
             type="button"
             onClick={saveEdit}
             disabled={!managingCat.label.trim()}
-            className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary-hover transition-colors shrink-0"
+            aria-label="Guardar categoría"
+            className="w-11 h-11 rounded-lg bg-primary text-primary-contrast inline-flex items-center justify-center disabled:opacity-40 hover:bg-primary-hover transition-colors shrink-0"
           >
             <Check size={16} strokeWidth={2.5} />
           </button>
           <button
             type="button"
             onClick={deleteManaging}
-            className="w-9 h-9 rounded-lg bg-danger-soft text-danger flex items-center justify-center hover:bg-danger hover:text-white transition-colors shrink-0"
+            aria-label="Eliminar categoría"
+            className="w-11 h-11 rounded-lg bg-danger-soft text-danger inline-flex items-center justify-center hover:bg-danger hover:text-white transition-colors shrink-0"
           >
             <Trash2 size={15} strokeWidth={2} />
           </button>
           <button
             type="button"
             onClick={() => setManagingCat(null)}
-            className="w-9 h-9 rounded-lg bg-surface text-text-muted border border-border hover:text-danger hover:border-danger/40 flex items-center justify-center transition-colors shrink-0"
+            aria-label="Cancelar"
+            className="w-11 h-11 rounded-lg bg-surface text-text-muted border border-border/60 hover:text-text-primary inline-flex items-center justify-center transition-colors shrink-0"
           >
             <X size={16} strokeWidth={2.5} />
           </button>
@@ -296,14 +290,14 @@ export function WishlistAddForm({
 
       {/* New category form */}
       {showNewCat && (
-        <div className="flex items-center gap-2 bg-surface-hover rounded-xl p-2 border border-primary/30">
+        <div className="flex items-center gap-2 bg-surface-light rounded-xl p-2 border border-primary/30">
           <input
             value={newEmoji}
             onChange={(e) => setNewEmoji(e.target.value)}
             onKeyDown={handleNewCatKeyDown}
             placeholder="📌"
             maxLength={2}
-            className="w-9 h-9 text-center text-base bg-surface rounded-lg border border-border outline-none placeholder:text-text-muted shrink-0"
+            className="w-11 h-11 text-center text-base bg-surface rounded-lg border border-border/60 outline-none placeholder:text-text-muted shrink-0"
           />
           <input
             ref={newLabelRef}
@@ -311,20 +305,22 @@ export function WishlistAddForm({
             onChange={(e) => setNewLabel(e.target.value)}
             onKeyDown={handleNewCatKeyDown}
             placeholder="Nombre de categoría"
-            className="flex-1 h-9 text-sm bg-surface rounded-lg border border-border px-3 outline-none text-text-primary placeholder:text-text-muted min-w-0"
+            className="flex-1 h-11 text-sm bg-surface rounded-lg border border-border/60 px-3 outline-none text-text-primary placeholder:text-text-muted min-w-0"
           />
           <button
             type="button"
             onClick={confirmNewCat}
             disabled={!newLabel.trim() || savingCat}
-            className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary-hover transition-colors shrink-0"
+            aria-label="Crear categoría"
+            className="w-11 h-11 rounded-lg bg-primary text-primary-contrast inline-flex items-center justify-center disabled:opacity-40 hover:bg-primary-hover transition-colors shrink-0"
           >
             <Check size={16} strokeWidth={2.5} />
           </button>
           <button
             type="button"
             onClick={cancelNewCat}
-            className="w-9 h-9 rounded-lg bg-surface text-text-muted border border-border hover:text-danger hover:border-danger/40 flex items-center justify-center transition-colors shrink-0"
+            aria-label="Cancelar"
+            className="w-11 h-11 rounded-lg bg-surface text-text-muted border border-border/60 hover:text-text-primary inline-flex items-center justify-center transition-colors shrink-0"
           >
             <X size={16} strokeWidth={2.5} />
           </button>

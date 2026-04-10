@@ -159,16 +159,17 @@ export function JournalSheet({ open, onClose, entries, onSave, onDelete }: Journ
 
               {/* Header */}
               <div className="px-5 pb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold text-text-primary">Mi Diario</h2>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-text-muted bg-surface-light rounded-full px-2 py-0.5">
+                <div>
+                  <h2 className="text-lg font-bold text-text-primary leading-tight">Mi diario</h2>
+                  <div className="flex items-center gap-1 text-2xs text-text-muted mt-0.5">
                     <Lock size={10} />
-                    Solo vos podés ver esto
-                  </span>
+                    <span>Solo vos podes ver esto</span>
+                  </div>
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+                  className="w-11 h-11 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors duration-150 ease-out flex items-center justify-center"
+                  aria-label="Cerrar"
                 >
                   <X size={20} />
                 </button>
@@ -178,22 +179,24 @@ export function JournalSheet({ open, onClose, entries, onSave, onDelete }: Journ
               <div className="px-5 pb-4 flex items-center justify-between">
                 <button
                   onClick={goToPrevDay}
-                  className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+                  className="w-11 h-11 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors duration-150 ease-out flex items-center justify-center"
+                  aria-label="Dia anterior"
                 >
                   <ChevronLeft size={20} />
                 </button>
-                <span className="text-sm font-semibold text-text-primary">
+                <span className="text-sm font-semibold text-text-primary capitalize">
                   {formatDisplayDate(currentDate)}
                 </span>
                 <button
                   onClick={goToNextDay}
                   disabled={isToday || isFuture}
                   className={cn(
-                    'p-2 rounded-xl transition-colors',
+                    'w-11 h-11 rounded-xl transition-colors duration-150 ease-out flex items-center justify-center',
                     isToday || isFuture
                       ? 'text-text-muted/30 cursor-not-allowed'
                       : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
                   )}
+                  aria-label="Dia siguiente"
                 >
                   <ChevronRight size={20} />
                 </button>
@@ -201,23 +204,36 @@ export function JournalSheet({ open, onClose, entries, onSave, onDelete }: Journ
 
               {/* Mood selector */}
               <div className="px-5 pb-3">
-                <p className="text-xs text-text-muted mb-2">¿Cómo te sentís?</p>
+                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
+                  Como te sentis?
+                </p>
                 <div className="flex gap-2">
-                  {MOOD_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.emoji}
-                      onClick={() => handleMoodSelect(opt.emoji)}
-                      className={cn(
-                        'flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all',
-                        mood === opt.emoji
-                          ? 'bg-primary/10 ring-2 ring-primary/40 scale-110'
-                          : 'bg-surface-light hover:bg-surface-hover',
-                      )}
-                    >
-                      <span className="text-xl">{opt.emoji}</span>
-                      <span className="text-[9px] text-text-muted">{opt.label}</span>
-                    </button>
-                  ))}
+                  {MOOD_OPTIONS.map((opt) => {
+                    const selected = mood === opt.emoji;
+                    return (
+                      <button
+                        key={opt.emoji}
+                        onClick={() => handleMoodSelect(opt.emoji)}
+                        className={cn(
+                          'flex-1 min-h-12 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl',
+                          'transition-colors duration-150 ease-out',
+                          selected
+                            ? 'bg-primary-soft ring-1 ring-primary/60'
+                            : 'bg-surface-light border border-border/60 hover:bg-surface-hover',
+                        )}
+                        aria-label={opt.label}
+                        aria-pressed={selected}
+                      >
+                        <span className="text-2xl leading-none">{opt.emoji}</span>
+                        <span className={cn(
+                          'text-2xs font-medium',
+                          selected ? 'text-primary' : 'text-text-muted',
+                        )}>
+                          {opt.label}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -228,12 +244,12 @@ export function JournalSheet({ open, onClose, entries, onSave, onDelete }: Journ
                     ref={textareaRef}
                     value={content}
                     onChange={(e) => handleContentChange(e.target.value)}
-                    placeholder="¿Cómo fue tu día?"
+                    placeholder="Como fue tu dia?"
                     className={cn(
-                      'w-full min-h-[120px] max-h-[300px] resize-none rounded-2xl',
-                      'bg-surface-light border border-border p-4 text-sm text-text-primary',
-                      'placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30',
-                      'transition-all',
+                      'w-full min-h-[140px] max-h-[320px] resize-none rounded-2xl',
+                      'bg-surface-light border border-border/60 p-4 text-sm text-text-primary leading-relaxed',
+                      'placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40',
+                      'transition-colors duration-150 ease-out',
                     )}
                     rows={4}
                   />
@@ -246,7 +262,7 @@ export function JournalSheet({ open, onClose, entries, onSave, onDelete }: Journ
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          className="text-[11px] text-text-muted"
+                          className="text-2xs text-text-muted"
                         >
                           Guardando...
                         </motion.span>
@@ -254,10 +270,10 @@ export function JournalSheet({ open, onClose, entries, onSave, onDelete }: Journ
                       {saveStatus === 'saved' && (
                         <motion.span
                           key="saved"
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          className="inline-flex items-center gap-1 text-[11px] text-primary font-medium"
+                          className="inline-flex items-center gap-1 text-2xs text-primary font-semibold"
                         >
                           <Check size={12} />
                           Guardado
@@ -271,7 +287,7 @@ export function JournalSheet({ open, onClose, entries, onSave, onDelete }: Journ
               {/* Recent entries */}
               {recentEntries.length > 0 && (
                 <div className="px-5 pt-3 pb-8">
-                  <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
+                  <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
                     Entradas recientes
                   </h3>
                   <div className="space-y-2">
@@ -281,22 +297,22 @@ export function JournalSheet({ open, onClose, entries, onSave, onDelete }: Journ
                         <motion.div
                           key={entry.id}
                           layout
-                          className="bg-surface-light rounded-xl border border-border p-3"
+                          className="bg-surface-light rounded-xl border border-border/60 p-3"
                         >
                           <button
                             className="w-full text-left"
                             onClick={() => setExpandedEntry(isExpanded ? null : entry.id)}
                           >
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs font-semibold text-text-secondary">
+                              <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
                                 {formatDisplayDate(entry.date)}
-                                {entry.mood && (
-                                  <span className="ml-1.5">{entry.mood}</span>
-                                )}
                               </span>
+                              {entry.mood && (
+                                <span className="text-base leading-none">{entry.mood}</span>
+                              )}
                             </div>
                             <p className={cn(
-                              'text-sm text-text-primary',
+                              'text-sm text-text-primary leading-relaxed',
                               !isExpanded && 'line-clamp-2',
                             )}>
                               {entry.content}
@@ -306,11 +322,11 @@ export function JournalSheet({ open, onClose, entries, onSave, onDelete }: Journ
                             <motion.div
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
-                              className="flex justify-end mt-2 pt-2 border-t border-border"
+                              className="flex justify-end mt-2 pt-2 border-t border-border/60"
                             >
                               <button
                                 onClick={() => setDeleteTarget(entry)}
-                                className="inline-flex items-center gap-1 text-xs text-danger hover:text-danger/80 transition-colors p-1"
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-danger hover:text-danger/80 transition-colors h-9 px-2"
                               >
                                 <Trash2 size={14} />
                                 Eliminar

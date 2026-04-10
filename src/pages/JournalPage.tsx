@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Trash2, Lock, Plus,
-  CalendarDays, Flame, BookOpen,
+  CalendarDays, Flame, BookOpen, Pencil,
 } from 'lucide-react';
 import { subDays, addDays, isToday as isTodayFn, format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -13,6 +13,9 @@ import { useJournal } from '../hooks/useJournal';
 import { useJournalStats } from '../hooks/useJournalStats';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { CardSkeleton } from '../components/ui/Skeleton';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { IconButton } from '../components/ui/IconButton';
 import { JournalWriteView } from '../components/journal/JournalWriteView';
 import type { JournalEntry } from '../types/journal';
 
@@ -111,38 +114,39 @@ export function JournalPage() {
   }
 
   return (
-    <div className="py-4 space-y-4">
+    <div className="py-4 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
+        <div className="flex items-center gap-2">
+          <IconButton
+            variant="ghost"
+            size="md"
+            aria-label="Volver"
             onClick={() => viewMode === 'write' ? setViewMode('list') : navigate(-1)}
-            className="p-2 -ml-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+            className="-ml-2"
           >
             <ArrowLeft size={20} />
-          </button>
+          </IconButton>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold text-text-primary">
-                {viewMode === 'write' ? 'Escribir' : 'Mi Diario'}
-              </h1>
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-text-muted bg-surface-light rounded-full px-2 py-0.5">
-                <Lock size={9} />
-                Personal
-              </span>
+            <h1 className="text-lg font-bold text-text-primary leading-tight">
+              {viewMode === 'write' ? 'Escribir' : 'Mi diario'}
+            </h1>
+            <div className="flex items-center gap-1 text-2xs text-text-muted mt-0.5">
+              <Lock size={10} />
+              <span>Solo vos podes ver esto</span>
             </div>
           </div>
         </div>
 
         {viewMode === 'list' && (
-          <motion.button
-            whileTap={{ scale: 0.95 }}
+          <Button
             onClick={() => openWriteMode()}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-primary text-white rounded-xl text-sm font-medium shadow-sm shadow-primary/25"
+            size="md"
+            variant="primary"
           >
-            <Plus size={16} />
+            {todayEntry ? <Pencil size={16} /> : <Plus size={16} />}
             {todayEntry ? 'Editar hoy' : 'Escribir'}
-          </motion.button>
+          </Button>
         )}
       </div>
 
@@ -150,59 +154,64 @@ export function JournalPage() {
         {viewMode === 'list' ? (
           <motion.div
             key="list"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            className="space-y-4"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="space-y-5"
           >
             {/* Stats cards */}
             {stats && (
               <div className="grid grid-cols-3 gap-2.5">
-                <div className="bg-surface rounded-2xl border border-border p-3 text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <BookOpen size={14} className="text-primary" />
+                <Card className="p-3 text-center">
+                  <div className="w-8 h-8 mx-auto mb-1.5 rounded-lg bg-primary-soft flex items-center justify-center">
+                    <BookOpen size={15} className="text-primary" />
                   </div>
-                  <p className="text-lg font-bold text-text-primary">{stats.totalEntries}</p>
-                  <p className="text-[10px] text-text-muted">Entradas</p>
-                </div>
-                <div className="bg-surface rounded-2xl border border-border p-3 text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <Flame size={14} className="text-orange-400" />
+                  <p className="text-xl font-bold text-text-primary tabular-nums leading-none">
+                    {stats.totalEntries}
+                  </p>
+                  <p className="text-2xs text-text-muted mt-1 uppercase tracking-wide">Entradas</p>
+                </Card>
+                <Card className="p-3 text-center">
+                  <div className="w-8 h-8 mx-auto mb-1.5 rounded-lg bg-warning-soft flex items-center justify-center">
+                    <Flame size={15} className="text-warning" />
                   </div>
-                  <p className="text-lg font-bold text-text-primary">{stats.streak}</p>
-                  <p className="text-[10px] text-text-muted">Racha</p>
-                </div>
-                <div className="bg-surface rounded-2xl border border-border p-3 text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
+                  <p className="text-xl font-bold text-text-primary tabular-nums leading-none">
+                    {stats.streak}
+                  </p>
+                  <p className="text-2xs text-text-muted mt-1 uppercase tracking-wide">Racha</p>
+                </Card>
+                <Card className="p-3 text-center">
+                  <div className="w-8 h-8 mx-auto mb-1.5 rounded-lg bg-accent-soft flex items-center justify-center">
                     {stats.topMood ? (
-                      <span className="text-sm">{stats.topMood[0]}</span>
+                      <span className="text-base leading-none">{stats.topMood[0]}</span>
                     ) : (
-                      <CalendarDays size={14} className="text-secondary" />
+                      <CalendarDays size={15} className="text-accent" />
                     )}
                   </div>
-                  <p className="text-lg font-bold text-text-primary">
+                  <p className="text-xl font-bold text-text-primary tabular-nums leading-none">
                     {stats.topMood ? stats.topMood[1] : stats.thisMonthEntries}
                   </p>
-                  <p className="text-[10px] text-text-muted">
+                  <p className="text-2xs text-text-muted mt-1 uppercase tracking-wide">
                     {stats.topMood ? 'Mood top' : 'Este mes'}
                   </p>
-                </div>
+                </Card>
               </div>
             )}
 
             {/* Mini month calendar */}
-            <div className="bg-surface rounded-2xl border border-border p-4">
+            <Card className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
                   {format(new Date(), 'MMMM yyyy', { locale: es })}
                 </h3>
-                <span className="text-[10px] text-text-muted">
+                <span className="text-2xs text-text-muted tabular-nums">
                   {stats?.thisMonthEntries || 0} entradas
                 </span>
               </div>
               <div className="grid grid-cols-7 gap-1">
                 {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'].map((d) => (
-                  <div key={d} className="text-[10px] text-text-muted text-center font-medium py-1">
+                  <div key={d} className="text-2xs text-text-muted text-center font-semibold py-1 uppercase">
                     {d}
                   </div>
                 ))}
@@ -221,42 +230,44 @@ export function JournalPage() {
                       key={ds}
                       disabled={isFuture}
                       onClick={() => {
-                        if (hasEntry) {
-                          openWriteMode(day);
-                        } else if (!isFuture) {
-                          openWriteMode(day);
-                        }
+                        if (!isFuture) openWriteMode(day);
                       }}
                       className={cn(
-                        'relative aspect-square flex flex-col items-center justify-center rounded-lg text-xs transition-colors',
+                        'relative h-9 flex flex-col items-center justify-center rounded-lg text-xs font-medium tabular-nums',
+                        'transition-colors duration-150 ease-out',
                         isFuture && 'opacity-25 cursor-not-allowed',
-                        isTodayCell && 'ring-1 ring-primary/50',
+                        isTodayCell && !hasEntry && 'ring-1 ring-primary/60 text-text-primary',
+                        isTodayCell && hasEntry && 'ring-1 ring-primary',
                         hasEntry
-                          ? 'bg-primary/15 text-primary font-semibold'
+                          ? 'bg-primary-soft text-primary font-semibold'
                           : 'text-text-secondary hover:bg-surface-hover',
                       )}
                     >
                       <span>{format(day, 'd')}</span>
                       {entry?.mood && (
-                        <span className="text-[8px] leading-none">{entry.mood}</span>
+                        <span className="text-2xs leading-none mt-0.5">{entry.mood}</span>
                       )}
                     </button>
                   );
                 })}
               </div>
-            </div>
+            </Card>
 
             {/* Entries list */}
             <div>
-              <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 px-1">
+              <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3 px-1">
                 Entradas recientes
               </h3>
               {entries.length === 0 ? (
-                <div className="bg-surface rounded-2xl border border-border p-8 text-center">
-                  <span className="text-3xl mb-3 block">📝</span>
-                  <p className="text-sm font-semibold text-text-primary mb-1">Tu diario está vacío</p>
-                  <p className="text-xs text-text-muted">Escribí tu primera entrada para empezar a registrar cómo te sentís.</p>
-                </div>
+                <Card className="p-8 text-center">
+                  <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-primary-soft flex items-center justify-center">
+                    <BookOpen size={24} className="text-primary" />
+                  </div>
+                  <p className="text-base font-semibold text-text-primary mb-1">Tu diario esta vacio</p>
+                  <p className="text-sm text-text-muted leading-relaxed max-w-xs mx-auto">
+                    Escribi tu primera entrada para empezar a registrar como te sentis.
+                  </p>
+                </Card>
               ) : (
                 <div className="space-y-2">
                   {entries.map((entry, index) => {
@@ -264,57 +275,60 @@ export function JournalPage() {
                     return (
                       <motion.div
                         key={entry.id}
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.03 }}
+                        transition={{ delay: index * 0.025, duration: 0.18, ease: 'easeOut' }}
                         layout
-                        className="bg-surface rounded-2xl border border-border overflow-hidden"
                       >
-                        <button
-                          className="w-full text-left p-4"
-                          onClick={() => setExpandedEntry(isExpanded ? null : entry.id)}
-                        >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs font-semibold text-text-secondary">
-                              {formatDisplayDate(entry.date)}
-                            </span>
-                            {entry.mood && (
-                              <span className="text-base">{entry.mood}</span>
+                        <Card className="overflow-hidden p-0">
+                          <button
+                            className="w-full text-left p-4 hover:bg-surface-hover transition-colors duration-150"
+                            onClick={() => setExpandedEntry(isExpanded ? null : entry.id)}
+                          >
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                                {formatDisplayDate(entry.date)}
+                              </span>
+                              {entry.mood && (
+                                <span className="text-lg leading-none">{entry.mood}</span>
+                              )}
+                            </div>
+                            <p className={cn(
+                              'text-sm text-text-primary leading-relaxed',
+                              !isExpanded && 'line-clamp-2',
+                            )}>
+                              {entry.content || <span className="text-text-muted italic">Solo mood, sin texto</span>}
+                            </p>
+                          </button>
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.18, ease: 'easeOut' }}
+                                className="overflow-hidden"
+                              >
+                                <div className="flex items-center justify-between px-4 pb-3 pt-2 border-t border-border/60">
+                                  <button
+                                    onClick={() => openWriteMode(parseISO(entry.date))}
+                                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-hover transition-colors h-9 px-2"
+                                  >
+                                    <Pencil size={13} />
+                                    Editar
+                                  </button>
+                                  <button
+                                    onClick={() => setDeleteTarget(entry)}
+                                    className="inline-flex items-center gap-1 text-xs font-semibold text-danger hover:text-danger/80 transition-colors h-9 px-2"
+                                  >
+                                    <Trash2 size={13} />
+                                    Eliminar
+                                  </button>
+                                </div>
+                              </motion.div>
                             )}
-                          </div>
-                          <p className={cn(
-                            'text-sm text-text-primary leading-relaxed',
-                            !isExpanded && 'line-clamp-2',
-                          )}>
-                            {entry.content || <span className="text-text-muted italic">Solo mood, sin texto</span>}
-                          </p>
-                        </button>
-                        <AnimatePresence>
-                          {isExpanded && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="flex items-center justify-between px-4 pb-3 pt-1 border-t border-border">
-                                <button
-                                  onClick={() => openWriteMode(parseISO(entry.date))}
-                                  className="text-xs text-primary font-medium hover:text-primary/80 transition-colors"
-                                >
-                                  Editar
-                                </button>
-                                <button
-                                  onClick={() => setDeleteTarget(entry)}
-                                  className="inline-flex items-center gap-1 text-xs text-danger hover:text-danger/80 transition-colors"
-                                >
-                                  <Trash2 size={13} />
-                                  Eliminar
-                                </button>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                          </AnimatePresence>
+                        </Card>
                       </motion.div>
                     );
                   })}
@@ -345,7 +359,7 @@ export function JournalPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         title="Eliminar entrada"
-        description="¿Seguro que querés eliminar esta entrada del diario? No se puede deshacer."
+        description="Seguro que queres eliminar esta entrada del diario? No se puede deshacer."
         confirmLabel="Eliminar"
         cancelLabel="Cancelar"
         variant="danger"

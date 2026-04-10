@@ -4,6 +4,7 @@ import { Trash2, CreditCard, Calendar, Check, AlertCircle, User, Bell } from 'lu
 import { cn } from '../../lib/utils';
 import { formatCurrency } from '../../lib/currency-utils';
 import { Badge } from '../ui/Badge';
+import { useDensity } from '../../contexts/DensityContext';
 import { getDaysUntilDue, isPaidThisMonth } from '../../hooks/useRecurringPayments';
 import type { RecurringPayment, ExpenseCard, ExpenseCategory } from '../../types/expense';
 
@@ -16,45 +17,40 @@ interface RecurringPaymentItemProps {
   onDelete: () => void;
 }
 
-function getStatusInfo(item: RecurringPayment) {
-  const paid = isPaidThisMonth(item);
-  if (paid) {
-    return {
-      label: 'Pagado este mes',
-      tone: 'paid' as const,
-      icon: Check,
-    };
+type StatusTone = 'paid' | 'overdue' | 'today' | 'soon' | 'upcoming';
+
+interface StatusInfo {
+  label: string;
+  tone: StatusTone;
+  icon: typeof Check;
+}
+
+function getStatusInfo(item: RecurringPayment): StatusInfo {
+  if (isPaidThisMonth(item)) {
+    return { label: 'Pagado este mes', tone: 'paid', icon: Check };
   }
 
   const daysUntil = getDaysUntilDue(item.dayOfMonth);
 
   if (daysUntil < 0) {
-    return {
-      label: `Vencido hace ${Math.abs(daysUntil)}d`,
-      tone: 'overdue' as const,
-      icon: AlertCircle,
-    };
+    return { label: `Vencido hace ${Math.abs(daysUntil)}d`, tone: 'overdue', icon: AlertCircle };
   }
   if (daysUntil === 0) {
-    return {
-      label: 'Vence hoy',
-      tone: 'today' as const,
-      icon: AlertCircle,
-    };
+    return { label: 'Vence hoy', tone: 'today', icon: AlertCircle };
   }
   if (daysUntil <= 3) {
-    return {
-      label: `Vence en ${daysUntil}d`,
-      tone: 'soon' as const,
-      icon: Calendar,
-    };
+    return { label: `Vence en ${daysUntil}d`, tone: 'soon', icon: Calendar };
   }
-  return {
-    label: `Vence en ${daysUntil}d`,
-    tone: 'upcoming' as const,
-    icon: Calendar,
-  };
+  return { label: `Vence en ${daysUntil}d`, tone: 'upcoming', icon: Calendar };
 }
+
+const toneClasses: Record<StatusTone, string> = {
+  paid: 'bg-primary-soft text-primary border border-primary/25',
+  overdue: 'bg-danger-soft text-danger border border-danger/25',
+  today: 'bg-warning-soft text-warning border border-warning/30',
+  soon: 'bg-warning-soft text-warning border border-warning/20',
+  upcoming: 'bg-surface-light text-text-muted border border-border/60',
+};
 
 export const RecurringPaymentItem = memo(function RecurringPaymentItem({
   item,
@@ -64,6 +60,8 @@ export const RecurringPaymentItem = memo(function RecurringPaymentItem({
   onSelect,
   onDelete,
 }: RecurringPaymentItemProps) {
+  const { isCompact } = useDensity();
+
   const x = useMotionValue(0);
   const deleteOpacity = useTransform(x, [-100, -60], [1, 0]);
   const deleteScale = useTransform(x, [-100, -60], [1, 0.8]);
@@ -71,14 +69,6 @@ export const RecurringPaymentItem = memo(function RecurringPaymentItem({
   const status = getStatusInfo(item);
   const paid = status.tone === 'paid';
   const StatusIcon = status.icon;
-
-  const toneClasses: Record<typeof status.tone, string> = {
-    paid: 'bg-primary/15 text-primary border border-primary/25',
-    overdue: 'bg-danger/15 text-danger border border-danger/25',
-    today: 'bg-accent/20 text-accent border border-accent/30',
-    soon: 'bg-accent/10 text-accent border border-accent/20',
-    upcoming: 'bg-surface-light text-text-muted border border-border',
-  };
 
   return (
     <motion.div
@@ -102,7 +92,8 @@ export const RecurringPaymentItem = memo(function RecurringPaymentItem({
       {/* Card content */}
       <motion.div
         className={cn(
-          'bg-surface rounded-xl border border-border p-3.5 shadow-sm relative cursor-pointer active:bg-surface-hover transition-colors',
+          'bg-surface rounded-xl border border-border/60 shadow-sm relative cursor-pointer active:bg-surface-hover transition-colors',
+          isCompact ? 'p-3' : 'p-4',
           paid && 'opacity-70',
         )}
         style={{ x }}
@@ -115,7 +106,7 @@ export const RecurringPaymentItem = memo(function RecurringPaymentItem({
         onClick={onSelect}
       >
         {/* Title row */}
-        <div className="flex items-start justify-between gap-3 mb-2">
+        <div className={cn('flex items-start justify-between gap-3', isCompact ? 'mb-1.5' : 'mb-2')}>
           <p
             className={cn(
               'text-sm font-semibold truncate flex-1 min-w-0',
@@ -130,48 +121,50 @@ export const RecurringPaymentItem = memo(function RecurringPaymentItem({
         </div>
 
         {/* Status pill */}
-        <div className="flex items-center gap-1.5 mb-2.5 flex-wrap">
+        <div className={cn('flex items-center gap-1.5 flex-wrap', isCompact ? 'mb-0' : 'mb-2.5')}>
           <span
             className={cn(
-              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold',
+              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-semibold',
               toneClasses[status.tone],
             )}
           >
             <StatusIcon size={11} />
             {status.label}
           </span>
-          <span className="text-[11px] text-text-muted">
+          <span className="text-2xs text-text-muted">
             día {item.dayOfMonth} de cada mes
           </span>
         </div>
 
-        {/* Tags row — todos como badges consistentes */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {category && (
-            <Badge variant="secondary" className="text-[10px] py-0.5">
-              <span className="text-[11px] leading-none">{category.emoji}</span>
-              {category.label}
-            </Badge>
-          )}
-          {card && (
-            <Badge variant="default" className="text-[10px] py-0.5">
-              <CreditCard size={10} />
-              {card.name}
-            </Badge>
-          )}
-          {assignedToLabel && (
-            <Badge variant="default" className="text-[10px] py-0.5">
-              <User size={10} />
-              {assignedToLabel}
-            </Badge>
-          )}
-          {item.reminders.length > 0 && (
-            <Badge variant="default" className="text-[10px] py-0.5">
-              <Bell size={10} />
-              {item.reminders.length}
-            </Badge>
-          )}
-        </div>
+        {/* Tags row — hidden in compact */}
+        {!isCompact && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {category && (
+              <Badge variant="secondary" className="text-2xs py-0.5">
+                <span className="text-2xs leading-none">{category.emoji}</span>
+                {category.label}
+              </Badge>
+            )}
+            {card && (
+              <Badge variant="default" className="text-2xs py-0.5">
+                <CreditCard size={10} />
+                {card.name}
+              </Badge>
+            )}
+            {assignedToLabel && (
+              <Badge variant="default" className="text-2xs py-0.5">
+                <User size={10} />
+                {assignedToLabel}
+              </Badge>
+            )}
+            {item.reminders.length > 0 && (
+              <Badge variant="default" className="text-2xs py-0.5">
+                <Bell size={10} />
+                {item.reminders.length}
+              </Badge>
+            )}
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );

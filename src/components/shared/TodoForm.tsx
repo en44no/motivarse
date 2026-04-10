@@ -14,26 +14,21 @@ interface TodoFormProps {
   onDeleteCategory: (id: string) => void;
 }
 
-const PRIORITIES: { value: TodoPriority; label: string; color: string }[] = [
-  { value: 'low', label: 'Baja', color: 'bg-surface-light text-text-muted' },
-  { value: 'medium', label: 'Media', color: 'bg-secondary-soft text-secondary' },
-  { value: 'high', label: 'Alta', color: 'bg-danger-soft text-danger' },
-];
-
-const CAT_COLORS = [
-  { base: 'bg-violet-500/10 text-violet-400', active: 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-400/40' },
-  { base: 'bg-sky-500/10 text-sky-400', active: 'bg-sky-500/20 text-sky-400 ring-1 ring-sky-400/40' },
-  { base: 'bg-emerald-500/10 text-emerald-400', active: 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-400/40' },
-  { base: 'bg-amber-500/10 text-amber-400', active: 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-400/40' },
-  { base: 'bg-rose-500/10 text-rose-400', active: 'bg-rose-500/20 text-rose-400 ring-1 ring-rose-400/40' },
-  { base: 'bg-pink-500/10 text-pink-400', active: 'bg-pink-500/20 text-pink-400 ring-1 ring-pink-400/40' },
-  { base: 'bg-teal-500/10 text-teal-400', active: 'bg-teal-500/20 text-teal-400 ring-1 ring-teal-400/40' },
-  { base: 'bg-orange-500/10 text-orange-400', active: 'bg-orange-500/20 text-orange-400 ring-1 ring-orange-400/40' },
+const PRIORITIES: { value: TodoPriority; label: string; activeClass: string }[] = [
+  { value: 'low', label: 'Baja', activeClass: 'bg-surface-light text-text-secondary ring-1 ring-border-light' },
+  { value: 'medium', label: 'Media', activeClass: 'bg-secondary-soft text-secondary ring-1 ring-secondary/40' },
+  { value: 'high', label: 'Alta', activeClass: 'bg-danger-soft text-danger ring-1 ring-danger/40' },
 ];
 
 type ManagingCat = { id: string; emoji: string; label: string } | null;
 
-export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory, onDeleteCategory }: TodoFormProps) {
+export function TodoForm({
+  categories,
+  onSubmit,
+  onAddCategory,
+  onUpdateCategory,
+  onDeleteCategory,
+}: TodoFormProps) {
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<TodoPriority>('medium');
   const [category, setCategory] = useState<string | undefined>(undefined);
@@ -74,7 +69,7 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
     }, 700);
 
     return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title]);
 
   // ── Todo submit ───────────────────────────────────────────────────────────
@@ -97,7 +92,6 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
     setShowNewCat(true);
     setNewEmoji('');
     setNewLabel('');
-    setTimeout(() => newLabelRef.current?.focus(), 50);
   }
   function cancelNewCat() {
     setShowNewCat(false);
@@ -120,8 +114,10 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
     }
   }
   function handleNewCatKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Enter') { e.preventDefault(); confirmNewCat(); }
-    else if (e.key === 'Escape') cancelNewCat();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      confirmNewCat();
+    } else if (e.key === 'Escape') cancelNewCat();
   }
 
   // ── Long-press to manage category ─────────────────────────────────────────
@@ -132,7 +128,6 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
       setShowNewCat(false);
       setManagingCat({ id: cat.id, emoji: cat.emoji, label: cat.label });
       navigator.vibrate?.(40);
-      setTimeout(() => editLabelRef.current?.focus(), 50);
     }, 500);
   }
   function cancelLongPress() {
@@ -161,26 +156,34 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
     setManagingCat(null);
   }
   function handleEditKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Enter') { e.preventDefault(); saveEdit(); }
-    else if (e.key === 'Escape') setManagingCat(null);
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveEdit();
+    } else if (e.key === 'Escape') setManagingCat(null);
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2.5">
+    <form onSubmit={handleSubmit} className="space-y-3">
       {/* Input row */}
       <div className="flex gap-2">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); doSubmit(); } }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              doSubmit();
+            }
+          }}
           placeholder="Agregar mandado..."
           enterKeyHint="send"
-          className="flex-1 rounded-xl border border-border bg-surface-hover px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
+          className="flex-1 rounded-xl border border-border/60 bg-surface-light px-4 h-11 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/60 transition-colors"
         />
         <button
           type="submit"
           disabled={!title.trim()}
-          className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-hover transition-colors disabled:opacity-40 shrink-0"
+          aria-label="Agregar mandado"
+          className="w-11 h-11 rounded-xl bg-primary text-primary-contrast inline-flex items-center justify-center hover:bg-primary-hover transition-colors disabled:opacity-40 shrink-0"
         >
           <Plus size={20} />
         </button>
@@ -197,7 +200,7 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
             className="flex items-center gap-1.5 px-1"
           >
             <Loader2 size={11} className="animate-spin text-primary shrink-0" />
-            <span className="text-xs text-text-muted">Buscando categoría con IA...</span>
+            <span className="text-2xs text-text-muted">Buscando categoría con IA...</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -207,20 +210,23 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
         {/* Sin cat. */}
         <button
           type="button"
-          onClick={() => { setCategory(undefined); setAiSelectedCategoryId(null); userOverrode.current = true; }}
+          onClick={() => {
+            setCategory(undefined);
+            setAiSelectedCategoryId(null);
+            userOverrode.current = true;
+          }}
           className={cn(
-            'shrink-0 h-7 px-2.5 rounded-lg text-xs font-medium transition-all',
+            'shrink-0 h-8 px-3 inline-flex items-center rounded-full text-xs font-medium transition-colors',
             category === undefined
-              ? 'bg-primary/15 text-primary ring-1 ring-primary/40'
-              : 'bg-surface-hover text-text-muted hover:text-text-secondary'
+              ? 'bg-primary-soft text-primary ring-1 ring-primary/40'
+              : 'bg-surface-hover text-text-muted hover:text-text-secondary',
           )}
         >
           Sin cat.
         </button>
 
         {/* Category chips */}
-        {categories.map((cat, i) => {
-          const color = CAT_COLORS[i % CAT_COLORS.length];
+        {categories.map((cat) => {
           const isSelected = category === cat.id;
           const isManaging = managingCat?.id === cat.id;
           const isAiSelected = aiSelectedCategoryId === cat.id;
@@ -234,26 +240,24 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
               onPointerLeave={cancelLongPress}
               onPointerCancel={cancelLongPress}
               onClick={() => handleChipClick(cat)}
-              animate={isAiSelected ? { scale: [1, 1.14, 1] } : {}}
-              transition={{ duration: 0.38, ease: 'backOut' }}
+              animate={isAiSelected ? { scale: [1, 1.06, 1] } : {}}
+              transition={{ duration: 0.32, ease: 'easeOut' }}
               className={cn(
-                'shrink-0 h-7 flex items-center gap-1 px-2.5 rounded-lg text-xs font-medium transition-all select-none',
+                'shrink-0 h-8 inline-flex items-center gap-1 px-3 rounded-full text-xs font-medium transition-colors select-none',
                 isManaging
-                  ? 'ring-2 ring-offset-1 ring-offset-surface scale-95 ' + color.active
+                  ? 'bg-primary-soft text-primary ring-2 ring-primary/50'
                   : isSelected
-                  ? isAiSelected
-                    ? color.active + ' outline outline-2 outline-offset-1 outline-primary/50'
-                    : color.active
-                  : color.base
+                    ? 'bg-primary-soft text-primary ring-1 ring-primary/40'
+                    : 'bg-surface-hover text-text-muted hover:text-text-secondary',
               )}
             >
               <AnimatePresence>
                 {isAiSelected && (
                   <motion.span
-                    initial={{ width: 0, opacity: 0, scale: 0.4 }}
-                    animate={{ width: 14, opacity: 1, scale: 1 }}
-                    exit={{ width: 0, opacity: 0, scale: 0.4 }}
-                    transition={{ duration: 0.22, ease: 'backOut' }}
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: 14, opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
                     className="flex items-center overflow-hidden"
                   >
                     <Sparkles size={10} className="text-primary shrink-0" />
@@ -271,7 +275,7 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
           <button
             type="button"
             onClick={openNewCat}
-            className="shrink-0 h-7 px-2.5 rounded-lg text-xs font-medium bg-surface-hover text-text-muted hover:text-primary hover:bg-primary/10 transition-all border border-dashed border-border flex items-center"
+            className="shrink-0 h-8 px-3 inline-flex items-center rounded-full text-xs font-medium bg-surface-hover text-text-muted hover:text-primary hover:bg-primary-soft transition-colors border border-dashed border-border"
           >
             + Nueva
           </button>
@@ -280,13 +284,13 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
 
       {/* Edit existing category — shown on long-press */}
       {managingCat && (
-        <div className="flex items-center gap-2 bg-surface-hover rounded-xl p-2 border border-primary/30">
+        <div className="flex items-center gap-2 bg-surface-light rounded-xl p-2 border border-primary/30">
           <input
             value={managingCat.emoji}
             onChange={(e) => setManagingCat({ ...managingCat, emoji: e.target.value })}
             onKeyDown={handleEditKeyDown}
             maxLength={2}
-            className="w-9 h-9 text-center text-base bg-surface rounded-lg border border-border outline-none shrink-0"
+            className="w-11 h-11 text-center text-base bg-surface rounded-lg border border-border/60 outline-none shrink-0"
           />
           <input
             ref={editLabelRef}
@@ -294,27 +298,30 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
             onChange={(e) => setManagingCat({ ...managingCat, label: e.target.value })}
             onKeyDown={handleEditKeyDown}
             placeholder="Nombre"
-            className="flex-1 h-9 text-sm bg-surface rounded-lg border border-border px-3 outline-none text-text-primary placeholder:text-text-muted min-w-0"
+            className="flex-1 h-11 text-sm bg-surface rounded-lg border border-border/60 px-3 outline-none text-text-primary placeholder:text-text-muted min-w-0"
           />
           <button
             type="button"
             onClick={saveEdit}
             disabled={!managingCat.label.trim()}
-            className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary-hover transition-colors shrink-0"
+            aria-label="Guardar categoría"
+            className="w-11 h-11 rounded-lg bg-primary text-primary-contrast inline-flex items-center justify-center disabled:opacity-40 hover:bg-primary-hover transition-colors shrink-0"
           >
             <Check size={16} strokeWidth={2.5} />
           </button>
           <button
             type="button"
             onClick={deleteManaging}
-            className="w-9 h-9 rounded-lg bg-danger-soft text-danger flex items-center justify-center hover:bg-danger hover:text-white transition-colors shrink-0"
+            aria-label="Eliminar categoría"
+            className="w-11 h-11 rounded-lg bg-danger-soft text-danger inline-flex items-center justify-center hover:bg-danger hover:text-white transition-colors shrink-0"
           >
             <Trash2 size={15} strokeWidth={2} />
           </button>
           <button
             type="button"
             onClick={() => setManagingCat(null)}
-            className="w-9 h-9 rounded-lg bg-surface text-text-muted border border-border hover:text-danger hover:border-danger/40 flex items-center justify-center transition-colors shrink-0"
+            aria-label="Cancelar"
+            className="w-11 h-11 rounded-lg bg-surface text-text-muted border border-border/60 hover:text-text-primary inline-flex items-center justify-center transition-colors shrink-0"
           >
             <X size={16} strokeWidth={2.5} />
           </button>
@@ -323,14 +330,14 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
 
       {/* New category form */}
       {showNewCat && (
-        <div className="flex items-center gap-2 bg-surface-hover rounded-xl p-2 border border-primary/30">
+        <div className="flex items-center gap-2 bg-surface-light rounded-xl p-2 border border-primary/30">
           <input
             value={newEmoji}
             onChange={(e) => setNewEmoji(e.target.value)}
             onKeyDown={handleNewCatKeyDown}
             placeholder="📌"
             maxLength={2}
-            className="w-9 h-9 text-center text-base bg-surface rounded-lg border border-border outline-none placeholder:text-text-muted shrink-0"
+            className="w-11 h-11 text-center text-base bg-surface rounded-lg border border-border/60 outline-none placeholder:text-text-muted shrink-0"
           />
           <input
             ref={newLabelRef}
@@ -338,20 +345,22 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
             onChange={(e) => setNewLabel(e.target.value)}
             onKeyDown={handleNewCatKeyDown}
             placeholder="Nombre de categoría"
-            className="flex-1 h-9 text-sm bg-surface rounded-lg border border-border px-3 outline-none text-text-primary placeholder:text-text-muted min-w-0"
+            className="flex-1 h-11 text-sm bg-surface rounded-lg border border-border/60 px-3 outline-none text-text-primary placeholder:text-text-muted min-w-0"
           />
           <button
             type="button"
             onClick={confirmNewCat}
             disabled={!newLabel.trim() || savingCat}
-            className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary-hover transition-colors shrink-0"
+            aria-label="Crear categoría"
+            className="w-11 h-11 rounded-lg bg-primary text-primary-contrast inline-flex items-center justify-center disabled:opacity-40 hover:bg-primary-hover transition-colors shrink-0"
           >
             <Check size={16} strokeWidth={2.5} />
           </button>
           <button
             type="button"
             onClick={cancelNewCat}
-            className="w-9 h-9 rounded-lg bg-surface text-text-muted border border-border hover:text-danger hover:border-danger/40 flex items-center justify-center transition-colors shrink-0"
+            aria-label="Cancelar"
+            className="w-11 h-11 rounded-lg bg-surface text-text-muted border border-border/60 hover:text-text-primary inline-flex items-center justify-center transition-colors shrink-0"
           >
             <X size={16} strokeWidth={2.5} />
           </button>
@@ -366,9 +375,8 @@ export function TodoForm({ categories, onSubmit, onAddCategory, onUpdateCategory
             type="button"
             onClick={() => setPriority(p.value)}
             className={cn(
-              'px-3 py-1 rounded-lg text-xs font-medium transition-all',
-              priority === p.value ? p.color : 'bg-transparent text-text-muted',
-              priority === p.value && 'ring-1 ring-current'
+              'h-8 px-3 inline-flex items-center rounded-full text-xs font-medium transition-colors',
+              priority === p.value ? p.activeClass : 'bg-transparent text-text-muted hover:text-text-secondary',
             )}
           >
             {p.label}

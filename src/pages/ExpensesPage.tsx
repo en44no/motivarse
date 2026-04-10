@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Wallet, Plus, Repeat, Search, X, Calendar as CalendarIcon } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Wallet, Plus, Repeat, Search, X, Calendar as CalendarIcon, SlidersHorizontal } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
 import { useExpenses } from '../hooks/useExpenses';
@@ -44,6 +45,7 @@ export function ExpensesPage() {
   const [assignedFilter, setAssignedFilter] = useState<AssignedFilter>('all');
   const [cardFilter, setCardFilter] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [showAddRecurring, setShowAddRecurring] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState<RecurringPayment | null>(null);
@@ -132,6 +134,9 @@ export function ExpensesPage() {
     { id: 'both', label: 'Los dos' },
   ];
 
+  const activeFilterCount =
+    (assignedFilter !== 'all' ? 1 : 0) + (cardFilter ? 1 : 0);
+
   function handleFabClick() {
     if (isRecurringTab) {
       setEditingRecurring(null);
@@ -173,91 +178,156 @@ export function ExpensesPage() {
           aria-label="Ver calendario"
           aria-pressed={isCalendarTab}
           className={cn(
-            'shrink-0 flex items-center justify-center w-11 rounded-xl border transition-colors',
+            'shrink-0 inline-flex items-center justify-center w-11 rounded-xl border transition-colors',
             isCalendarTab
               ? 'bg-gradient-to-b from-primary to-primary-hover text-primary-contrast border-transparent shadow-[var(--shadow-glow-primary)]'
-              : 'bg-surface border-border/50 text-text-muted hover:text-text-secondary'
+              : 'bg-surface border-border/60 text-text-muted hover:text-text-secondary',
           )}
         >
           <CalendarIcon size={18} />
         </button>
       </div>
 
-      {/* Search input (oculto en tab calendario) */}
+      {/* Search + filters toggle (oculto en tab calendario) */}
       {!isCalendarTab && (
-        <div className="relative">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-          />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar gasto..."
-            className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl bg-surface-light border border-border/60 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/60 transition-colors"
-          />
-          {search && (
+        <div className="space-y-2">
+          <div className="flex items-stretch gap-2">
+            <div className="relative flex-1 min-w-0">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar gasto..."
+                className="w-full pl-9 pr-9 h-11 text-sm rounded-xl bg-surface-light border border-border/60 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/60 transition-colors"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 inline-flex items-center justify-center rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+                  aria-label="Limpiar busqueda"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
             <button
               type="button"
-              onClick={() => setSearch('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-              aria-label="Limpiar busqueda"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Assigned filter pills (oculto en tab calendario) */}
-      {!isCalendarTab && (
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 px-1 scrollbar-none">
-          {ASSIGNED_FILTERS.map(f => (
-            <button
-              key={f.id}
-              onClick={() => setAssignedFilter(assignedFilter === f.id && f.id !== 'all' ? 'all' : f.id)}
+              onClick={() => setShowFilters((v) => !v)}
+              aria-pressed={showFilters}
+              aria-label="Mostrar filtros"
               className={cn(
-                'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
-                assignedFilter === f.id
-                  ? 'bg-primary text-primary-contrast shadow-sm shadow-primary/30'
-                  : 'bg-surface-hover text-text-muted hover:text-text-secondary'
+                'shrink-0 relative w-11 h-11 inline-flex items-center justify-center rounded-xl border transition-colors',
+                showFilters || activeFilterCount > 0
+                  ? 'bg-primary-soft text-primary border-primary/30'
+                  : 'bg-surface-light border-border/60 text-text-muted hover:text-text-secondary',
               )}
             >
-              {f.label}
+              <SlidersHorizontal size={17} />
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] rounded-full bg-primary text-primary-contrast text-2xs font-bold flex items-center justify-center px-1 tabular-nums">
+                  {activeFilterCount}
+                </span>
+              )}
             </button>
-          ))}
-        </div>
-      )}
+          </div>
 
-      {/* Card filter pills (only show if cards exist in current tab) */}
-      {!isCalendarTab && usedCards.length > 0 && (
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 px-1 scrollbar-none">
-          <button
-            onClick={() => setCardFilter(null)}
-            className={cn(
-              'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
-              cardFilter === null
-                ? 'bg-primary text-primary-contrast shadow-sm shadow-primary/30'
-                : 'bg-surface-hover text-text-muted hover:text-text-secondary'
+          <AnimatePresence initial={false}>
+            {showFilters && (
+              <motion.div
+                key="filters-panel"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="overflow-hidden"
+              >
+                <div className="bg-surface rounded-2xl border border-border/60 p-4 space-y-4 shadow-sm">
+                  {/* Asignado */}
+                  <div className="space-y-2">
+                    <p className="text-2xs font-semibold text-text-muted uppercase tracking-wider">
+                      Asignado a
+                    </p>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {ASSIGNED_FILTERS.map((f) => (
+                        <button
+                          key={f.id}
+                          onClick={() =>
+                            setAssignedFilter(
+                              assignedFilter === f.id && f.id !== 'all' ? 'all' : f.id,
+                            )
+                          }
+                          className={cn(
+                            'shrink-0 px-3 h-8 inline-flex items-center rounded-full text-xs font-medium transition-colors',
+                            assignedFilter === f.id
+                              ? 'bg-primary text-primary-contrast'
+                              : 'bg-surface-hover text-text-muted hover:text-text-secondary',
+                          )}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tarjeta */}
+                  {usedCards.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-2xs font-semibold text-text-muted uppercase tracking-wider">
+                        Tarjeta
+                      </p>
+                      <div className="flex gap-1.5 flex-wrap">
+                        <button
+                          onClick={() => setCardFilter(null)}
+                          className={cn(
+                            'shrink-0 px-3 h-8 inline-flex items-center rounded-full text-xs font-medium transition-colors',
+                            cardFilter === null
+                              ? 'bg-primary text-primary-contrast'
+                              : 'bg-surface-hover text-text-muted hover:text-text-secondary',
+                          )}
+                        >
+                          Todas
+                        </button>
+                        {usedCards.map((card) => (
+                          <button
+                            key={card.id}
+                            onClick={() =>
+                              setCardFilter(cardFilter === card.id ? null : card.id)
+                            }
+                            className={cn(
+                              'shrink-0 px-3 h-8 inline-flex items-center rounded-full text-xs font-medium transition-colors',
+                              cardFilter === card.id
+                                ? 'bg-primary text-primary-contrast'
+                                : 'bg-surface-hover text-text-muted hover:text-text-secondary',
+                            )}
+                          >
+                            {card.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeFilterCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAssignedFilter('all');
+                        setCardFilter(null);
+                      }}
+                      className="text-2xs font-semibold text-text-muted hover:text-text-primary transition-colors"
+                    >
+                      Limpiar filtros
+                    </button>
+                  )}
+                </div>
+              </motion.div>
             )}
-          >
-            Todas
-          </button>
-          {usedCards.map(card => (
-            <button
-              key={card.id}
-              onClick={() => setCardFilter(cardFilter === card.id ? null : card.id)}
-              className={cn(
-                'shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all',
-                cardFilter === card.id
-                  ? 'bg-primary text-primary-contrast shadow-sm shadow-primary/30'
-                  : 'bg-surface-hover text-text-muted hover:text-text-secondary'
-              )}
-            >
-              {card.name}
-            </button>
-          ))}
+          </AnimatePresence>
         </div>
       )}
 

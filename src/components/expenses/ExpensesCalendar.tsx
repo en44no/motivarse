@@ -88,7 +88,7 @@ function computeRecurringStatus(
 const STATUS_DOT_CLASS: Record<DotStatus, string> = {
   paid: 'bg-primary',
   overdue: 'bg-danger',
-  soon: 'bg-accent',
+  soon: 'bg-warning',
   future: 'bg-text-muted',
 };
 
@@ -210,22 +210,22 @@ export function ExpensesCalendar({
   return (
     <div className="space-y-3">
       {/* Calendar card */}
-      <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm space-y-3">
+      <div className="bg-surface rounded-2xl border border-border/60 p-4 shadow-sm space-y-3">
         {/* Header */}
         <div className="flex items-center justify-between">
           <button
             onClick={goToPrevMonth}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+            className="w-9 h-9 inline-flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
             aria-label="Mes anterior"
           >
             <ChevronLeft size={18} />
           </button>
-          <h3 className="text-sm font-semibold text-text-primary capitalize">
+          <h3 className="text-base font-semibold text-text-primary capitalize">
             {monthLabel}
           </h3>
           <button
             onClick={goToNextMonth}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+            className="w-9 h-9 inline-flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
             aria-label="Mes siguiente"
           >
             <ChevronRight size={18} />
@@ -237,7 +237,7 @@ export function ExpensesCalendar({
           {DAY_LABELS.map((d, i) => (
             <div
               key={`${d}-${i}`}
-              className="text-center text-[10px] text-text-muted font-medium py-0.5"
+              className="text-center text-2xs text-text-muted font-medium py-0.5"
             >
               {d}
             </div>
@@ -302,7 +302,7 @@ export function ExpensesCalendar({
                   >
                     <span
                       className={cn(
-                        'text-[11px] font-medium leading-none',
+                        'text-2xs font-medium leading-none tabular-nums',
                         isSelected
                           ? 'text-primary font-bold'
                           : isToday
@@ -338,26 +338,26 @@ export function ExpensesCalendar({
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 border-t border-border/50">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 border-t border-border/60">
           <div className="flex items-center gap-1">
             <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-            <span className="text-[10px] text-text-muted">Pagado</span>
+            <span className="text-2xs text-text-muted">Pagado</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-            <span className="text-[10px] text-text-muted">Proximo</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-warning" />
+            <span className="text-2xs text-text-muted">Próximo</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-1.5 h-1.5 rounded-full bg-danger" />
-            <span className="text-[10px] text-text-muted">Vencido</span>
+            <span className="text-2xs text-text-muted">Vencido</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-1.5 h-1.5 rounded-full bg-text-muted" />
-            <span className="text-[10px] text-text-muted">Pendiente</span>
+            <span className="text-2xs text-text-muted">Pendiente</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
-            <span className="text-[10px] text-text-muted">Gasto</span>
+            <span className="text-2xs text-text-muted">Gasto</span>
           </div>
         </div>
       </div>
@@ -373,13 +373,13 @@ export function ExpensesCalendar({
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm space-y-3">
-              <h4 className="text-xs font-semibold text-text-muted uppercase tracking-wider capitalize">
+            <div className="bg-surface rounded-2xl border border-border/60 p-4 shadow-sm space-y-3">
+              <h4 className="text-2xs font-semibold text-text-muted uppercase tracking-wider capitalize">
                 {selectedLabel}
               </h4>
 
               {selectedEntries.length === 0 ? (
-                <p className="text-xs text-text-muted">Sin eventos este dia</p>
+                <p className="text-xs text-text-muted">Sin eventos este día</p>
               ) : (
                 <div className="space-y-2">
                   {selectedEntries.map((entry) => {
@@ -396,11 +396,7 @@ export function ExpensesCalendar({
                           key={`rec-${entry.id}`}
                           className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-surface-light border border-border/60"
                         >
-                          <div
-                            className={cn(
-                              'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-surface',
-                            )}
-                          >
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-surface">
                             <Repeat size={14} className="text-text-secondary" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -420,18 +416,18 @@ export function ExpensesCalendar({
                                     STATUS_DOT_CLASS[entry.status],
                                   )}
                                 />
-                                <span className="text-[10px] text-text-muted">
+                                <span className="text-2xs text-text-muted">
                                   {STATUS_LABEL[entry.status]}
                                 </span>
                               </div>
                               {card && (
-                                <span className="text-[10px] text-text-muted truncate">
+                                <span className="text-2xs text-text-muted truncate">
                                   {card.name}
                                 </span>
                               )}
                             </div>
                           </div>
-                          <span className="text-sm font-bold text-text-primary shrink-0">
+                          <span className="text-sm font-bold text-text-primary shrink-0 tabular-nums">
                             {formatCurrency(entry.amount, entry.currency)}
                           </span>
                         </div>
@@ -443,7 +439,7 @@ export function ExpensesCalendar({
                         key={`exp-${entry.id}`}
                         className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-surface-light border border-border/60"
                       >
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-surface">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-surface">
                           <Wallet size={14} className="text-text-secondary" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -456,17 +452,17 @@ export function ExpensesCalendar({
                             </p>
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] text-text-muted">
+                            <span className="text-2xs text-text-muted">
                               Gasto agregado
                             </span>
                             {card && (
-                              <span className="text-[10px] text-text-muted truncate">
+                              <span className="text-2xs text-text-muted truncate">
                                 {card.name}
                               </span>
                             )}
                           </div>
                         </div>
-                        <span className="text-sm font-bold text-text-primary shrink-0">
+                        <span className="text-sm font-bold text-text-primary shrink-0 tabular-nums">
                           {formatCurrency(entry.amount, entry.currency)}
                         </span>
                       </div>
@@ -481,7 +477,7 @@ export function ExpensesCalendar({
 
       {/* Help text when in future months */}
       {!isCurrentOrFutureMonth && (
-        <p className="text-[10px] text-text-muted text-center">
+        <p className="text-2xs text-text-muted text-center">
           Mostrando mes pasado
         </p>
       )}

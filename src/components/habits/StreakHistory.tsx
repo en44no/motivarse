@@ -70,10 +70,10 @@ export function StreakHistory({ habits, logs, userId }: StreakHistoryProps) {
   }
 
   return (
-    <div className="bg-surface rounded-2xl border border-border p-4 space-y-3 shadow-sm">
+    <div className="bg-surface rounded-2xl border border-border/60 p-4 space-y-3 shadow-sm border-t-white/[0.04]">
       <div className="flex items-center gap-2">
-        <span className="text-lg">🔥</span>
-        <h3 className="text-sm font-semibold text-text-primary">
+        <Flame size={16} className="text-secondary" />
+        <h3 className="text-base font-semibold text-text-primary">
           Historial de rachas
         </h3>
       </div>
@@ -87,9 +87,9 @@ export function StreakHistory({ habits, logs, userId }: StreakHistoryProps) {
           {shown.map((period, i) => (
             <motion.div
               key={period.startDate}
-              initial={{ opacity: 0, x: -12 }}
+              initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.06, duration: 0.3 }}
+              transition={{ delay: i * 0.05, duration: 0.2, ease: 'easeOut' }}
               className="space-y-1"
             >
               <div className="flex items-center gap-2">
@@ -100,23 +100,23 @@ export function StreakHistory({ habits, logs, userId }: StreakHistoryProps) {
                 )}
                 <span
                   className={cn(
-                    'text-sm font-bold',
+                    'text-sm font-bold tabular-nums',
                     period.isCurrent ? 'text-primary' : 'text-text-primary'
                   )}
                 >
                   {period.length} {period.length === 1 ? 'día' : 'días'}
                 </span>
                 {period.isCurrent && (
-                  <span className="text-[10px] font-medium text-primary/70 bg-primary/10 rounded-full px-1.5 py-0.5">
+                  <span className="text-2xs font-semibold text-primary bg-primary-soft rounded-full px-1.5 py-0.5">
                     actual
                   </span>
                 )}
-                <span className="text-[11px] text-text-muted ml-auto">
+                <span className="text-2xs text-text-muted ml-auto tabular-nums">
                   {formatRange(period)}
                 </span>
               </div>
 
-              <div className="h-2 w-full rounded-full bg-border/50 overflow-hidden">
+              <div className="h-2 w-full rounded-full bg-surface-light overflow-hidden">
                 <motion.div
                   className={cn(
                     'h-full rounded-full',
@@ -126,7 +126,11 @@ export function StreakHistory({ habits, logs, userId }: StreakHistoryProps) {
                   animate={{
                     width: `${Math.max((period.length / maxLength) * 100, 4)}%`,
                   }}
-                  transition={{ delay: i * 0.06 + 0.15, duration: 0.4, ease: 'easeOut' }}
+                  transition={{
+                    delay: i * 0.05 + 0.1,
+                    duration: 0.3,
+                    ease: 'easeOut',
+                  }}
                 />
               </div>
             </motion.div>

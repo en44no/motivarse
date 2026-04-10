@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Square, X, SkipForward } from 'lucide-react';
+import { Play, Pause, Square, X, SkipForward, Footprints } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Confetti } from '../ui/Confetti';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { IconButton } from '../ui/IconButton';
 import { ProgressRing } from './ProgressRing';
 import { playTimerRun, playTimerWalk, playTimerBeep, playTimerComplete } from '../../lib/sound-utils';
 import { useAuthContext } from '../../contexts/AuthContext';
@@ -202,53 +203,61 @@ export function CacoTimer({
   }
 
   const isRunPhase = phase === 'run';
-  const phaseColor = isRunPhase ? 'var(--color-primary)' : '#3b82f6';
-  const phaseBgClass = isRunPhase ? 'from-primary/20' : 'from-blue-500/20';
+  // Use semantic tokens; walk phase uses info (cyan-ish) token from index.css
+  const phaseColor = isRunPhase ? 'var(--color-primary)' : 'var(--color-info)';
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-between overflow-hidden"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-between overflow-hidden bg-background"
       style={{ top: 0, bottom: 0, left: 0, right: 0, margin: 0 }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
     >
       {/* Background gradient based on phase */}
       <motion.div
         className={cn(
-          'absolute inset-0 bg-gradient-to-b to-transparent opacity-60',
-          state === 'completed' ? 'from-primary/30' : phaseBgClass
+          'absolute inset-0 bg-gradient-to-b to-transparent',
+          state === 'completed'
+            ? 'from-primary-soft'
+            : isRunPhase
+            ? 'from-primary-soft'
+            : 'from-info-soft',
         )}
         key={`${phase}-${currentRep}`}
         initial={{ opacity: 0 }}
-        animate={{ opacity: 0.6 }}
-        transition={{ duration: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
       />
 
       {/* Phase switch flash overlay */}
       <AnimatePresence>
         {state === 'phase_switch' && (
           <motion.div
-            className="absolute inset-0 z-50 flex items-center justify-center"
-            style={{
-              backgroundColor: phaseLabel === 'CORRER!'
-                ? 'var(--color-primary-soft)'
-                : 'rgba(59, 130, 246, 0.3)',
-            }}
+            className={cn(
+              'absolute inset-0 z-50 flex items-center justify-center',
+              phaseLabel === 'CORRER!' ? 'bg-primary-soft' : 'bg-info-soft',
+            )}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
           >
-            <motion.span
-              className="text-5xl font-extrabold text-white drop-shadow-lg"
-              initial={{ scale: 0.3, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 1.5, opacity: 0 }}
-              transition={{ duration: 0.4 }}
+            <motion.div
+              className="flex flex-col items-center gap-3"
+              initial={{ y: 8, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -8, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              {phaseLabel === 'CORRER!' ? 'CORRER! 🏃' : 'CAMINAR! 🚶'}
-            </motion.span>
+              <span className="text-5xl" aria-hidden="true">
+                {phaseLabel === 'CORRER!' ? '🏃' : '🚶'}
+              </span>
+              <span className="text-4xl font-extrabold tracking-tight text-text-primary">
+                {phaseLabel === 'CORRER!' ? 'CORRER!' : 'CAMINAR!'}
+              </span>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -257,37 +266,32 @@ export function CacoTimer({
       <AnimatePresence>
         {state === 'completed' && (
           <motion.div
-            className="absolute inset-0 z-50 flex flex-col items-center justify-center"
+            className="absolute inset-0 z-50 flex flex-col items-center justify-center px-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
           >
-            {/* Confetti */}
             <Confetti count={40} />
 
             <motion.div
-              className="text-center z-10"
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              className="z-10 text-center"
+              initial={{ y: 16, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.15, duration: 0.3, ease: 'easeOut' }}
             >
-              <motion.div
-                className="text-7xl mb-4"
-                animate={{ rotate: [0, -10, 10, -10, 10, 0] }}
-                transition={{ delay: 0.5, duration: 0.8 }}
-              >
-                {'🎉'}
-              </motion.div>
-              <h2 className="text-4xl font-extrabold text-text-primary mb-2">
-                Completado!
-              </h2>
-              <p className="text-lg text-text-secondary mb-8">
-                {repetitions} repeticiones terminadas
+              <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-primary-soft text-5xl">
+                🎉
+              </div>
+              <h2 className="text-3xl font-bold text-text-primary">Completado</h2>
+              <p className="mt-2 text-base text-text-secondary">
+                {repetitions} {repetitions === 1 ? 'repetición' : 'repeticiones'} terminadas
               </p>
               <button
+                type="button"
                 onClick={handleCompleteClose}
-                className="px-8 py-4 bg-primary text-white font-bold text-lg rounded-2xl hover:bg-primary-hover active:scale-95 transition-all shadow-lg shadow-primary/30"
+                className="mt-8 rounded-2xl bg-primary px-8 py-4 text-base font-semibold text-primary-contrast shadow-[var(--shadow-glow-primary)] transition-colors duration-150 hover:bg-primary-hover active:scale-[0.97]"
               >
-                Finalizar
+                Finalizar sesión
               </button>
             </motion.div>
           </motion.div>
@@ -295,36 +299,43 @@ export function CacoTimer({
       </AnimatePresence>
 
       {/* Close button */}
-      <div className="relative z-10 w-full flex justify-end p-4 safe-top">
-        <button
+      <div className="safe-top relative z-10 flex w-full justify-end p-3">
+        <IconButton
+          variant="ghost"
+          size="md"
           onClick={handleCloseRequest}
-          className="p-2 rounded-full text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+          aria-label="Cerrar timer"
         >
-          <X size={24} />
-        </button>
+          <X size={20} />
+        </IconButton>
       </div>
 
       {/* Main timer area */}
       {state !== 'completed' && (
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-6 px-4">
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-6 px-4">
           {/* Phase indicator */}
           <motion.div
             key={`phase-${phase}-${currentRep}`}
-            initial={{ y: -20, opacity: 0 }}
+            initial={{ y: -8, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="text-center"
+            transition={{ duration: 0.2, ease: 'easeOut' }}
           >
             <span
               role="status"
               aria-live="polite"
               className={cn(
-                'inline-block px-6 py-2 rounded-full text-lg font-bold',
+                'inline-flex items-center gap-2 rounded-full px-5 py-2 text-base font-bold uppercase tracking-wide',
                 isRunPhase
-                  ? 'bg-primary/20 text-primary'
-                  : 'bg-blue-500/20 text-blue-400'
+                  ? 'bg-primary-soft text-primary ring-1 ring-primary/30'
+                  : 'bg-info-soft text-info ring-1 ring-info/30',
               )}
             >
-              {isRunPhase ? 'CORRER 🏃' : 'CAMINAR 🚶'}
+              {isRunPhase ? (
+                <Footprints size={14} />
+              ) : (
+                <span className="text-sm" aria-hidden="true">🚶</span>
+              )}
+              {isRunPhase ? 'Correr' : 'Caminar'}
             </span>
           </motion.div>
 
@@ -342,32 +353,43 @@ export function CacoTimer({
 
           {/* Repetition indicator */}
           <div className="text-center">
-            <p className="text-base font-semibold text-text-secondary">
-              Repeticion {currentRep} de {repetitions}
+            <p className="text-2xs uppercase tracking-wide text-text-muted">Repetición</p>
+            <p className="mt-0.5 text-base font-semibold tabular-nums text-text-secondary">
+              {currentRep} <span className="text-text-muted">de</span> {repetitions}
             </p>
             {/* Rep dots */}
-            <div className="flex gap-2 justify-center mt-3">
-              {Array.from({ length: repetitions }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  className={cn(
-                    'w-3 h-3 rounded-full transition-colors',
-                    i < currentRep - 1
-                      ? 'bg-primary'
-                      : i === currentRep - 1
-                      ? state === 'running' || state === 'paused'
-                        ? 'bg-primary/60'
-                        : 'bg-surface-light'
-                      : 'bg-surface-light'
-                  )}
-                  animate={
-                    i === currentRep - 1 && state === 'running'
-                      ? { scale: [1, 1.3, 1] }
-                      : {}
-                  }
-                  transition={{ repeat: Infinity, duration: 2 }}
-                />
-              ))}
+            <div className="mt-3 flex justify-center gap-1.5">
+              {Array.from({ length: repetitions }).map((_, i) => {
+                const isDone = i < currentRep - 1;
+                const isActive = i === currentRep - 1;
+                return (
+                  <motion.div
+                    key={i}
+                    className={cn(
+                      'h-2 w-2 rounded-full transition-colors duration-200',
+                      isDone
+                        ? 'bg-primary'
+                        : isActive
+                        ? state === 'running' || state === 'paused'
+                          ? isRunPhase
+                            ? 'bg-primary/70'
+                            : 'bg-info/70'
+                          : 'bg-surface-light'
+                        : 'bg-surface-light',
+                    )}
+                    animate={
+                      isActive && state === 'running'
+                        ? { scale: [1, 1.25, 1] }
+                        : { scale: 1 }
+                    }
+                    transition={{
+                      repeat: isActive && state === 'running' ? Infinity : 0,
+                      duration: 2,
+                      ease: 'easeOut',
+                    }}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>
@@ -375,52 +397,67 @@ export function CacoTimer({
 
       {/* Controls */}
       {state !== 'completed' && (
-        <div className="relative z-10 flex items-center justify-center gap-6 pt-4 pb-[max(3rem,env(safe-area-inset-bottom,3rem))]">
+        <div className="relative z-10 flex items-center justify-center gap-5 pt-4 pb-[max(3rem,env(safe-area-inset-bottom,3rem))]">
           {/* Stop button */}
-          {(state === 'running' || state === 'paused') && (
-            <motion.button
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              onClick={handleStop}
-              className="w-14 h-14 rounded-full bg-surface-light flex items-center justify-center text-text-secondary hover:text-danger hover:bg-danger/20 transition-colors active:scale-90"
-            >
-              <Square size={22} fill="currentColor" />
-            </motion.button>
-          )}
+          <AnimatePresence>
+            {(state === 'running' || state === 'paused') && (
+              <motion.button
+                key="stop"
+                type="button"
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.6, opacity: 0 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                onClick={handleStop}
+                aria-label="Detener sesión"
+                className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/60 bg-surface/80 text-text-secondary backdrop-blur transition-colors duration-150 hover:border-danger/40 hover:bg-danger/10 hover:text-danger active:scale-95"
+              >
+                <Square size={20} fill="currentColor" />
+              </motion.button>
+            )}
+          </AnimatePresence>
 
           {/* Play/Pause button */}
           {state !== 'phase_switch' && (
             <motion.button
+              type="button"
               onClick={handlePlayPause}
+              aria-label={state === 'running' ? 'Pausar' : state === 'paused' ? 'Reanudar' : 'Iniciar'}
+              whileTap={{ scale: 0.94 }}
+              transition={{ duration: 0.1, ease: 'easeOut' }}
               className={cn(
-                'w-20 h-20 rounded-full flex items-center justify-center text-white shadow-lg active:scale-90 transition-transform',
+                'flex h-[88px] w-[88px] items-center justify-center rounded-full text-primary-contrast shadow-lg transition-colors duration-150',
                 state === 'running'
-                  ? 'bg-secondary shadow-secondary/30'
-                  : 'bg-primary shadow-primary/30'
+                  ? 'bg-secondary shadow-[var(--shadow-glow-secondary)] hover:bg-secondary-hover'
+                  : 'bg-primary shadow-[var(--shadow-glow-primary)] hover:bg-primary-hover',
               )}
-              whileTap={{ scale: 0.9 }}
             >
               {state === 'running' ? (
-                <Pause size={32} fill="white" />
+                <Pause size={34} fill="currentColor" />
               ) : (
-                <Play size={32} fill="white" className="ml-1" />
+                <Play size={34} fill="currentColor" className="ml-1" />
               )}
             </motion.button>
           )}
 
           {/* Skip button */}
-          {(state === 'running' || state === 'paused') && (
-            <motion.button
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              onClick={handleSkip}
-              className="w-14 h-14 rounded-full bg-surface-light flex items-center justify-center text-text-secondary hover:text-secondary hover:bg-secondary/20 transition-colors active:scale-90"
-            >
-              <SkipForward size={22} />
-            </motion.button>
-          )}
+          <AnimatePresence>
+            {(state === 'running' || state === 'paused') && (
+              <motion.button
+                key="skip"
+                type="button"
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.6, opacity: 0 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                onClick={handleSkip}
+                aria-label="Saltar fase"
+                className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/60 bg-surface/80 text-text-secondary backdrop-blur transition-colors duration-150 hover:border-info/40 hover:bg-info/10 hover:text-info active:scale-95"
+              >
+                <SkipForward size={20} />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
       )}
 

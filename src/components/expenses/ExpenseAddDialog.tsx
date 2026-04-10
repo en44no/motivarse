@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Check, X } from 'lucide-react';
 import { Dialog } from '../ui/Dialog';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { IconButton } from '../ui/IconButton';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useCoupleContext } from '../../contexts/CoupleContext';
 import { useExpenses } from '../../hooks/useExpenses';
@@ -181,9 +182,37 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
     setNewCatLabel('');
   }
 
+  const canSubmit = !!name.trim() && price > 0 && installments > 0;
+
+  // Chip pill styles — compartido entre todos los selectores de este form
+  const pillBase =
+    'inline-flex items-center justify-center min-h-9 px-3 rounded-full text-xs font-medium transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60';
+  const pillActive = 'bg-primary text-primary-contrast shadow-sm shadow-primary/30';
+  const pillInactive =
+    'bg-surface-hover text-text-muted hover:text-text-secondary';
+  const pillDashed =
+    'bg-surface-hover text-text-muted border border-dashed border-border';
+
   return (
-    <Dialog open={open} onClose={onClose} title="Nuevo gasto">
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Nuevo gasto"
+      subtitle="Registra un gasto fijo o en cuotas"
+      footer={
+        <Button
+          type="submit"
+          form="expense-add-form"
+          className="w-full"
+          size="lg"
+          isLoading={submitting}
+          disabled={!canSubmit || submitting}
+        >
+          Crear gasto
+        </Button>
+      }
+    >
+      <form id="expense-add-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Nombre */}
         <Input
           label="Nombre"
@@ -235,10 +264,8 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
                   type="button"
                   onClick={() => setCurrency(c)}
                   className={cn(
-                    'px-3 py-1 rounded-full text-xs font-medium transition-all',
-                    currency === c
-                      ? 'bg-primary text-white shadow-sm shadow-primary/30'
-                      : 'bg-surface-hover text-text-muted',
+                    pillBase,
+                    currency === c ? pillActive : pillInactive,
                   )}
                 >
                   {c}
@@ -254,24 +281,14 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
               <button
                 type="button"
                 onClick={() => setIsFixed(true)}
-                className={cn(
-                  'px-3 py-1 rounded-full text-xs font-medium transition-all',
-                  isFixed
-                    ? 'bg-primary text-white shadow-sm shadow-primary/30'
-                    : 'bg-surface-hover text-text-muted',
-                )}
+                className={cn(pillBase, isFixed ? pillActive : pillInactive)}
               >
                 Fija
               </button>
               <button
                 type="button"
                 onClick={() => setIsFixed(false)}
-                className={cn(
-                  'px-3 py-1 rounded-full text-xs font-medium transition-all',
-                  !isFixed
-                    ? 'bg-primary text-white shadow-sm shadow-primary/30'
-                    : 'bg-surface-hover text-text-muted',
-                )}
+                className={cn(pillBase, !isFixed ? pillActive : pillInactive)}
               >
                 Variable
               </button>
@@ -305,10 +322,8 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
                 type="button"
                 onClick={() => setAssignedTo(opt.value)}
                 className={cn(
-                  'px-3 py-1 rounded-full text-xs font-medium transition-all',
-                  assignedTo === opt.value
-                    ? 'bg-primary text-white shadow-sm shadow-primary/30'
-                    : 'bg-surface-hover text-text-muted',
+                  pillBase,
+                  assignedTo === opt.value ? pillActive : pillInactive,
                 )}
               >
                 {opt.label}
@@ -331,10 +346,8 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
                   setSelectedCard(selectedCard === card.id ? undefined : card.id)
                 }
                 className={cn(
-                  'px-2.5 py-1 rounded-full text-xs font-medium transition-all',
-                  selectedCard === card.id
-                    ? 'bg-primary text-white shadow-sm shadow-primary/30'
-                    : 'bg-surface-hover text-text-muted',
+                  pillBase,
+                  selectedCard === card.id ? pillActive : pillInactive,
                 )}
               >
                 {card.name}
@@ -344,7 +357,7 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
               <button
                 type="button"
                 onClick={() => setShowNewCard(true)}
-                className="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-muted border border-dashed border-border"
+                className={cn(pillBase, pillDashed)}
               >
                 + Nueva
               </button>
@@ -356,25 +369,25 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
                 value={newCardName}
                 onChange={(e) => setNewCardName(e.target.value)}
                 placeholder="Nombre tarjeta"
-                className="flex-1 rounded-lg border border-border bg-surface-hover px-3 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary/50"
+                className="flex-1 rounded-lg border border-border bg-surface-hover px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary/50"
               />
-              <button
-                type="button"
+              <IconButton
+                variant="solid"
+                aria-label="Confirmar tarjeta"
                 onClick={handleAddCard}
-                className="text-primary text-sm font-bold"
               >
-                &#x2713;
-              </button>
-              <button
-                type="button"
+                <Check size={18} />
+              </IconButton>
+              <IconButton
+                variant="ghost"
+                aria-label="Cancelar"
                 onClick={() => {
                   setShowNewCard(false);
                   setNewCardName('');
                 }}
-                className="text-text-muted text-sm"
               >
-                &#x2717;
-              </button>
+                <X size={18} />
+              </IconButton>
             </div>
           )}
         </div>
@@ -416,10 +429,8 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
                   )
                 }
                 className={cn(
-                  'px-2.5 py-1 rounded-full text-xs font-medium transition-all',
-                  selectedCategory === cat.id
-                    ? 'bg-primary text-white shadow-sm shadow-primary/30'
-                    : 'bg-surface-hover text-text-muted',
+                  pillBase,
+                  selectedCategory === cat.id ? pillActive : pillInactive,
                 )}
               >
                 {cat.emoji} {cat.label}
@@ -429,7 +440,7 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
               <button
                 type="button"
                 onClick={() => setShowNewCat(true)}
-                className="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-hover text-text-muted border border-dashed border-border"
+                className={cn(pillBase, pillDashed)}
               >
                 + Nueva
               </button>
@@ -442,39 +453,36 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
                 onChange={(e) => setNewCatEmoji(e.target.value)}
                 placeholder={'\uD83D\uDCE6'}
                 maxLength={2}
-                className="w-10 rounded-lg border border-border bg-surface-hover px-2 py-1.5 text-xs text-center text-text-primary focus:outline-none focus:ring-1 focus:ring-primary/50"
+                className="w-11 h-11 rounded-lg border border-border bg-surface-hover px-2 text-sm text-center text-text-primary focus:outline-none focus:ring-1 focus:ring-primary/50"
               />
               <input
                 value={newCatLabel}
                 onChange={(e) => setNewCatLabel(e.target.value)}
                 placeholder="Nombre"
-                className="flex-1 rounded-lg border border-border bg-surface-hover px-3 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary/50"
+                className="flex-1 rounded-lg border border-border bg-surface-hover px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary/50"
               />
-              <button
-                type="button"
+              <IconButton
+                variant="solid"
+                aria-label="Confirmar categoria"
                 onClick={handleAddCategory}
-                className="text-primary text-sm font-bold"
               >
-                &#x2713;
-              </button>
-              <button
-                type="button"
+                <Check size={18} />
+              </IconButton>
+              <IconButton
+                variant="ghost"
+                aria-label="Cancelar"
                 onClick={() => {
                   setShowNewCat(false);
                   setNewCatEmoji('');
                   setNewCatLabel('');
                 }}
-                className="text-text-muted text-sm"
               >
-                &#x2717;
-              </button>
+                <X size={18} />
+              </IconButton>
             </div>
           )}
         </div>
 
-        <Button type="submit" className="w-full" size="lg" isLoading={submitting}>
-          Crear gasto
-        </Button>
       </form>
     </Dialog>
   );

@@ -1,5 +1,4 @@
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { Card } from '../ui/Card';
 import type { RunLog } from '../../types/running';
 import { formatShortDate } from '../../lib/date-utils';
 
@@ -20,32 +19,44 @@ export function RunProgressChart({ logs }: RunProgressChartProps) {
     }));
 
   return (
-    <Card>
-      <h3 className="text-sm font-bold text-text-secondary mb-3">Progreso</h3>
+    <section
+      className="rounded-2xl border border-border/60 bg-surface p-4 shadow-sm"
+      aria-label="Progreso en el tiempo"
+    >
+      <div className="mb-3 flex items-end justify-between">
+        <div>
+          <p className="text-2xs uppercase tracking-wide text-text-muted">Progreso</p>
+          <h3 className="mt-0.5 text-base font-semibold text-text-primary">
+            Últimas {data.length} carreras
+          </h3>
+        </div>
+      </div>
       <div className="h-40">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data}>
+          <AreaChart data={data} margin={{ top: 5, right: 4, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="colorDuration" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.35} />
                 <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 10, fill: '#64748b' }}
+              tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis hide />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#1a2332',
-                border: '1px solid #2a3a50',
+                backgroundColor: 'var(--color-surface-elevated)',
+                border: '1px solid var(--color-border)',
                 borderRadius: '12px',
                 fontSize: '12px',
-                color: '#f1f5f9',
+                color: 'var(--color-text-primary)',
+                boxShadow: 'var(--shadow-md)',
               }}
+              cursor={{ stroke: 'var(--color-border-light)', strokeWidth: 1 }}
               formatter={(value) => [`${value} min`, 'Duración']}
             />
             <Area
@@ -58,6 +69,6 @@ export function RunProgressChart({ logs }: RunProgressChartProps) {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-    </Card>
+    </section>
   );
 }

@@ -18,8 +18,22 @@ import { Card } from '../components/ui/Card';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { ROUTES } from '../config/routes';
 
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="mb-3 px-1 text-2xs font-semibold uppercase tracking-wide text-text-muted">
+      {children}
+    </h3>
+  );
+}
+
 export function DashboardPage() {
-  const { todayHabits, myHabits, todayProgress, partnerTodayLogs, loading: habitsLoading } = useHabits();
+  const {
+    todayHabits,
+    myHabits,
+    todayProgress,
+    partnerTodayLogs,
+    loading: habitsLoading,
+  } = useHabits();
   const { bestStreak } = useStreaks();
   const { profile } = useAuthContext();
   const { partnerName } = useCoupleContext();
@@ -36,6 +50,7 @@ export function DashboardPage() {
   );
 
   const completedCount = Math.round((todayProgress / 100) * todayHabits.length);
+  const hasStreak = !!bestStreak && bestStreak.currentStreak > 0;
 
   if (habitsLoading) {
     return (
@@ -48,10 +63,14 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-5 py-4">
+    <div className="space-y-6 py-4">
       <h1 className="sr-only">Dashboard</h1>
+
+      {/* Floating/overlay layers — don't break flow */}
       <FloatingLoveNotes />
       <ReceivedReactions />
+
+      {/* Hero: progreso del dia */}
       <TodaySummary
         progress={todayProgress}
         completedCount={completedCount}
@@ -59,54 +78,71 @@ export function DashboardPage() {
         soundEnabled={soundEnabled}
       />
 
-      {partnerName && (
-        <PartnerStatus
-          partnerName={partnerName}
-          completedCount={partnerCompletedToday}
-          totalCount={todayHabits.length}
-        />
+      {/* Pareja + racha: contexto emocional */}
+      {(partnerName || hasStreak) && (
+        <section className="space-y-3">
+          {partnerName && (
+            <PartnerStatus
+              partnerName={partnerName}
+              completedCount={partnerCompletedToday}
+              totalCount={todayHabits.length}
+            />
+          )}
+          <StreakHighlight bestStreak={bestStreak} habits={myHabits} />
+        </section>
       )}
 
-      <StreakHighlight bestStreak={bestStreak} habits={myHabits} />
+      {/* Entry points: navegacion a otras secciones */}
+      <section className="space-y-3">
+        <SectionLabel>Explorar</SectionLabel>
 
-      {pendingTodos.length > 0 && (
-        <Link to={ROUTES.SHARED} className="block">
+        {pendingTodos.length > 0 && (
+          <Link to={ROUTES.SHARED} className="block">
+            <Card variant="interactive" className="flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-light">
+                <ShoppingCart size={20} className="text-text-secondary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-text-primary">
+                  Mandados pendientes
+                </p>
+                <p className="mt-0.5 text-xs text-text-muted">
+                  {pendingTodos.length === 1
+                    ? '1 pendiente por hacer'
+                    : `${pendingTodos.length} pendientes por hacer`}
+                </p>
+              </div>
+              <span className="shrink-0 text-xl font-bold tabular-nums text-text-primary">
+                {pendingTodos.length}
+              </span>
+              <ChevronRight size={18} className="shrink-0 text-text-muted" />
+            </Card>
+          </Link>
+        )}
+
+        <Link to={ROUTES.INSIGHTS} className="block">
           <Card variant="interactive" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-secondary-soft flex items-center justify-center shrink-0">
-              <ShoppingCart size={20} className="text-secondary" />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-light">
+              <BarChart3 size={20} className="text-text-secondary" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-text-primary">Mandados pendientes</p>
-              <p className="text-xs text-text-muted">
-                {pendingTodos.length} {pendingTodos.length === 1 ? 'mandado por hacer' : 'mandados por hacer'}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-text-primary">Resumen mensual</p>
+              <p className="mt-0.5 text-xs text-text-muted">
+                Estadísticas e insights del mes
               </p>
             </div>
-            <span className="shrink-0 text-lg font-bold text-secondary">{pendingTodos.length}</span>
+            <ChevronRight size={18} className="shrink-0 text-text-muted" />
           </Card>
         </Link>
-      )}
 
-      <Link to={ROUTES.INSIGHTS} className="block">
-        <Card variant="interactive" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-            <BarChart3 size={20} className="text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-text-primary">Resumen mensual</p>
-            <p className="text-xs text-text-muted">Estadísticas e insights del mes</p>
-          </div>
-          <ChevronRight size={18} className="text-text-muted shrink-0" />
-        </Card>
-      </Link>
+        <RunningProgress progress={progress} />
+      </section>
 
-      <RunningProgress progress={progress} />
-
-      <div>
-        <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 px-1">
-          Acciones rápidas
-        </h3>
+      {/* Quick actions */}
+      <section>
+        <SectionLabel>Acciones rápidas</SectionLabel>
         <QuickActions />
-      </div>
+      </section>
     </div>
   );
 }

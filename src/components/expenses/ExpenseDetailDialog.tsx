@@ -10,10 +10,12 @@ import {
   User,
   StickyNote,
   Pencil,
+  X,
 } from 'lucide-react';
 import { Dialog } from '../ui/Dialog';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { IconButton } from '../ui/IconButton';
 import { ProgressBar } from '../ui/ProgressBar';
 import { formatCurrency } from '../../lib/currency-utils';
 import { cn } from '../../lib/utils';
@@ -195,8 +197,49 @@ export function ExpenseDetailDialog({
     }
   }
 
+  const subtitleText = [
+    category ? `${category.emoji} ${category.label}` : null,
+    card?.name,
+    memberNames[expense.assignedTo],
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
-    <Dialog open={expense !== null} onClose={onClose} title={expense.name}>
+    <Dialog
+      open={expense !== null}
+      onClose={onClose}
+      title={expense.name}
+      subtitle={subtitleText || undefined}
+      footer={
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="md"
+            className="flex-1"
+            onClick={async () => {
+              await onDuplicate(expense.id);
+              onClose();
+            }}
+          >
+            <Copy size={16} />
+            Duplicar
+          </Button>
+          <Button
+            variant="danger"
+            size="md"
+            className="flex-1"
+            onClick={async () => {
+              await onDelete(expense.id);
+              onClose();
+            }}
+          >
+            <Trash2 size={16} />
+            Eliminar
+          </Button>
+        </div>
+      }
+    >
       {/* Info section */}
       <div className="space-y-3 mb-5">
         <div className="grid grid-cols-2 gap-3">
@@ -229,7 +272,7 @@ export function ExpenseDetailDialog({
         <div className="flex flex-wrap items-center gap-2">
           {category && (
             <Badge variant="secondary">
-              <span className="text-[13px] leading-none">{category.emoji}</span>
+              <span className="text-sm leading-none">{category.emoji}</span>
               {category.label}
             </Badge>
           )}
@@ -260,8 +303,7 @@ export function ExpenseDetailDialog({
                 disabled={savingDate}
                 onChange={(e) => handleSaveDate(e.target.value)}
                 onBlur={() => setEditingDate(false)}
-                autoFocus
-                className="rounded-md border border-border bg-surface-hover px-1.5 py-0.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-primary/50"
+                className="rounded-md border border-border bg-surface-hover px-2 py-1 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-primary/50"
               />
             </span>
           ) : (
@@ -297,10 +339,10 @@ export function ExpenseDetailDialog({
 
       {/* Mismatch banner */}
       {hasMismatch && (
-        <div className="mb-4 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2">
-          <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
+        <div className="mb-4 px-3 py-2.5 rounded-xl bg-warning-soft border border-warning/30 flex items-start gap-2">
+          <AlertTriangle size={16} className="text-warning shrink-0 mt-0.5" />
           <div className="text-xs leading-snug">
-            <p className="font-semibold text-amber-500">
+            <p className="font-semibold text-warning">
               {mismatchedPayments.length}{' '}
               {mismatchedPayments.length === 1 ? 'cuota no la pago' : 'cuotas no las pago'}{' '}
               quien correspondia
@@ -319,7 +361,7 @@ export function ExpenseDetailDialog({
       <div>
         <div className="mb-3">
           <h3 className="text-sm font-semibold text-text-primary mb-2">Cuotas</h3>
-          <p className="text-[11px] text-text-muted mb-1.5">Marcar como pagado por</p>
+          <p className="text-2xs text-text-muted mb-1.5">Marcar como pagado por</p>
           <div className="flex gap-1.5">
             {PAID_BY_OPTIONS.map((opt) => (
               <button
@@ -327,7 +369,7 @@ export function ExpenseDetailDialog({
                 type="button"
                 onClick={() => setPaidByMode(opt.value)}
                 className={cn(
-                  'px-3 py-1 rounded-full text-xs font-medium transition-all',
+                  'inline-flex items-center justify-center min-h-9 px-3 rounded-full text-xs font-medium transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
                   paidByMode === opt.value
                     ? 'bg-primary text-primary-contrast shadow-sm shadow-primary/30'
                     : 'bg-surface-hover text-text-muted hover:text-text-secondary',
@@ -357,9 +399,9 @@ export function ExpenseDetailDialog({
                     onClick={() => handleToggleFixed(num)}
                     disabled={loading}
                     className={cn(
-                      'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
+                      'w-full min-h-11 flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-150 ease-out',
                       mismatch
-                        ? 'bg-amber-500/10 border border-amber-500/30'
+                        ? 'bg-warning-soft border border-warning/30'
                         : paid
                           ? 'bg-primary/10 border border-primary/20'
                           : 'bg-surface-light border border-transparent hover:border-border'
@@ -385,8 +427,8 @@ export function ExpenseDetailDialog({
                       {paid && paidByLabel && (
                         <span
                           className={cn(
-                            'ml-1.5 text-[10px] font-normal',
-                            mismatch ? 'text-amber-500' : 'text-text-muted'
+                            'ml-1.5 text-2xs font-normal',
+                            mismatch ? 'text-warning' : 'text-text-muted'
                           )}
                         >
                           {mismatch && <AlertTriangle size={10} className="inline -mt-0.5 mr-0.5" />}
@@ -394,11 +436,11 @@ export function ExpenseDetailDialog({
                         </span>
                       )}
                     </span>
-                    <span className="text-xs text-text-muted">
+                    <span className="text-2xs text-text-muted">
                       {formatCurrency(expense.installmentPrice, expense.currency)}
                     </span>
                     {paid && payment && (
-                      <span className="text-xs text-text-muted">
+                      <span className="text-2xs text-text-muted">
                         {formatDate(payment.paidAt)}
                       </span>
                     )}
@@ -424,7 +466,7 @@ export function ExpenseDetailDialog({
                         className={cn(
                           'flex items-center gap-3 px-3 py-2.5 rounded-xl border',
                           mismatch
-                            ? 'bg-amber-500/10 border-amber-500/30'
+                            ? 'bg-warning-soft border-warning/30'
                             : 'bg-primary/10 border-primary/20'
                         )}
                       >
@@ -436,8 +478,8 @@ export function ExpenseDetailDialog({
                           {paidByLabel && (
                             <span
                               className={cn(
-                                'ml-1.5 text-[10px] font-normal',
-                                mismatch ? 'text-amber-500' : 'text-text-muted'
+                                'ml-1.5 text-2xs font-normal',
+                                mismatch ? 'text-warning' : 'text-text-muted'
                               )}
                             >
                               {mismatch && (
@@ -447,10 +489,10 @@ export function ExpenseDetailDialog({
                             </span>
                           )}
                         </span>
-                        <span className="text-xs text-text-muted">
+                        <span className="text-2xs text-text-muted">
                           {formatCurrency(payment.amount, expense.currency)}
                         </span>
-                        <span className="text-xs text-text-muted">
+                        <span className="text-2xs text-text-muted">
                           {formatDate(payment.paidAt)}
                         </span>
                       </div>
@@ -476,32 +518,36 @@ export function ExpenseDetailDialog({
                     value={paymentAmount}
                     onChange={(e) => setPaymentAmount(e.target.value)}
                     placeholder={String(expense.installmentPrice)}
-                    className="w-full pl-8 pr-3 py-2 text-sm rounded-xl bg-surface-light border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary"
+                    className="w-full h-11 pl-8 pr-3 text-sm rounded-xl bg-surface-light border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary"
                   />
                 </div>
-                <Button
-                  size="sm"
+                <IconButton
+                  variant="solid"
+                  aria-label="Confirmar pago"
                   onClick={handleAddVariablePayment}
-                  isLoading={loadingInstallment === -1}
-                  disabled={!paymentAmount || parseFloat(paymentAmount) <= 0}
+                  disabled={
+                    !paymentAmount ||
+                    parseFloat(paymentAmount) <= 0 ||
+                    loadingInstallment === -1
+                  }
                 >
-                  <Check size={16} />
-                </Button>
-                <Button
-                  size="sm"
+                  <Check size={18} />
+                </IconButton>
+                <IconButton
                   variant="ghost"
+                  aria-label="Cancelar"
                   onClick={() => {
                     setShowPaymentForm(false);
                     setPaymentAmount('');
                   }}
                 >
-                  Cancelar
-                </Button>
+                  <X size={18} />
+                </IconButton>
               </div>
             ) : (
               <Button
                 variant="outline"
-                size="sm"
+                size="md"
                 className="w-full mt-2"
                 onClick={() => {
                   setPaymentAmount(String(expense.installmentPrice));
@@ -526,9 +572,9 @@ export function ExpenseDetailDialog({
             <button
               type="button"
               onClick={startEditingDescription}
-              className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+              className="inline-flex items-center gap-1 min-h-11 px-2 -mr-2 text-xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-lg"
             >
-              <Pencil size={11} />
+              <Pencil size={12} />
               Editar
             </button>
           )}
@@ -546,7 +592,7 @@ export function ExpenseDetailDialog({
               className="w-full rounded-xl border border-border bg-surface-light px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary resize-none"
             />
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] text-text-muted">
+              <span className="text-2xs text-text-muted">
                 {descriptionDraft.length}/500
               </span>
               <div className="flex items-center gap-2">
@@ -583,33 +629,6 @@ export function ExpenseDetailDialog({
         )}
       </div>
 
-      {/* Actions */}
-      <div className="mt-6 pt-4 border-t border-border flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1"
-          onClick={async () => {
-            await onDuplicate(expense.id);
-            onClose();
-          }}
-        >
-          <Copy size={16} />
-          Duplicar
-        </Button>
-        <Button
-          variant="danger"
-          size="sm"
-          className="flex-1"
-          onClick={async () => {
-            await onDelete(expense.id);
-            onClose();
-          }}
-        >
-          <Trash2 size={16} />
-          Eliminar
-        </Button>
-      </div>
     </Dialog>
   );
 }

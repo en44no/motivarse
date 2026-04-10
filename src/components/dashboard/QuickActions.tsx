@@ -2,29 +2,40 @@ import { Plus, Footprints, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../config/routes';
 
+const ACTIONS = [
+  {
+    icon: Plus,
+    label: 'Nuevo hábito',
+    route: ROUTES.HABITS,
+  },
+  {
+    icon: Footprints,
+    label: 'Correr',
+    route: ROUTES.RUNNING,
+  },
+  {
+    icon: ShoppingCart,
+    label: 'Mandado',
+    route: ROUTES.SHARED,
+  },
+] as const;
+
 export function QuickActions() {
   const navigate = useNavigate();
 
-  const actions = [
-    { icon: Plus, label: 'Nuevo hábito', color: 'bg-primary-soft text-primary', route: ROUTES.HABITS },
-    { icon: Footprints, label: 'Registrar carrera', color: 'bg-secondary-soft text-secondary', route: ROUTES.RUNNING },
-    { icon: ShoppingCart, label: 'Agregar mandado', color: 'bg-accent-soft text-accent', route: ROUTES.SHARED },
-  ];
-
   return (
     <div className="grid grid-cols-3 gap-2">
-      {actions.map((action) => (
+      {ACTIONS.map(({ icon: Icon, label, route }) => (
         <button
-          key={action.label}
-          onClick={() => navigate(action.route)}
-          className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-surface border border-border shadow-sm hover:bg-gradient-to-b hover:from-surface-hover hover:to-surface transition-all active:scale-95"
+          key={label}
+          type="button"
+          onClick={() => navigate(route)}
+          className="flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-2xl border border-border/60 bg-surface p-4 text-text-secondary transition-colors duration-150 hover:bg-surface-hover hover:text-text-primary active:scale-[0.98]"
         >
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center border border-current/10 ${action.color}`}>
-            <action.icon size={20} />
-          </div>
-          <span className="text-[11px] font-medium text-text-secondary text-center leading-tight">
-            {action.label}
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-surface-light">
+            <Icon size={20} className="text-text-secondary" />
           </span>
+          <span className="text-xs font-medium leading-tight">{label}</span>
         </button>
       ))}
     </div>

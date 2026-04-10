@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
-import { Bot, X, Send, Loader2 } from 'lucide-react';
+import { Bot, X, Send, Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useCoupleContext } from '../../contexts/CoupleContext';
@@ -15,6 +15,7 @@ import {
   loadCoachMemory,
   saveCoachMemory,
 } from '../../services/coachMemory.service';
+import { cn } from '../../lib/utils';
 
 function TypingDots() {
   return (
@@ -23,8 +24,8 @@ function TypingDots() {
         <motion.div
           key={i}
           className="w-2 h-2 rounded-full bg-text-muted"
-          animate={{ opacity: [0.3, 1, 0.3], y: [0, -4, 0] }}
-          transition={{ duration: 1, repeat: Infinity, delay: i * 0.18 }}
+          animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
+          transition={{ duration: 1, repeat: Infinity, delay: i * 0.18, ease: 'easeInOut' }}
         />
       ))}
     </div>
@@ -40,7 +41,6 @@ export default function CoachChat() {
   const [memory, setMemory] = useState('');
   const newUserMessages = useRef(0);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const { profile } = useAuthContext();
   const { partnerName } = useCoupleContext();
@@ -96,11 +96,7 @@ export default function CoachChat() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 350);
-    }
-  }, [open]);
+  // NOTE: intentionally NO autoFocus en el input — queda horrible en mobile con el teclado
 
   async function handleOpen() {
     setOpen(true);
@@ -185,7 +181,13 @@ export default function CoachChat() {
       {createPortal(
         <button
           onClick={handleOpen}
-          className="fixed bottom-28 left-4 w-12 h-12 rounded-full bg-primary text-white shadow-lg shadow-primary/40 flex items-center justify-center z-30 hover:bg-primary-hover transition-colors active:scale-90"
+          className={cn(
+            'fixed bottom-28 left-4 w-12 h-12 rounded-full bg-primary text-primary-contrast',
+            'shadow-[var(--shadow-glow-primary)] flex items-center justify-center z-30',
+            'hover:bg-primary-hover transition-colors duration-150 ease-out active:scale-95',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          )}
+          aria-label="Abrir Coach IA"
           title="Coach IA"
         >
           <Bot size={22} />
@@ -198,66 +200,106 @@ export default function CoachChat() {
           {open && (
             <>
               <motion.div
-                className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+                className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
                 onClick={handleClose}
               />
 
               <motion.div
-                className="fixed inset-x-0 bottom-0 z-50 flex flex-col bg-surface border-t border-border rounded-t-3xl max-w-lg mx-auto"
-                style={{ height: '85vh' }}
+                className="fixed inset-x-0 bottom-0 z-50 flex flex-col bg-surface border-t border-border/60 rounded-t-3xl max-w-lg mx-auto shadow-lg"
+                style={{ height: '88vh' }}
                 initial={{ y: '100%' }}
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
-                transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+                transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
               >
+                {/* Drag handle */}
+                <div className="flex justify-center pt-3 pb-1 shrink-0">
+                  <div className="w-10 h-1 rounded-full bg-border" />
+                </div>
+
                 {/* Header */}
-                <div className="flex items-center gap-3 px-5 py-4 border-b border-border shrink-0">
-                  <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
-                    <Bot size={18} className="text-primary" />
+                <div className="flex items-center gap-3 px-5 pt-2 pb-4 border-b border-border/60 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-primary-soft flex items-center justify-center">
+                    <Bot size={20} className="text-primary" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-text-primary">Coach IA</p>
-                    <p className="text-xs text-text-muted">Moti · tu coach personal</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-semibold text-text-primary leading-tight">
+                      Coach IA
+                    </p>
+                    <p className="text-2xs text-text-muted mt-0.5">
+                      Moti · tu coach personal
+                    </p>
                   </div>
                   <button
                     onClick={handleClose}
-                    className="w-8 h-8 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover flex items-center justify-center transition-colors"
+                    aria-label="Cerrar coach"
+                    className="w-11 h-11 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover flex items-center justify-center transition-colors duration-150 ease-out"
                   >
-                    <X size={18} />
+                    <X size={20} />
                   </button>
                 </div>
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                  {messages.length === 0 && !loading && (
+                    <div className="h-full flex flex-col items-center justify-center text-center py-8">
+                      <div className="w-14 h-14 rounded-2xl bg-primary-soft flex items-center justify-center mb-3">
+                        <Sparkles size={24} className="text-primary" />
+                      </div>
+                      <p className="text-base font-semibold text-text-primary mb-1">
+                        Hola! Soy Moti
+                      </p>
+                      <p className="text-sm text-text-muted leading-relaxed max-w-xs">
+                        Preguntame lo que quieras sobre tus hábitos, tu racha o cómo mantenerte motivado.
+                      </p>
+                    </div>
+                  )}
+
                   <AnimatePresence initial={false}>
                     {messages.map((msg, i) => (
                       <motion.div
                         key={i}
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.18, ease: 'easeOut' }}
                         className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                          className={cn(
+                            'max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
                             msg.role === 'user'
-                              ? 'bg-primary text-white rounded-br-sm'
-                              : 'bg-surface-hover text-text-primary rounded-bl-sm'
-                          }`}
+                              ? 'bg-primary text-primary-contrast rounded-br-md font-medium'
+                              : 'bg-surface-hover text-text-primary rounded-bl-md border border-border/60',
+                          )}
                         >
                           {msg.role === 'user' ? (
                             msg.content
                           ) : (
                             <ReactMarkdown
                               components={{
-                                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                                strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                                p: ({ children }) => (
+                                  <p className="mb-2 last:mb-0">{children}</p>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-semibold text-text-primary">{children}</strong>
+                                ),
                                 em: ({ children }) => <em className="italic">{children}</em>,
-                                ul: ({ children }) => <ul className="list-disc pl-4 mb-2 last:mb-0 space-y-0.5">{children}</ul>,
-                                ol: ({ children }) => <ol className="list-decimal pl-4 mb-2 last:mb-0 space-y-0.5">{children}</ol>,
-                                li: ({ children }) => <li>{children}</li>,
+                                ul: ({ children }) => (
+                                  <ul className="list-disc pl-5 mb-2 last:mb-0 space-y-1">{children}</ul>
+                                ),
+                                ol: ({ children }) => (
+                                  <ol className="list-decimal pl-5 mb-2 last:mb-0 space-y-1">{children}</ol>
+                                ),
+                                li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                                code: ({ children }) => (
+                                  <code className="px-1.5 py-0.5 rounded bg-surface text-primary text-xs font-mono">
+                                    {children}
+                                  </code>
+                                ),
                               }}
                             >
                               {msg.content}
@@ -270,7 +312,7 @@ export default function CoachChat() {
 
                   {loading && (
                     <div className="flex justify-start">
-                      <div className="bg-surface-hover rounded-2xl rounded-bl-sm">
+                      <div className="bg-surface-hover border border-border/60 rounded-2xl rounded-bl-md">
                         <TypingDots />
                       </div>
                     </div>
@@ -283,17 +325,24 @@ export default function CoachChat() {
                 <AnimatePresence>
                   {showChips && (
                     <motion.div
-                      initial={{ opacity: 0, y: 6 }}
+                      initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 6 }}
-                      className="px-4 pb-2 shrink-0"
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                      className="px-4 pb-3 shrink-0"
                     >
                       <div className="flex gap-2 overflow-x-auto scrollbar-none">
                         {preQuestions.map((q) => (
                           <button
                             key={q}
                             onClick={() => handleSend(q)}
-                            className="shrink-0 rounded-full border border-border bg-surface-hover text-text-secondary text-xs px-3 py-1.5 hover:border-primary/60 hover:text-primary transition-colors active:scale-95"
+                            className={cn(
+                              'shrink-0 rounded-full border border-border/80 bg-surface-hover text-text-secondary',
+                              'text-xs font-medium px-3.5 py-2',
+                              'hover:border-primary/60 hover:text-primary hover:bg-primary-soft',
+                              'transition-colors duration-150 ease-out active:scale-95',
+                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
+                            )}
                           >
                             {q}
                           </button>
@@ -304,22 +353,32 @@ export default function CoachChat() {
                 </AnimatePresence>
 
                 {/* Input */}
-                <div className="px-4 py-3 border-t border-border shrink-0 flex gap-2 items-center pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))]">
+                <div className="px-4 py-3 border-t border-border/60 shrink-0 flex gap-2 items-center pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))]">
                   <input
-                    ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                     placeholder="Escribí tu mensaje..."
                     disabled={loading}
-                    className="flex-1 rounded-xl border border-border bg-surface-hover px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+                    className={cn(
+                      'flex-1 h-12 rounded-xl border border-border/60 bg-surface-hover px-4 text-sm text-text-primary',
+                      'placeholder:text-text-muted/60',
+                      'focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40',
+                      'transition-colors duration-150 ease-out disabled:opacity-50',
+                    )}
                   />
                   <button
                     onClick={() => handleSend()}
                     disabled={!input.trim() || loading}
-                    className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-hover transition-colors disabled:opacity-40 shrink-0 active:scale-90"
+                    className={cn(
+                      'w-12 h-12 rounded-xl bg-primary text-primary-contrast flex items-center justify-center shrink-0',
+                      'hover:bg-primary-hover transition-colors duration-150 ease-out active:scale-95',
+                      'disabled:opacity-40 disabled:active:scale-100',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                    )}
+                    aria-label="Enviar mensaje"
                   >
-                    {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                    {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                   </button>
                 </div>
               </motion.div>

@@ -41,12 +41,12 @@ export function BottomNav() {
                     <motion.div
                       layoutId="nav-pill"
                       className="absolute inset-x-1.5 inset-y-1.5 rounded-xl bg-primary/10"
-                      transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+                      transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
                     />
                   )}
                   <item.icon size={20} strokeWidth={isActive ? 2.5 : 1.8} className="relative z-10" />
                   <span className={cn(
-                    'text-[10px] font-medium relative z-10 transition-opacity duration-200',
+                    'text-2xs font-medium relative z-10 transition-opacity duration-200',
                     isActive ? 'opacity-100' : 'opacity-70'
                   )}>
                     {item.label}

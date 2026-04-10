@@ -24,7 +24,7 @@ export function MoodSelector({ value, onChange }: MoodSelectorProps) {
             )}
           >
             <span className="text-xl">{option.emoji}</span>
-            <span className="text-[10px] text-text-muted">{option.label}</span>
+            <span className="text-2xs text-text-muted">{option.label}</span>
           </button>
         ))}
       </div>

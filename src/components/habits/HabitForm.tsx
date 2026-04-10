@@ -47,6 +47,7 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
   const [reminderTime, setReminderTime] = useState('09:00');
 
   const isEditing = !!editingHabit;
+  const formId = 'habit-form';
 
   // Pre-fill form when editing
   useEffect(() => {
@@ -104,9 +105,33 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
     onClose();
   }
 
+  const canSubmit =
+    name.trim().length > 0 && (frequency !== 'custom' || customDays.length > 0);
+
   return (
-    <Dialog open={open} onClose={onClose} title={isEditing ? 'Editar habito' : 'Nuevo habito'}>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={isEditing ? 'Editar hábito' : 'Nuevo hábito'}
+      subtitle={
+        isEditing
+          ? 'Ajustá los detalles del hábito'
+          : 'Creá un hábito personalizado'
+      }
+      footer={
+        <Button
+          type="submit"
+          form={formId}
+          className="w-full"
+          size="lg"
+          disabled={!canSubmit}
+        >
+          {isEditing ? <Save size={18} /> : <Plus size={18} />}
+          {isEditing ? 'Guardar cambios' : 'Crear hábito'}
+        </Button>
+      }
+    >
+      <form id={formId} onSubmit={handleSubmit} className="space-y-5">
         <Input
           label="Nombre del hábito"
           placeholder="Ej: Meditar 10 minutos"
@@ -115,8 +140,8 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
           required
         />
 
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-2">Color</label>
+        <div className="space-y-2">
+          <span className="block text-sm font-medium text-text-secondary">Color</span>
           <div className="flex gap-2">
             {COLORS.map((c) => (
               <button
@@ -124,21 +149,28 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
                 type="button"
                 onClick={() => setColor(c)}
                 aria-label={`Color ${c}`}
-                className="w-8 h-8 rounded-full transition-transform"
-                style={{
-                  backgroundColor: c,
-                  transform: color === c ? 'scale(1.2)' : 'scale(1)',
-                  boxShadow: color === c ? `0 0 12px ${c}60` : 'none',
-                }}
-              />
+                aria-pressed={color === c}
+                className="w-11 h-11 rounded-full transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface flex items-center justify-center"
+              >
+                <span
+                  className="block rounded-full"
+                  style={{
+                    backgroundColor: c,
+                    width: color === c ? '28px' : '24px',
+                    height: color === c ? '28px' : '24px',
+                    boxShadow: color === c ? `0 0 12px ${c}60` : 'none',
+                    transition: 'all 150ms ease-out',
+                  }}
+                />
+              </button>
             ))}
           </div>
         </div>
 
         {/* Frequency selector */}
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-2">Frecuencia</label>
-          <div className="grid grid-cols-2 gap-1.5">
+        <div className="space-y-2">
+          <span className="block text-sm font-medium text-text-secondary">Frecuencia</span>
+          <div className="grid grid-cols-2 gap-2">
             {([
               { value: 'daily', label: 'Todos los días' },
               { value: 'weekdays', label: 'Lunes a viernes' },
@@ -149,10 +181,12 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
                 key={opt.value}
                 type="button"
                 onClick={() => setFrequency(opt.value)}
+                aria-pressed={frequency === opt.value}
                 className={cn(
-                  'py-2 px-3 rounded-lg text-xs font-medium transition-all',
+                  'min-h-11 px-3 rounded-xl text-xs font-semibold transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
                   frequency === opt.value
-                    ? 'bg-primary text-white shadow-sm'
+                    ? 'bg-primary text-primary-contrast shadow-sm'
                     : 'bg-surface-alt text-text-muted hover:text-text-secondary'
                 )}
               >
@@ -164,19 +198,27 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
 
         {/* Custom days picker */}
         {frequency === 'custom' && (
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Seleccioná los días</label>
-            <div className="flex gap-1.5 justify-between">
+          <div className="space-y-2">
+            <span className="block text-sm font-medium text-text-secondary">
+              Seleccioná los días
+            </span>
+            <div
+              role="group"
+              aria-label="Días de la semana"
+              className="flex gap-1.5 justify-between"
+            >
               {DAY_LABELS.map((day) => (
                 <button
                   key={day.value}
                   type="button"
                   onClick={() => toggleDay(day.value)}
                   aria-label={day.label}
+                  aria-pressed={customDays.includes(day.value)}
                   className={cn(
-                    'w-9 h-9 rounded-full text-xs font-bold transition-all',
+                    'w-11 h-11 rounded-full text-xs font-bold transition-colors',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
                     customDays.includes(day.value)
-                      ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                      ? 'bg-primary text-primary-contrast shadow-sm shadow-primary/30'
                       : 'bg-surface-alt text-text-muted hover:text-text-secondary'
                   )}
                   title={day.label}
@@ -186,22 +228,29 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
               ))}
             </div>
             {customDays.length === 0 && (
-              <p className="text-xs text-danger mt-1.5">Elegí al menos un día</p>
+              <p className="text-xs text-danger mt-1">Elegí al menos un día</p>
             )}
           </div>
         )}
 
         {/* Scope toggle: Individual vs Compartido */}
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-2">Alcance</label>
-          <div className="flex rounded-xl bg-surface-alt p-1 gap-1">
+        <div className="space-y-2">
+          <span className="block text-sm font-medium text-text-secondary">Alcance</span>
+          <div
+            role="radiogroup"
+            aria-label="Alcance del hábito"
+            className="flex rounded-xl bg-surface-alt p-1 gap-1"
+          >
             <button
               type="button"
+              role="radio"
+              aria-checked={scope === 'individual'}
               onClick={() => setScope('individual')}
               className={cn(
-                'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
+                'flex-1 min-h-11 px-3 rounded-lg text-sm font-semibold transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
                 scope === 'individual'
-                  ? 'bg-primary text-white shadow-sm'
+                  ? 'bg-primary text-primary-contrast shadow-sm'
                   : 'text-text-muted hover:text-text-secondary'
               )}
             >
@@ -209,11 +258,14 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
             </button>
             <button
               type="button"
+              role="radio"
+              aria-checked={scope === 'shared'}
               onClick={() => setScope('shared')}
               className={cn(
-                'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
+                'flex-1 min-h-11 px-3 rounded-lg text-sm font-semibold transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
                 scope === 'shared'
-                  ? 'bg-primary text-white shadow-sm'
+                  ? 'bg-primary text-primary-contrast shadow-sm'
                   : 'text-text-muted hover:text-text-secondary'
               )}
             >
@@ -224,16 +276,25 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
 
         {/* Completion mode toggle - only for shared */}
         {scope === 'shared' && (
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Modo de completado</label>
-            <div className="flex rounded-xl bg-surface-alt p-1 gap-1">
+          <div className="space-y-2">
+            <span className="block text-sm font-medium text-text-secondary">
+              Modo de completado
+            </span>
+            <div
+              role="radiogroup"
+              aria-label="Modo de completado"
+              className="flex rounded-xl bg-surface-alt p-1 gap-1"
+            >
               <button
                 type="button"
+                role="radio"
+                aria-checked={completionMode === 'any'}
                 onClick={() => setCompletionMode('any')}
                 className={cn(
-                  'flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all',
+                  'flex-1 min-h-11 px-3 rounded-lg text-xs font-semibold transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
                   completionMode === 'any'
-                    ? 'bg-primary text-white shadow-sm'
+                    ? 'bg-primary text-primary-contrast shadow-sm'
                     : 'text-text-muted hover:text-text-secondary'
                 )}
               >
@@ -241,11 +302,14 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
               </button>
               <button
                 type="button"
+                role="radio"
+                aria-checked={completionMode === 'both'}
                 onClick={() => setCompletionMode('both')}
                 className={cn(
-                  'flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all',
+                  'flex-1 min-h-11 px-3 rounded-lg text-xs font-semibold transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
                   completionMode === 'both'
-                    ? 'bg-primary text-white shadow-sm'
+                    ? 'bg-primary text-primary-contrast shadow-sm'
                     : 'text-text-muted hover:text-text-secondary'
                 )}
               >
@@ -256,17 +320,21 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
         )}
 
         {/* Reminder toggle */}
-        <div>
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+            <span className="flex items-center gap-2 text-sm font-medium text-text-secondary">
               <Bell size={16} />
               Recordatorio
-            </label>
+            </span>
             <button
               type="button"
+              role="switch"
+              aria-checked={reminderEnabled}
+              aria-label="Activar recordatorio"
               onClick={() => setReminderEnabled(!reminderEnabled)}
               className={cn(
-                'relative w-11 h-6 rounded-full transition-colors',
+                'relative w-11 h-6 rounded-full transition-colors shrink-0',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
                 reminderEnabled ? 'bg-primary' : 'bg-surface-alt'
               )}
             >
@@ -283,15 +351,11 @@ export function HabitForm({ open, onClose, onSubmit, editingHabit }: HabitFormPr
               type="time"
               value={reminderTime}
               onChange={(e) => setReminderTime(e.target.value)}
-              className="mt-2 w-full rounded-lg bg-surface-alt border border-border px-3 py-2 text-sm text-text-primary"
+              aria-label="Hora del recordatorio"
+              className="w-full rounded-xl bg-surface-hover border border-border px-4 py-3 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
             />
           )}
         </div>
-
-        <Button type="submit" className="w-full" size="lg">
-          {isEditing ? <Save size={18} /> : <Plus size={18} />}
-          {isEditing ? 'Guardar cambios' : 'Crear habito'}
-        </Button>
       </form>
     </Dialog>
   );

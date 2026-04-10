@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
-import { Users, MessageCircleHeart, Check, Trash2 } from 'lucide-react';
+import { Users, MessageCircleHeart, Check, Trash2, PenLine } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Card } from '../ui/Card';
 import { Dialog } from '../ui/Dialog';
+import { Button } from '../ui/Button';
+import { IconButton } from '../ui/IconButton';
+import { Badge } from '../ui/Badge';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useCoupleContext } from '../../contexts/CoupleContext';
 import { sendReaction, subscribeToReactions, type Reaction, type ReactionType } from '../../services/reactions.service';
@@ -116,17 +119,17 @@ export const PartnerStatus = memo(function PartnerStatus({ partnerName, complete
 
   return (
     <>
-      <Card className="bg-gradient-to-r from-accent/5 to-transparent relative overflow-hidden">
+      <Card className="relative overflow-hidden">
         {/* Flying emoji animation */}
         <AnimatePresence>
           {flyingEmoji && (
             <motion.div
               key={flyingEmoji}
-              className="absolute text-3xl pointer-events-none z-10"
+              className="pointer-events-none absolute z-10 text-3xl"
               initial={{ opacity: 1, y: 0, x: '50%', right: '50%' }}
-              animate={{ opacity: 0, y: -80, scale: 1.5 }}
+              animate={{ opacity: 0, y: -80, scale: 1.4 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
+              transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
               style={{ bottom: '40px' }}
             >
               {flyingEmoji}
@@ -135,160 +138,201 @@ export const PartnerStatus = memo(function PartnerStatus({ partnerName, complete
         </AnimatePresence>
 
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-accent-soft flex items-center justify-center">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-soft">
             <Users size={20} className="text-accent" />
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-text-primary">{partnerName}</p>
-            <p className="text-xs text-text-muted">
-              {completedCount}/{totalCount} hábitos hoy
+          <div className="min-w-0 flex-1">
+            <p className="text-2xs font-semibold uppercase tracking-wide text-text-muted">
+              En pareja
+            </p>
+            <p className="mt-0.5 truncate text-base font-semibold text-text-primary">
+              {partnerName}
             </p>
           </div>
-          <div className="text-right">
-            <span className="text-lg font-bold font-mono text-accent">{progress}%</span>
+          <div className="shrink-0 text-right">
+            <span className="text-2xl font-bold tabular-nums text-text-primary">
+              {progress}
+              <span className="text-base font-semibold text-text-muted">%</span>
+            </span>
+            <p className="text-2xs text-text-muted">
+              {completedCount}/{totalCount} hoy
+            </p>
           </div>
         </div>
 
         {/* Mini progress dots */}
-        <div className="flex gap-1.5 mt-3">
-          {Array.from({ length: totalCount }).map((_, i) => (
-            <div
-              key={i}
-              className={`h-2 flex-1 rounded-full transition-all ${
-                i < completedCount ? 'bg-accent' : 'bg-surface-light'
-              }`}
-            />
-          ))}
-        </div>
+        {totalCount > 0 && (
+          <div className="mt-4 flex gap-1.5">
+            {Array.from({ length: totalCount }).map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  'h-1.5 flex-1 rounded-full transition-colors duration-200',
+                  i < completedCount ? 'bg-accent' : 'bg-surface-light',
+                )}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Received reactions from partner */}
         {receivedToday.length > 0 && (
-          <div className="flex items-center gap-1 mt-3">
-            <span className="text-xs text-text-muted mr-1">Recibiste:</span>
-            {receivedToday.map((r) => (
-              <motion.span
-                key={r.id}
-                className="text-lg"
-                initial={{ scale: 0 }}
-                animate={{ scale: [0, 1.3, 1] }}
-                transition={{ duration: 0.4 }}
-              >
-                {r.type}
-              </motion.span>
-            ))}
+          <div className="mt-4 flex items-center gap-1.5">
+            <span className="text-xs text-text-muted">Recibiste</span>
+            <div className="flex gap-1">
+              {receivedToday.map((r) => (
+                <motion.span
+                  key={r.id}
+                  className="text-lg"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: [0, 1.2, 1] }}
+                  transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+                >
+                  {r.type}
+                </motion.span>
+              ))}
+            </div>
           </div>
         )}
 
         {/* Reaction buttons + Note button */}
         {partnerId && (
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
-            <span className="text-xs text-text-muted">Reaccionar:</span>
-            <div className="flex gap-1.5 flex-1">
+          <div className="mt-4 flex items-center gap-2 border-t border-border/60 pt-4">
+            <div className="flex flex-1 gap-1.5">
               {REACTION_EMOJIS.map(({ type, label }) => {
                 const alreadySent = sentToday.has(type);
                 return (
-                  <motion.button
+                  <button
                     key={type}
+                    type="button"
                     aria-label={label}
                     disabled={alreadySent || sending}
                     onClick={() => handleReaction(type)}
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg transition-all ${
+                    className={cn(
+                      'flex h-11 w-11 items-center justify-center rounded-xl text-lg transition-colors duration-150',
                       alreadySent
-                        ? 'bg-surface-light opacity-40 cursor-not-allowed'
-                        : 'bg-surface-light hover:bg-primary-soft hover:scale-110 active:scale-95'
-                    }`}
-                    whileTap={!alreadySent ? { scale: 0.85 } : undefined}
+                        ? 'cursor-not-allowed bg-surface-light opacity-40'
+                        : 'bg-surface-light hover:bg-surface-hover active:scale-[0.94]',
+                    )}
                   >
                     {type}
-                  </motion.button>
+                  </button>
                 );
               })}
             </div>
 
             {/* Note button with badge */}
-            <motion.button
+            <button
+              type="button"
               onClick={handleNotaClick}
-              className="h-9 px-3 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 flex items-center gap-1.5 transition-colors relative"
-              whileTap={{ scale: 0.9 }}
+              className="relative inline-flex h-11 items-center gap-1.5 rounded-xl bg-accent-soft px-3.5 text-accent transition-colors duration-150 hover:bg-accent/20 active:scale-[0.97]"
               aria-label="Enviar nota"
             >
-              <MessageCircleHeart size={16} className="text-pink-400" />
-              <span className="text-xs font-semibold text-pink-400">Nota</span>
+              <MessageCircleHeart size={16} />
+              <span className="text-xs font-semibold">Nota</span>
               {sentUnreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-pink-500 text-white text-[10px] font-bold flex items-center justify-center px-1 shadow-sm">
+                <Badge
+                  variant="accent"
+                  className="absolute -top-1.5 -right-1.5 min-w-[18px] justify-center px-1 py-0 text-2xs"
+                >
                   {sentUnreadCount}
-                </span>
+                </Badge>
               )}
-            </motion.button>
+            </button>
           </div>
         )}
       </Card>
 
       {/* Notes list dialog */}
-      <Dialog open={showNotes} onClose={() => setShowNotes(false)} title={`Notas de ${partnerName}`}>
+      <Dialog
+        open={showNotes}
+        onClose={() => setShowNotes(false)}
+        title={`Notas de ${partnerName}`}
+        subtitle={
+          receivedNotes.length > 0
+            ? `${receivedNotes.length} ${receivedNotes.length === 1 ? 'nota' : 'notas'}`
+            : undefined
+        }
+        size="sm"
+        footer={
+          <Button
+            type="button"
+            variant="primary"
+            size="lg"
+            onClick={() => {
+              setShowNotes(false);
+              setTimeout(() => setComposingNote(true), 200);
+            }}
+            className="w-full"
+          >
+            <PenLine size={16} />
+            Escribir nota
+          </Button>
+        }
+      >
         <div className="space-y-3">
           {receivedNotes.length === 0 ? (
-            <p className="text-sm text-text-muted text-center py-6">
-              No hay notas recibidas
-            </p>
+            <div className="text-center py-10">
+              <div className="w-14 h-14 rounded-full bg-surface-light flex items-center justify-center mx-auto mb-3">
+                <MessageCircleHeart size={24} className="text-text-muted" />
+              </div>
+              <p className="text-sm text-text-muted">No hay notas recibidas</p>
+            </div>
           ) : (
             receivedNotes.map((note) => (
               <div
                 key={note.id}
                 className={cn(
-                  'flex items-start gap-3 p-3 rounded-xl border transition-colors',
+                  'flex items-start gap-3 rounded-xl border p-4 transition-colors',
                   note.read
-                    ? 'bg-surface border-border/50'
-                    : 'bg-primary/5 border-primary/20',
+                    ? 'border-border/60 bg-surface'
+                    : 'border-primary/30 bg-primary-soft',
                 )}
               >
                 {note.emoji && (
-                  <span className="text-lg shrink-0 mt-0.5">{note.emoji}</span>
+                  <span className="text-xl shrink-0 mt-0.5" aria-hidden="true">
+                    {note.emoji}
+                  </span>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-text-primary whitespace-pre-wrap break-words">
+                  <p className="text-sm text-text-primary whitespace-pre-wrap break-words leading-relaxed">
                     {note.text}
                   </p>
-                  <p className="text-[10px] text-text-muted mt-1">
-                    {formatRelativeTime(note.createdAt)}
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="text-2xs text-text-muted">
+                      {formatRelativeTime(note.createdAt)}
+                    </span>
                     {!note.read && (
-                      <span className="ml-1.5 text-primary font-medium">Nueva</span>
+                      <Badge variant="primary" className="text-2xs py-0">
+                        Nueva
+                      </Badge>
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {!note.read && (
-                    <button
-                      onClick={() => handleMarkRead(note.id)}
-                      className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-colors"
+                    <IconButton
                       aria-label="Marcar como leída"
+                      variant="subtle"
+                      size="md"
+                      onClick={() => handleMarkRead(note.id)}
+                      className="bg-primary-soft text-primary hover:bg-primary/20"
                     >
-                      <Check size={14} strokeWidth={2.5} />
-                    </button>
+                      <Check size={16} strokeWidth={2.5} />
+                    </IconButton>
                   )}
-                  <button
-                    onClick={() => handleDeleteNote(note.id)}
-                    className="w-7 h-7 rounded-lg bg-surface-hover text-text-muted flex items-center justify-center hover:bg-danger-soft hover:text-danger transition-colors"
+                  <IconButton
                     aria-label="Eliminar nota"
+                    variant="danger"
+                    size="md"
+                    onClick={() => handleDeleteNote(note.id)}
                   >
-                    <Trash2 size={13} />
-                  </button>
+                    <Trash2 size={15} />
+                  </IconButton>
                 </div>
               </div>
             ))
           )}
-
-          {/* Compose button */}
-          <button
-            onClick={() => {
-              setShowNotes(false);
-              setTimeout(() => setComposingNote(true), 200);
-            }}
-            className="w-full py-2.5 rounded-xl bg-pink-500/15 text-pink-400 text-sm font-semibold hover:bg-pink-500/25 transition-colors flex items-center justify-center gap-2"
-          >
-            <MessageCircleHeart size={16} />
-            Escribir nota
-          </button>
         </div>
       </Dialog>
 

@@ -8,16 +8,18 @@ import { markNoteRead } from '../../services/notes.service';
 import { formatRelativeTime } from '../../lib/date-utils';
 import type { NoteColor } from '../../types/notes';
 
+// Post-it colors are domain (love notes) — intentionally warm & tactile.
 const COLOR_MAP: Record<NoteColor, { bg: string; border: string; text: string }> = {
   yellow: { bg: 'bg-yellow-300', border: 'border-yellow-400', text: 'text-yellow-950' },
-  pink:   { bg: 'bg-pink-300',   border: 'border-pink-400',   text: 'text-pink-950'   },
-  blue:   { bg: 'bg-sky-300',    border: 'border-sky-400',    text: 'text-sky-950'     },
-  green:  { bg: 'bg-emerald-300',border: 'border-emerald-400',text: 'text-emerald-950' },
-  purple: { bg: 'bg-purple-300', border: 'border-purple-400', text: 'text-purple-950'  },
+  pink: { bg: 'bg-pink-300', border: 'border-pink-400', text: 'text-pink-950' },
+  blue: { bg: 'bg-sky-300', border: 'border-sky-400', text: 'text-sky-950' },
+  green: { bg: 'bg-emerald-300', border: 'border-emerald-400', text: 'text-emerald-950' },
+  purple: { bg: 'bg-purple-300', border: 'border-purple-400', text: 'text-purple-950' },
 };
 
-// Slight random rotations for post-it feel
-const ROTATIONS = [-3, 2, -1.5, 3, -2];
+// Slight random rotations for post-it feel (subtle, not bouncy)
+const ROTATIONS = [-2, 1.5, -1, 2, -1.5];
+const EASE = [0.32, 0.72, 0, 1] as const;
 
 export function FloatingLoveNotes() {
   const { user } = useAuthContext();
@@ -50,41 +52,48 @@ export function FloatingLoveNotes() {
           return (
             <motion.div
               key={note.id}
-              initial={{ opacity: 0, scale: 0.8, rotate: rotation * 2 }}
+              initial={{ opacity: 0, scale: 0.94, rotate: rotation * 1.5 }}
               animate={{ opacity: 1, scale: 1, rotate: rotation }}
-              exit={{ opacity: 0, scale: 0.6, rotate: rotation + 10 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className={`relative ${colors.bg} ${colors.border} border rounded-sm shadow-md px-4 pt-4 pb-3`}
+              exit={{ opacity: 0, scale: 0.92, rotate: rotation + 4 }}
+              transition={{ duration: 0.2, ease: EASE }}
+              className={`relative ${colors.bg} ${colors.border} rounded-sm border px-5 pt-4 pb-3 shadow-md`}
             >
-              {/* Folded corner — triangle in top-right */}
+              {/* Folded corner — triangle in top-right, uses theme background token */}
               <div
-                className="absolute top-0 right-0 w-5 h-5"
+                className="pointer-events-none absolute top-0 right-0 h-5 w-5"
                 style={{
-                  background: 'linear-gradient(225deg, var(--color-background, #1a1a2e) 50%, rgba(0,0,0,0.15) 50%)',
+                  background:
+                    'linear-gradient(225deg, var(--color-background) 50%, rgba(0,0,0,0.15) 50%)',
                 }}
+                aria-hidden
               />
 
-              {/* Dismiss button */}
+              {/* Dismiss button — 44px touch target */}
               <button
+                type="button"
                 onClick={() => handleDismiss(note.id)}
                 aria-label="Cerrar nota"
-                className="absolute top-1 right-7 w-6 h-6 rounded-full flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity"
+                className="absolute -top-1 right-6 flex h-11 w-11 items-center justify-center opacity-60 transition-opacity duration-150 hover:opacity-100"
               >
-                <X size={14} className={colors.text} />
+                <X size={16} className={colors.text} strokeWidth={2.5} />
               </button>
 
               {/* Emoji */}
               {note.emoji && (
-                <span className="text-xl mb-1 block">{note.emoji}</span>
+                <span className="mb-1 block text-xl" aria-hidden>
+                  {note.emoji}
+                </span>
               )}
 
               {/* Note text */}
-              <p className={`text-sm font-medium whitespace-pre-wrap break-words ${colors.text} leading-relaxed`}>
+              <p
+                className={`whitespace-pre-wrap break-words text-sm font-medium leading-relaxed ${colors.text}`}
+              >
                 {note.text}
               </p>
 
               {/* Footer */}
-              <p className={`text-[10px] mt-2 ${colors.text} opacity-60`}>
+              <p className={`mt-2 text-2xs opacity-70 ${colors.text}`}>
                 De {partnerName} · {formatRelativeTime(note.createdAt)}
               </p>
             </motion.div>

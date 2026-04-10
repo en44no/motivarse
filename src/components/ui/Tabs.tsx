@@ -59,7 +59,7 @@ export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
               <motion.div
                 layoutId="tab-indicator"
                 className="absolute inset-0 rounded-lg bg-gradient-to-b from-primary to-primary-hover shadow-[var(--shadow-glow-primary)]"
-                transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+                transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
               />
             )}
             <span className="relative z-10 block truncate">{tab.label}</span>

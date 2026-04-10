@@ -1,19 +1,38 @@
-import { memo } from 'react';
+import { memo, useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Sun, PhoneOff, AlarmClock, Footprints, Target, MoreVertical, Pencil, Trash2, GripVertical } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import {
+  Sun,
+  PhoneOff,
+  AlarmClock,
+  Footprints,
+  Target,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  GripVertical,
+  Check,
+} from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Card } from '../ui/Card';
 import { MiniConfetti } from '../ui/MiniConfetti';
 import { HabitCheckButton } from './HabitCheckButton';
 import { HabitStreakBadge } from './HabitStreakBadge';
 import { HabitTimeInput } from './HabitTimeInput';
-import { vibrateSuccess, vibrateMilestone, isStreakMilestone, getMilestoneMessage } from '../../lib/celebration-utils';
+import { useDensity } from '../../contexts/DensityContext';
+import {
+  vibrateSuccess,
+  vibrateMilestone,
+  isStreakMilestone,
+} from '../../lib/celebration-utils';
 import { playSuccess } from '../../lib/sound-utils';
 import type { Habit, HabitLog, HabitStreak } from '../../types/habit';
 
 const ICON_MAP: Record<string, React.ComponentType<any>> = {
-  Sun, PhoneOff, AlarmClock, Footprints, Target,
+  Sun,
+  PhoneOff,
+  AlarmClock,
+  Footprints,
+  Target,
 };
 
 interface HabitCardProps {
@@ -30,7 +49,20 @@ interface HabitCardProps {
   reorderable?: boolean;
 }
 
-export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle, partnerLog, partnerName, onEdit, onDelete, soundEnabled = true, isDragging = false, reorderable = false }: HabitCardProps) {
+export const HabitCard = memo(function HabitCard({
+  habit,
+  log,
+  streak,
+  onToggle,
+  partnerLog,
+  partnerName,
+  onEdit,
+  onDelete,
+  soundEnabled = true,
+  isDragging = false,
+  reorderable = false,
+}: HabitCardProps) {
+  const { isCompact } = useDensity();
   const [showMenu, setShowMenu] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -59,7 +91,6 @@ export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle,
       vibrateSuccess();
       if (soundEnabled) playSuccess();
       setShowConfetti(true);
-      // Check for streak milestone
       const nextStreak = (streak?.currentStreak || 0) + 1;
       if (isStreakMilestone(nextStreak)) {
         vibrateMilestone();
@@ -67,6 +98,7 @@ export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle,
     }
     onToggle(completed, value, metGoal);
   }
+
   const IconComponent = ICON_MAP[habit.icon] || Target;
   const myCompleted = !!log?.completed;
   const partnerCompleted = !!partnerLog?.completed;
@@ -86,63 +118,62 @@ export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle,
     partiallyCompleted = (myCompleted || partnerCompleted) && !completed;
   }
 
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ layout: { duration: 0.2 } }}
-    >
-      <Card className={cn(
-        'transition-all duration-300',
-        completed && 'bg-gradient-to-r from-primary/8 to-transparent border-primary/20 border-l-2',
-        completed && `border-l-[${habit.color}]`,
-        partiallyCompleted && 'border-primary/10 bg-primary-soft/15',
-        isDragging && 'shadow-xl scale-[1.02] z-50 relative'
-      )}
-      style={completed ? { borderLeftColor: habit.color } : {}}
+  // Compact row — smaller padding, inline partner status, less info
+  if (isCompact) {
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ layout: { duration: 0.18, ease: 'easeOut' }, duration: 0.15 }}
       >
-        {showConfetti && <MiniConfetti onComplete={() => setShowConfetti(false)} />}
-        <div className="flex items-start gap-3">
-          {/* Check / Icon */}
-          {habit.type === 'boolean' && (
-            <HabitCheckButton
-              completed={myCompleted}
-              color={habit.color}
-              onToggle={() => handleToggle(!myCompleted)}
-            />
+        <div
+          className={cn(
+            'relative rounded-2xl border bg-surface px-3 py-2 shadow-sm border-t-white/[0.04]',
+            'transition-colors duration-150',
+            completed
+              ? 'border-l-2 border-border/60'
+              : 'border-border/60',
+            partiallyCompleted && 'bg-primary-soft/10',
+            isDragging && 'shadow-xl scale-[1.01] z-50'
           )}
+          style={completed ? { borderLeftColor: habit.color } : undefined}
+        >
+          {showConfetti && (
+            <MiniConfetti onComplete={() => setShowConfetti(false)} />
+          )}
+          <div className="flex items-center gap-3">
+            {/* Color dot as icon cue */}
+            <div
+              className="w-2 h-2 rounded-full shrink-0"
+              style={{ backgroundColor: habit.color }}
+              aria-hidden
+            />
 
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className={cn(
-                'text-sm font-semibold truncate',
-                completed ? 'text-text-primary' : 'text-text-secondary'
-              )}>
+            {/* Name + inline partner check */}
+            <div className="flex-1 min-w-0 flex items-center gap-2">
+              <h3
+                className={cn(
+                  'text-sm font-semibold truncate',
+                  completed ? 'text-text-primary' : 'text-text-secondary'
+                )}
+              >
                 {habit.name}
               </h3>
               {streak && <HabitStreakBadge streak={streak.currentStreak} />}
+              {isShared && partnerCompleted && (
+                <span
+                  className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary-soft text-primary shrink-0"
+                  title={`${partnerName} completado`}
+                >
+                  <Check size={10} strokeWidth={3} />
+                </span>
+              )}
             </div>
 
-            {/* Partner status for shared habits */}
-            {isShared && partnerName && (
-              <div className={cn(
-                'text-xs flex items-center gap-1 mt-0.5',
-                partnerCompleted ? 'text-primary' : 'text-text-muted'
-              )}>
-                <span>
-                  {partnerCompleted
-                    ? `👤 ${partnerName} ✓`
-                    : `👤 ${partnerName} pendiente`
-                  }
-                </span>
-              </div>
-            )}
-
-            {/* Time input for time-based habits */}
-            {habit.type === 'time' && (
+            {/* Time input compact — fall back to check for boolean */}
+            {habit.type === 'time' && !myCompleted && (
               <HabitTimeInput
                 value={log?.value || ''}
                 goalTime={habit.goal?.targetTime}
@@ -152,22 +183,190 @@ export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle,
                 color={habit.color}
               />
             )}
+            {habit.type === 'time' && myCompleted && log?.value && (
+              <span className="text-2xs font-mono text-primary tabular-nums shrink-0">
+                {log.value}
+              </span>
+            )}
 
-            {/* Partner's time value for shared time habits */}
-            {isShared && habit.type === 'time' && partnerLog?.value && partnerName && (
-              <div className="flex items-center gap-1.5 text-xs mt-1">
-                <span className="text-text-muted">{partnerName}:</span>
-                <span className={cn('font-mono font-bold', partnerLog.metGoal ? 'text-primary' : 'text-secondary')}>
-                  {partnerLog.value}
-                </span>
-                {partnerLog.metGoal && <span className="text-primary">{'\u2713'}</span>}
+            {habit.type === 'boolean' && (
+              <HabitCheckButton
+                completed={myCompleted}
+                color={habit.color}
+                onToggle={() => handleToggle(!myCompleted)}
+              />
+            )}
+
+            {reorderable && (
+              <div className="shrink-0 text-text-muted/40 touch-none">
+                <GripVertical size={14} />
               </div>
             )}
+
+            {(onEdit || onDelete) && (
+              <div className="relative shrink-0" ref={menuRef}>
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  aria-label="Opciones"
+                  className="w-9 h-9 -mr-1 inline-flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors duration-150"
+                >
+                  <MoreVertical size={16} />
+                </button>
+                {showMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-10 z-20 bg-surface border border-border rounded-xl shadow-lg py-1 min-w-[140px]"
+                  >
+                    {onEdit && (
+                      <button
+                        onClick={() => {
+                          setShowMenu(false);
+                          onEdit();
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
+                      >
+                        <Pencil size={14} />
+                        Editar
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        onClick={() => {
+                          setShowMenu(false);
+                          onDelete();
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger hover:bg-danger-soft transition-colors"
+                      >
+                        <Trash2 size={14} />
+                        Eliminar
+                      </button>
+                    )}
+                  </motion.div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Cozy row (default) — more info, bigger padding
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ layout: { duration: 0.18, ease: 'easeOut' }, duration: 0.15 }}
+    >
+      <Card
+        className={cn(
+          'transition-colors duration-150',
+          completed &&
+            'bg-gradient-to-r from-primary-soft/40 to-transparent border-primary/20 border-l-2',
+          partiallyCompleted && 'border-primary/10 bg-primary-soft/15',
+          isDragging && 'shadow-xl scale-[1.02] z-50 relative'
+        )}
+        style={completed ? { borderLeftColor: habit.color } : undefined}
+      >
+        {showConfetti && (
+          <MiniConfetti onComplete={() => setShowConfetti(false)} />
+        )}
+        <div className="flex items-start gap-3">
+          {/* Check button (boolean) or icon (time) */}
+          {habit.type === 'boolean' ? (
+            <HabitCheckButton
+              completed={myCompleted}
+              color={habit.color}
+              onToggle={() => handleToggle(!myCompleted)}
+            />
+          ) : (
+            <div
+              className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 border border-border/60"
+              style={{
+                backgroundColor: `${habit.color}15`,
+                color: habit.color,
+              }}
+              aria-hidden
+            >
+              <IconComponent size={18} />
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="flex-1 min-w-0 pt-0.5">
+            <div className="flex items-center gap-2">
+              <h3
+                className={cn(
+                  'text-sm font-semibold truncate',
+                  completed ? 'text-text-primary' : 'text-text-secondary'
+                )}
+              >
+                {habit.name}
+              </h3>
+              {streak && <HabitStreakBadge streak={streak.currentStreak} />}
+            </div>
+
+            {/* Partner status for shared habits */}
+            {isShared && partnerName && (
+              <div
+                className={cn(
+                  'text-2xs flex items-center gap-1 mt-0.5',
+                  partnerCompleted ? 'text-primary' : 'text-text-muted'
+                )}
+              >
+                <span>
+                  {partnerCompleted
+                    ? `${partnerName} completo`
+                    : `${partnerName} pendiente`}
+                </span>
+              </div>
+            )}
+
+            {/* Time input for time-based habits */}
+            {habit.type === 'time' && (
+              <div className="mt-1.5">
+                <HabitTimeInput
+                  value={log?.value || ''}
+                  goalTime={habit.goal?.targetTime}
+                  comparison={habit.goal?.comparison}
+                  onSubmit={(time, metGoal) =>
+                    handleToggle(true, time, metGoal)
+                  }
+                  completed={myCompleted}
+                  color={habit.color}
+                />
+              </div>
+            )}
+
+            {/* Partner's time value for shared time habits */}
+            {isShared &&
+              habit.type === 'time' &&
+              partnerLog?.value &&
+              partnerName && (
+                <div className="flex items-center gap-1.5 text-2xs mt-1">
+                  <span className="text-text-muted">{partnerName}:</span>
+                  <span
+                    className={cn(
+                      'font-mono font-bold tabular-nums',
+                      partnerLog.metGoal ? 'text-primary' : 'text-secondary'
+                    )}
+                  >
+                    {partnerLog.value}
+                  </span>
+                  {partnerLog.metGoal && (
+                    <span className="text-primary">{'\u2713'}</span>
+                  )}
+                </div>
+              )}
           </div>
 
           {/* Drag handle */}
           {reorderable && (
-            <div className="shrink-0 text-text-muted/40 touch-none">
+            <div className="shrink-0 text-text-muted/40 touch-none self-center">
               <GripVertical size={16} />
             </div>
           )}
@@ -178,19 +377,23 @@ export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle,
               <button
                 onClick={() => setShowMenu(!showMenu)}
                 aria-label="Opciones"
-                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+                className="w-9 h-9 -mr-1 -mt-1 inline-flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors duration-150"
               >
                 <MoreVertical size={16} />
               </button>
               {showMenu && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="absolute right-0 top-8 z-20 bg-surface border border-border rounded-xl shadow-lg py-1 min-w-[140px]"
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-10 z-20 bg-surface border border-border rounded-xl shadow-lg py-1 min-w-[140px]"
                 >
                   {onEdit && (
                     <button
-                      onClick={() => { setShowMenu(false); onEdit(); }}
+                      onClick={() => {
+                        setShowMenu(false);
+                        onEdit();
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
                     >
                       <Pencil size={14} />
@@ -199,7 +402,10 @@ export const HabitCard = memo(function HabitCard({ habit, log, streak, onToggle,
                   )}
                   {onDelete && (
                     <button
-                      onClick={() => { setShowMenu(false); onDelete(); }}
+                      onClick={() => {
+                        setShowMenu(false);
+                        onDelete();
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger hover:bg-danger-soft transition-colors"
                     >
                       <Trash2 size={14} />

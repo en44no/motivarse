@@ -108,7 +108,7 @@ export function ConfirmDialog({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
             >
               <div className="flex items-center gap-3 mb-3">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${

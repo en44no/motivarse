@@ -1,5 +1,5 @@
 import { motion, useSpring, useTransform } from 'framer-motion';
-import { memo, useEffect, useId } from 'react';
+import { memo, useEffect, useId, useMemo } from 'react';
 
 interface WaterDropProps {
   fillPercent: number; // 0-1
@@ -15,12 +15,29 @@ function formatLiters(ml: number): string {
   return `${ml}ml`;
 }
 
-function getWaterColor(percent: number): { fill: string; glow: string } {
-  if (percent <= 0) return { fill: '#475569', glow: 'transparent' };
-  if (percent < 0.5) return { fill: '#38bdf8', glow: 'rgba(56, 189, 248, 0.15)' };
-  if (percent < 0.8) return { fill: '#3b82f6', glow: 'rgba(59, 130, 246, 0.2)' };
-  if (percent < 1) return { fill: '#2563eb', glow: 'rgba(37, 99, 235, 0.25)' };
-  return { fill: '#38bdf8', glow: 'rgba(56, 189, 248, 0.4)' };
+function readCssVar(name: string, fallback: string): string {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const val = getComputedStyle(document.documentElement)
+      .getPropertyValue(name)
+      .trim();
+    return val || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.replace('#', '');
+  if (clean.length !== 6 && clean.length !== 3) return hex;
+  const full =
+    clean.length === 3
+      ? clean.split('').map((c) => c + c).join('')
+      : clean;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 // Teardrop SVG path — wider belly, pointed top
@@ -32,8 +49,18 @@ export const WaterDrop = memo(function WaterDrop({ fillPercent, totalMl, goalMl 
   const glowId = useId();
   const clamped = Math.min(1, Math.max(0, fillPercent));
   const percent = Math.round(clamped * 100);
-  const { fill, glow } = getWaterColor(clamped);
   const isComplete = clamped >= 1;
+
+  // Pick water colors from CSS vars so it follows the current theme.
+  const { fill, glow } = useMemo(() => {
+    const info = readCssVar('--color-info', '#38bdf8');
+    const empty = readCssVar('--color-text-muted', '#64748b');
+    if (clamped <= 0) return { fill: empty, glow: 'transparent' };
+    if (clamped < 0.5) return { fill: info, glow: hexToRgba(info, 0.15) };
+    if (clamped < 0.8) return { fill: info, glow: hexToRgba(info, 0.22) };
+    if (clamped < 1) return { fill: info, glow: hexToRgba(info, 0.3) };
+    return { fill: info, glow: hexToRgba(info, 0.4) };
+  }, [clamped]);
 
   // Spring-animated fill height for smooth transitions
   const springFill = useSpring(clamped, { stiffness: 60, damping: 18, mass: 0.8 });
@@ -165,7 +192,7 @@ export const WaterDrop = memo(function WaterDrop({ fillPercent, totalMl, goalMl 
           x="50"
           y="78"
           textAnchor="middle"
-          style={{ fontSize: '10px', fontWeight: 600 }}
+          style={{ fontSize: '11px', fontWeight: 600 }}
           fill={fill}
           opacity={0.9}
         >
