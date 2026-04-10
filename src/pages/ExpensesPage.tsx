@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Wallet, Plus, Repeat, Search, X, Calendar as CalendarIcon, SlidersHorizontal } from 'lucide-react';
+import { Wallet, Plus, Repeat, Search, X, Calendar as CalendarIcon, SlidersHorizontal, Rows3, Rows4 } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCoupleContext } from '../contexts/CoupleContext';
+import { useDensity } from '../contexts/DensityContext';
 import { useExpenses } from '../hooks/useExpenses';
 import { useExpenseCards } from '../hooks/useExpenseCards';
 import { useExpenseCategories } from '../hooks/useExpenseCategories';
@@ -30,6 +31,7 @@ type AssignedFilter = 'all' | 'me' | 'partner' | 'both';
 export function ExpensesPage() {
   const { user } = useAuthContext();
   const { couple, partnerName } = useCoupleContext();
+  const { isCompact, toggleDensity } = useDensity();
   const { expenses, pending, completed, loading, remove, addPayment, removePayment, duplicate, update } = useExpenses();
   const { cards } = useExpenseCards();
   const { categories } = useExpenseCategories();
@@ -311,6 +313,48 @@ export function ExpensesPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Densidad de la lista */}
+                  <div className="space-y-2 pt-3 border-t border-border/60">
+                    <p className="text-2xs font-semibold text-text-muted uppercase tracking-wider">
+                      Vista
+                    </p>
+                    <button
+                      type="button"
+                      onClick={toggleDensity}
+                      aria-pressed={isCompact}
+                      className="w-full flex items-center justify-between gap-3 rounded-xl bg-surface-light hover:bg-surface-hover px-3 py-2.5 transition-colors text-left"
+                    >
+                      <span className="flex items-center gap-2.5 min-w-0">
+                        <span className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-surface text-text-secondary shrink-0">
+                          {isCompact ? <Rows4 size={16} /> : <Rows3 size={16} />}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-text-primary">
+                            Modo compacto
+                          </span>
+                          <span className="block text-2xs text-text-muted">
+                            {isCompact
+                              ? 'Mas items por pantalla'
+                              : 'Cards completas con detalles'}
+                          </span>
+                        </span>
+                      </span>
+                      <span
+                        className={cn(
+                          'shrink-0 relative inline-flex h-6 w-11 rounded-full transition-colors',
+                          isCompact ? 'bg-primary' : 'bg-surface',
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'absolute top-0.5 inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                            isCompact ? 'translate-x-[1.375rem]' : 'translate-x-0.5',
+                          )}
+                        />
+                      </span>
+                    </button>
+                  </div>
 
                   {activeFilterCount > 0 && (
                     <button

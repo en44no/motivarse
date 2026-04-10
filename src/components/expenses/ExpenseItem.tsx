@@ -32,13 +32,18 @@ export const ExpenseItem = memo(function ExpenseItem({
   const deleteOpacity = useTransform(x, [-100, -60], [1, 0]);
   const deleteScale = useTransform(x, [-100, -60], [1, 0.8]);
 
-  const totalPrice = expense.installmentPrice * expense.totalInstallments;
+  const isOpenEnded = expense.totalInstallments === 0;
   const paidAmount = expense.payments.reduce((s, p) => s + p.amount, 0);
+  // Para open-ended el "total" es la suma de pagos registrados (lo unico conocido)
+  const totalPrice = isOpenEnded
+    ? paidAmount
+    : expense.installmentPrice * expense.totalInstallments;
   const currentInstallment = expense.payments.length;
-  const isCompleted = currentInstallment >= expense.totalInstallments;
-  const progress = expense.totalInstallments > 0
-    ? (currentInstallment / expense.totalInstallments) * 100
-    : 0;
+  // Open-ended nunca se auto-completa
+  const isCompleted = !isOpenEnded && currentInstallment >= expense.totalInstallments;
+  const progress = isOpenEnded
+    ? 0
+    : (currentInstallment / expense.totalInstallments) * 100;
   const mismatch = hasPaymentMismatch(expense);
 
   return (
@@ -107,13 +112,15 @@ export const ExpenseItem = memo(function ExpenseItem({
           </p>
         </div>
 
-        {/* Progress */}
-        <div className={cn('flex items-center gap-2', isCompact ? 'mb-1.5' : 'mb-2')}>
-          <ProgressBar value={progress} size="sm" className="flex-1" />
-          <span className="text-2xs font-medium text-text-muted shrink-0 tabular-nums">
-            {currentInstallment}/{expense.totalInstallments}
-          </span>
-        </div>
+        {/* Progress (oculto en open-ended porque no hay denominador) */}
+        {!isOpenEnded && (
+          <div className={cn('flex items-center gap-2', isCompact ? 'mb-1.5' : 'mb-2')}>
+            <ProgressBar value={progress} size="sm" className="flex-1" />
+            <span className="text-2xs font-medium text-text-muted shrink-0 tabular-nums">
+              {currentInstallment}/{expense.totalInstallments}
+            </span>
+          </div>
+        )}
 
         {/* Amounts row — hidden in compact */}
         {!isCompleted && !isCompact && (
@@ -124,12 +131,20 @@ export const ExpenseItem = memo(function ExpenseItem({
                 {formatCurrency(paidAmount, expense.currency)}
               </span>
             </span>
-            <span className="text-2xs text-text-muted truncate">
-              Restante{' '}
-              <span className="font-semibold text-accent tabular-nums">
-                {formatCurrency(totalPrice - paidAmount, expense.currency)}
+            {isOpenEnded ? (
+              <span className="text-2xs text-text-muted truncate">
+                <span className="font-semibold text-info tabular-nums">
+                  {currentInstallment} {currentInstallment === 1 ? 'pago' : 'pagos'}
+                </span>
               </span>
-            </span>
+            ) : (
+              <span className="text-2xs text-text-muted truncate">
+                Restante{' '}
+                <span className="font-semibold text-accent tabular-nums">
+                  {formatCurrency(totalPrice - paidAmount, expense.currency)}
+                </span>
+              </span>
+            )}
           </div>
         )}
 
@@ -154,9 +169,15 @@ export const ExpenseItem = memo(function ExpenseItem({
                 {assignedToLabel}
               </Badge>
             )}
-            <Badge variant="default" className="text-2xs py-0.5 tabular-nums">
-              {formatCurrency(expense.installmentPrice, expense.currency)}/cuota
-            </Badge>
+            {isOpenEnded ? (
+              <Badge variant="default" className="text-2xs py-0.5">
+                Variable
+              </Badge>
+            ) : (
+              <Badge variant="default" className="text-2xs py-0.5 tabular-nums">
+                {formatCurrency(expense.installmentPrice, expense.currency)}/cuota
+              </Badge>
+            )}
           </div>
         )}
       </motion.div>

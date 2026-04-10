@@ -86,6 +86,8 @@ export function ExpenseDetailDialog({
   const [editingDescription, setEditingDescription] = useState(false);
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [savingDescription, setSavingDescription] = useState(false);
+  const [editingAssigned, setEditingAssigned] = useState(false);
+  const [savingAssigned, setSavingAssigned] = useState(false);
 
   // Reset paidByMode al asignado del gasto cada vez que se abre/cambia
   useEffect(() => {
@@ -103,14 +105,18 @@ export function ExpenseDetailDialog({
   const card = cards.find((c) => c.id === expense.card);
   const category = categories.find((c) => c.id === expense.category);
   const paidCount = expense.payments.length;
+  const isOpenEnded = expense.totalInstallments === 0;
   const progressPercent =
     expense.totalInstallments > 0
       ? (paidCount / expense.totalInstallments) * 100
       : 0;
 
-  const totalPrice = expense.installmentPrice * expense.totalInstallments;
   const paidAmount = expense.payments.reduce((s, p) => s + p.amount, 0);
-  const remainingAmount = totalPrice - paidAmount;
+  // Open-ended: el "total" no existe — mostramos lo registrado hasta ahora
+  const totalPrice = isOpenEnded
+    ? paidAmount
+    : expense.installmentPrice * expense.totalInstallments;
+  const remainingAmount = isOpenEnded ? 0 : totalPrice - paidAmount;
 
   const isInstallmentPaid = (num: number) =>
     expense.payments.some((p) => p.installmentNumber === num);
@@ -197,6 +203,20 @@ export function ExpenseDetailDialog({
     }
   }
 
+  async function handleSaveAssigned(value: string) {
+    if (!expense || !value || value === expense.assignedTo) {
+      setEditingAssigned(false);
+      return;
+    }
+    setSavingAssigned(true);
+    try {
+      await onUpdate(expense.id, { assignedTo: value });
+      setEditingAssigned(false);
+    } finally {
+      setSavingAssigned(false);
+    }
+  }
+
   const subtitleText = [
     category ? `${category.emoji} ${category.label}` : null,
     card?.name,
@@ -244,29 +264,42 @@ export function ExpenseDetailDialog({
       <div className="space-y-3 mb-5">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-surface-light rounded-xl p-3">
-            <p className="text-xs text-text-muted mb-0.5">Precio total</p>
-            <p className="text-sm font-bold text-text-primary">
+            <p className="text-xs text-text-muted mb-0.5">
+              {isOpenEnded ? 'Total registrado' : 'Precio total'}
+            </p>
+            <p className="text-sm font-bold text-text-primary tabular-nums">
               {formatCurrency(totalPrice, expense.currency)}
             </p>
           </div>
           <div className="bg-surface-light rounded-xl p-3">
-            <p className="text-xs text-text-muted mb-0.5">Por cuota</p>
-            <p className="text-sm font-bold text-text-primary">
-              {formatCurrency(expense.installmentPrice, expense.currency)}
+            <p className="text-xs text-text-muted mb-0.5">
+              {isOpenEnded ? 'Pagos' : 'Por cuota'}
+            </p>
+            <p className="text-sm font-bold text-text-primary tabular-nums">
+              {isOpenEnded
+                ? `${paidCount}`
+                : formatCurrency(expense.installmentPrice, expense.currency)}
             </p>
           </div>
           <div className="bg-primary/10 rounded-xl p-3">
             <p className="text-xs text-text-muted mb-0.5">Pagado</p>
-            <p className="text-sm font-bold text-primary">
+            <p className="text-sm font-bold text-primary tabular-nums">
               {formatCurrency(paidAmount, expense.currency)}
             </p>
           </div>
-          <div className="bg-accent/10 rounded-xl p-3">
-            <p className="text-xs text-text-muted mb-0.5">Restante</p>
-            <p className="text-sm font-bold text-accent">
-              {formatCurrency(remainingAmount, expense.currency)}
-            </p>
-          </div>
+          {isOpenEnded ? (
+            <div className="bg-info-soft rounded-xl p-3">
+              <p className="text-xs text-text-muted mb-0.5">Tipo</p>
+              <p className="text-sm font-bold text-info">Variable</p>
+            </div>
+          ) : (
+            <div className="bg-accent/10 rounded-xl p-3">
+              <p className="text-xs text-text-muted mb-0.5">Restante</p>
+              <p className="text-sm font-bold text-accent tabular-nums">
+                {formatCurrency(remainingAmount, expense.currency)}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -282,15 +315,50 @@ export function ExpenseDetailDialog({
               {card.name}
             </Badge>
           )}
-          <Badge variant="default">
+          <button
+            type="button"
+            onClick={() => setEditingAssigned((v) => !v)}
+            disabled={savingAssigned}
+            aria-label="Editar asignado"
+            className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-surface-light text-text-secondary hover:bg-surface-hover transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          >
             <User size={12} />
             {memberNames[expense.assignedTo] || 'Desconocido'}
-          </Badge>
+            <Pencil size={10} className="opacity-60" />
+          </button>
           <Badge variant="default">
             <DollarSign size={12} />
             {expense.currency}
           </Badge>
         </div>
+
+        {/* Pills inline para editar assignedTo */}
+        {editingAssigned && (
+          <div className="flex items-center gap-1.5 flex-wrap pt-1">
+            <span className="text-2xs text-text-muted uppercase tracking-wider mr-1">
+              Asignar a
+            </span>
+            {PAID_BY_OPTIONS.map((opt) => {
+              const active = expense.assignedTo === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleSaveAssigned(opt.value)}
+                  disabled={savingAssigned}
+                  className={cn(
+                    'inline-flex items-center justify-center min-h-9 px-3 rounded-full text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
+                    active
+                      ? 'bg-primary text-primary-contrast shadow-sm shadow-primary/30'
+                      : 'bg-surface-hover text-text-muted hover:text-text-secondary',
+                  )}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div className="flex items-center gap-4 text-xs text-text-muted flex-wrap">
           {editingDate ? (
@@ -323,19 +391,21 @@ export function ExpenseDetailDialog({
         </div>
       </div>
 
-      {/* Progress */}
-      <div className="mb-5">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-medium text-text-secondary">Progreso</span>
-          <span className="text-xs font-bold text-text-primary">
-            {paidCount}/{expense.totalInstallments} cuotas
-          </span>
+      {/* Progress (oculto en open-ended) */}
+      {!isOpenEnded && (
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-text-secondary">Progreso</span>
+            <span className="text-xs font-bold text-text-primary tabular-nums">
+              {paidCount}/{expense.totalInstallments} cuotas
+            </span>
+          </div>
+          <ProgressBar
+            value={progressPercent}
+            color={progressPercent >= 100 ? 'accent' : 'primary'}
+          />
         </div>
-        <ProgressBar
-          value={progressPercent}
-          color={progressPercent >= 100 ? 'accent' : 'primary'}
-        />
-      </div>
+      )}
 
       {/* Mismatch banner */}
       {hasMismatch && (
@@ -360,7 +430,9 @@ export function ExpenseDetailDialog({
       {/* Payment section */}
       <div>
         <div className="mb-3">
-          <h3 className="text-sm font-semibold text-text-primary mb-2">Cuotas</h3>
+          <h3 className="text-sm font-semibold text-text-primary mb-2">
+            {isOpenEnded ? 'Pagos' : 'Cuotas'}
+          </h3>
           <p className="text-2xs text-text-muted mb-1.5">Marcar como pagado por</p>
           <div className="flex gap-1.5">
             {PAID_BY_OPTIONS.map((opt) => (
@@ -517,7 +589,11 @@ export function ExpenseDetailDialog({
                     inputMode="decimal"
                     value={paymentAmount}
                     onChange={(e) => setPaymentAmount(e.target.value)}
-                    placeholder={String(expense.installmentPrice)}
+                    placeholder={
+                      expense.installmentPrice > 0
+                        ? String(expense.installmentPrice)
+                        : 'Monto'
+                    }
                     className="w-full h-11 pl-8 pr-3 text-sm rounded-xl bg-surface-light border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary"
                   />
                 </div>
@@ -550,7 +626,11 @@ export function ExpenseDetailDialog({
                 size="md"
                 className="w-full mt-2"
                 onClick={() => {
-                  setPaymentAmount(String(expense.installmentPrice));
+                  setPaymentAmount(
+                    expense.installmentPrice > 0
+                      ? String(expense.installmentPrice)
+                      : '',
+                  );
                   setShowPaymentForm(true);
                 }}
               >

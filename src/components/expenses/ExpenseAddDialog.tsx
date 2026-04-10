@@ -143,7 +143,10 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || price <= 0 || installments <= 0) return;
+    // Variable: precio y cuotas son opcionales (gasto open-ended)
+    // Fija: ambos requeridos
+    if (!name.trim()) return;
+    if (isFixed && (price <= 0 || installments <= 0)) return;
 
     setSubmitting(true);
     try {
@@ -182,7 +185,9 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
     setNewCatLabel('');
   }
 
-  const canSubmit = !!name.trim() && price > 0 && installments > 0;
+  const canSubmit = isFixed
+    ? !!name.trim() && price > 0 && installments > 0
+    : !!name.trim();
 
   // Chip pill styles — compartido entre todos los selectores de este form
   const pillBase =
@@ -225,29 +230,37 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
         {/* Precio + cuotas */}
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="Precio/cuota"
+            label={isFixed ? 'Precio/cuota' : 'Precio/cuota (opcional)'}
             type="number"
             inputMode="decimal"
-            placeholder="0"
+            placeholder={isFixed ? '0' : 'Sin estimar'}
             value={installmentPrice}
             onChange={(e) => setInstallmentPrice(e.target.value)}
-            required
+            required={isFixed}
           />
           <Input
-            label="Cuotas"
+            label={isFixed ? 'Cuotas' : 'Cuotas (opcional)'}
             type="number"
             inputMode="numeric"
-            placeholder="1"
+            placeholder={isFixed ? '1' : 'Sin definir'}
             value={totalInstallments}
             onChange={(e) => setTotalInstallments(e.target.value)}
-            required
+            required={isFixed}
           />
         </div>
 
-        {/* Total preview */}
+        {/* Total preview (solo cuando hay datos para calcular) */}
         {total > 0 && (
           <div className="text-sm font-semibold text-text-primary bg-surface-hover rounded-xl px-4 py-2.5">
             Total: {formatCurrency(total, currency)}
+          </div>
+        )}
+
+        {/* Hint variable */}
+        {!isFixed && (
+          <div className="text-2xs text-text-muted bg-info-soft border border-info/20 rounded-xl px-3 py-2 leading-snug">
+            <span className="font-semibold text-info">Variable abierto:</span>{' '}
+            registrá los pagos como vayan ocurriendo, sin necesidad de saber el monto o cantidad de cuotas.
           </div>
         )}
 

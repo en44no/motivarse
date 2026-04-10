@@ -34,8 +34,13 @@ export function useExpenses() {
     return () => unsub();
   }, [coupleId]);
 
-  const pending = expenses.filter((e) => e.payments.length < e.totalInstallments);
-  const completed = expenses.filter((e) => e.payments.length >= e.totalInstallments);
+  // Open-ended (variable sin total definido) → siempre pending, nunca auto-completa
+  const pending = expenses.filter(
+    (e) => e.totalInstallments === 0 || e.payments.length < e.totalInstallments,
+  );
+  const completed = expenses.filter(
+    (e) => e.totalInstallments > 0 && e.payments.length >= e.totalInstallments,
+  );
 
   const add = useCallback(
     async (
