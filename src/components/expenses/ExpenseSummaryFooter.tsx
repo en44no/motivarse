@@ -19,12 +19,13 @@ function computeSummaries(expenses: Expense[]): CurrencySummary[] {
   for (const expense of expenses) {
     const existing = map.get(expense.currency) ?? { total: 0, paid: 0 };
     const paid = expense.payments.reduce((sum, p) => sum + p.amount, 0);
-    // Open-ended (totalInstallments=0): el total no esta definido,
-    // contribuye solo lo ya pagado.
+    // Fijo: precio * cuotas. Variable con goal: usar goal. Variable sin goal: solo lo pagado.
     const total =
       expense.totalInstallments > 0
         ? expense.installmentPrice * expense.totalInstallments
-        : paid;
+        : expense.goalTotal && expense.goalTotal > 0
+          ? expense.goalTotal
+          : paid;
     existing.total += total;
     existing.paid += paid;
     map.set(expense.currency, existing);
@@ -34,7 +35,7 @@ function computeSummaries(expenses: Expense[]): CurrencySummary[] {
     currency,
     totalAmount: total,
     paidAmount: paid,
-    remainingAmount: total - paid,
+    remainingAmount: Math.max(total - paid, 0),
   }));
 }
 

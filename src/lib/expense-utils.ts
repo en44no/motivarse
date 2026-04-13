@@ -6,15 +6,17 @@ import type { Expense, ExpensePayment } from '../types/expense';
  *
  * Reglas:
  * - Si el payment no tiene paidBy (registros viejos) → no se considera mismatch.
- * - Si paidBy === expense.assignedTo → no hay mismatch.
- * - Cualquier otra combinacion → mismatch (ej: gasto de Vale pagado por Yo,
- *   gasto compartido pagado por uno solo, etc.).
+ * - Si el gasto es de 'both' (compartido) → ninguna cuota individual es mismatch:
+ *   cada cuota puede legitimamente pagarla uno u otro mientras se comparta el total.
+ * - Si el gasto es de un usuario especifico → mismatch si paidBy !== assignedTo
+ *   (ej: gasto de Vale pagado por Nahuel).
  */
 export function isPaymentMismatched(
   payment: ExpensePayment,
   expense: Expense,
 ): boolean {
   if (!payment.paidBy) return false;
+  if (expense.assignedTo === 'both') return false;
   return payment.paidBy !== expense.assignedTo;
 }
 

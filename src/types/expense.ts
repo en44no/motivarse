@@ -24,6 +24,13 @@ export interface Expense {
   assignedTo: string; // userId or 'both'
   /** Nota libre opcional sobre el gasto. */
   description?: string;
+  /**
+   * Objetivo total opcional para gastos variables (open-ended).
+   * Permite mostrar un contador de progreso (pagado vs objetivo) aunque
+   * las cuotas sean variables. Ej: "auto" = 10000 UYU total, con pagos
+   * variables mes a mes.
+   */
+  goalTotal?: number;
   payments: ExpensePayment[];
   createdBy: string;
   createdAt: number;

@@ -33,17 +33,25 @@ export const ExpenseItem = memo(function ExpenseItem({
   const deleteScale = useTransform(x, [-100, -60], [1, 0.8]);
 
   const isOpenEnded = expense.totalInstallments === 0;
+  const hasGoal = isOpenEnded && !!expense.goalTotal && expense.goalTotal > 0;
   const paidAmount = expense.payments.reduce((s, p) => s + p.amount, 0);
-  // Para open-ended el "total" es la suma de pagos registrados (lo unico conocido)
+  // Para open-ended con goal usamos el goal como total; sin goal usamos lo pagado
   const totalPrice = isOpenEnded
-    ? paidAmount
+    ? hasGoal
+      ? expense.goalTotal!
+      : paidAmount
     : expense.installmentPrice * expense.totalInstallments;
   const currentInstallment = expense.payments.length;
-  // Open-ended nunca se auto-completa
-  const isCompleted = !isOpenEnded && currentInstallment >= expense.totalInstallments;
+  // Fijo completa al llegar a N cuotas; variable con goal completa al alcanzar el monto
+  const isCompleted = isOpenEnded
+    ? hasGoal && paidAmount >= expense.goalTotal!
+    : currentInstallment >= expense.totalInstallments;
   const progress = isOpenEnded
-    ? 0
+    ? hasGoal
+      ? Math.min((paidAmount / expense.goalTotal!) * 100, 100)
+      : 0
     : (currentInstallment / expense.totalInstallments) * 100;
+  const showProgress = !isOpenEnded || hasGoal;
   const mismatch = hasPaymentMismatch(expense);
 
   return (
@@ -112,12 +120,14 @@ export const ExpenseItem = memo(function ExpenseItem({
           </p>
         </div>
 
-        {/* Progress (oculto en open-ended porque no hay denominador) */}
-        {!isOpenEnded && (
+        {/* Progress (oculto en variable sin goal porque no hay denominador) */}
+        {showProgress && (
           <div className={cn('flex items-center gap-2', isCompact ? 'mb-1.5' : 'mb-2')}>
             <ProgressBar value={progress} size="sm" className="flex-1" />
             <span className="text-2xs font-medium text-text-muted shrink-0 tabular-nums">
-              {currentInstallment}/{expense.totalInstallments}
+              {isOpenEnded
+                ? `${Math.round(progress)}%`
+                : `${currentInstallment}/${expense.totalInstallments}`}
             </span>
           </div>
         )}
@@ -131,7 +141,7 @@ export const ExpenseItem = memo(function ExpenseItem({
                 {formatCurrency(paidAmount, expense.currency)}
               </span>
             </span>
-            {isOpenEnded ? (
+            {isOpenEnded && !hasGoal ? (
               <span className="text-2xs text-text-muted truncate">
                 <span className="font-semibold text-info tabular-nums">
                   {currentInstallment} {currentInstallment === 1 ? 'pago' : 'pagos'}
@@ -141,7 +151,7 @@ export const ExpenseItem = memo(function ExpenseItem({
               <span className="text-2xs text-text-muted truncate">
                 Restante{' '}
                 <span className="font-semibold text-accent tabular-nums">
-                  {formatCurrency(totalPrice - paidAmount, expense.currency)}
+                  {formatCurrency(Math.max(totalPrice - paidAmount, 0), expense.currency)}
                 </span>
               </span>
             )}
@@ -170,9 +180,15 @@ export const ExpenseItem = memo(function ExpenseItem({
               </Badge>
             )}
             {isOpenEnded ? (
-              <Badge variant="default" className="text-2xs py-0.5">
-                Variable
-              </Badge>
+              hasGoal ? (
+                <Badge variant="default" className="text-2xs py-0.5 tabular-nums">
+                  Meta {formatCurrency(expense.goalTotal!, expense.currency)}
+                </Badge>
+              ) : (
+                <Badge variant="default" className="text-2xs py-0.5">
+                  Variable
+                </Badge>
+              )
             ) : (
               <Badge variant="default" className="text-2xs py-0.5 tabular-nums">
                 {formatCurrency(expense.installmentPrice, expense.currency)}/cuota

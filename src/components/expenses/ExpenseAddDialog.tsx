@@ -45,6 +45,7 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
   const [name, setName] = useState('');
   const [installmentPrice, setInstallmentPrice] = useState('');
   const [totalInstallments, setTotalInstallments] = useState('');
+  const [goalTotalInput, setGoalTotalInput] = useState('');
   const [isFixed, setIsFixed] = useState(true);
   const [currency, setCurrency] = useState<Currency>('UYU');
   const [assignedTo, setAssignedTo] = useState<string>('both');
@@ -67,6 +68,7 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
   const price = parseFloat(installmentPrice) || 0;
   const installments = parseInt(totalInstallments) || 0;
   const total = price * installments;
+  const goalTotal = parseFloat(goalTotalInput) || 0;
 
   const partnerId = couple?.members.find((m) => m !== user?.uid);
 
@@ -126,6 +128,7 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
     setName('');
     setInstallmentPrice('');
     setTotalInstallments('');
+    setGoalTotalInput('');
     setIsFixed(true);
     setCurrency('UYU');
     setAssignedTo('both');
@@ -160,6 +163,7 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
         ...(selectedCard ? { card: selectedCard } : {}),
         ...(selectedCategory ? { category: selectedCategory } : {}),
         ...(createdAtDate ? { createdAt: fromDateInputValue(createdAtDate) } : {}),
+        ...(!isFixed && goalTotal > 0 ? { goalTotal } : {}),
       });
       resetForm();
       onClose();
@@ -256,11 +260,29 @@ export function ExpenseAddDialog({ open, onClose }: ExpenseAddDialogProps) {
           </div>
         )}
 
-        {/* Hint variable */}
+        {/* Hint variable + objetivo opcional */}
         {!isFixed && (
-          <div className="text-2xs text-text-muted bg-info-soft border border-info/20 rounded-xl px-3 py-2 leading-snug">
-            <span className="font-semibold text-info">Variable abierto:</span>{' '}
-            registrá los pagos como vayan ocurriendo, sin necesidad de saber el monto o cantidad de cuotas.
+          <div className="space-y-3">
+            <div className="text-2xs text-text-muted bg-info-soft border border-info/20 rounded-xl px-3 py-2 leading-snug">
+              <span className="font-semibold text-info">Variable abierto:</span>{' '}
+              registrá los pagos como vayan ocurriendo, sin necesidad de saber el monto o cantidad de cuotas.
+            </div>
+            <Input
+              label="Objetivo total (opcional)"
+              type="number"
+              inputMode="decimal"
+              placeholder="Ej: 10000 para ver progreso contra una meta"
+              value={goalTotalInput}
+              onChange={(e) => setGoalTotalInput(e.target.value)}
+            />
+            {goalTotal > 0 && (
+              <div className="text-2xs text-text-muted -mt-1">
+                Vas a ver una barra de progreso con lo pagado vs{' '}
+                <span className="font-semibold text-text-secondary tabular-nums">
+                  {formatCurrency(goalTotal, currency)}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

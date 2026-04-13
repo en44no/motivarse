@@ -34,13 +34,20 @@ export function useExpenses() {
     return () => unsub();
   }, [coupleId]);
 
-  // Open-ended (variable sin total definido) → siempre pending, nunca auto-completa
-  const pending = expenses.filter(
-    (e) => e.totalInstallments === 0 || e.payments.length < e.totalInstallments,
-  );
-  const completed = expenses.filter(
-    (e) => e.totalInstallments > 0 && e.payments.length >= e.totalInstallments,
-  );
+  // Variable con goalTotal alcanzado tambien cuenta como completo.
+  // Variable sin goal (open-ended puro) → siempre pending.
+  const isExpenseCompleted = (e: Expense) => {
+    if (e.totalInstallments > 0) {
+      return e.payments.length >= e.totalInstallments;
+    }
+    if (e.goalTotal && e.goalTotal > 0) {
+      const paid = e.payments.reduce((s, p) => s + p.amount, 0);
+      return paid >= e.goalTotal;
+    }
+    return false;
+  };
+  const pending = expenses.filter((e) => !isExpenseCompleted(e));
+  const completed = expenses.filter((e) => isExpenseCompleted(e));
 
   const add = useCallback(
     async (
@@ -158,6 +165,7 @@ export function useExpenses() {
           currency: source.currency,
           ...(source.category ? { category: source.category } : {}),
           ...(source.card ? { card: source.card } : {}),
+          ...(source.goalTotal && source.goalTotal > 0 ? { goalTotal: source.goalTotal } : {}),
           assignedTo: source.assignedTo,
           payments: [],
           createdBy: user.uid,

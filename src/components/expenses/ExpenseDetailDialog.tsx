@@ -10,6 +10,7 @@ import {
   User,
   StickyNote,
   Pencil,
+  Target,
   X,
 } from 'lucide-react';
 import { Dialog } from '../ui/Dialog';
@@ -88,6 +89,9 @@ export function ExpenseDetailDialog({
   const [savingDescription, setSavingDescription] = useState(false);
   const [editingAssigned, setEditingAssigned] = useState(false);
   const [savingAssigned, setSavingAssigned] = useState(false);
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalDraft, setGoalDraft] = useState('');
+  const [savingGoal, setSavingGoal] = useState(false);
 
   // Reset paidByMode al asignado del gasto cada vez que se abre/cambia
   useEffect(() => {
@@ -106,17 +110,27 @@ export function ExpenseDetailDialog({
   const category = categories.find((c) => c.id === expense.category);
   const paidCount = expense.payments.length;
   const isOpenEnded = expense.totalInstallments === 0;
-  const progressPercent =
-    expense.totalInstallments > 0
-      ? (paidCount / expense.totalInstallments) * 100
-      : 0;
+  const hasGoal = isOpenEnded && !!expense.goalTotal && expense.goalTotal > 0;
 
   const paidAmount = expense.payments.reduce((s, p) => s + p.amount, 0);
-  // Open-ended: el "total" no existe — mostramos lo registrado hasta ahora
+  // Open-ended con goal: usar goal como total; sin goal: usar lo registrado
   const totalPrice = isOpenEnded
-    ? paidAmount
+    ? hasGoal
+      ? expense.goalTotal!
+      : paidAmount
     : expense.installmentPrice * expense.totalInstallments;
-  const remainingAmount = isOpenEnded ? 0 : totalPrice - paidAmount;
+  const remainingAmount = isOpenEnded
+    ? hasGoal
+      ? Math.max(expense.goalTotal! - paidAmount, 0)
+      : 0
+    : totalPrice - paidAmount;
+  const progressPercent = isOpenEnded
+    ? hasGoal
+      ? Math.min((paidAmount / expense.goalTotal!) * 100, 100)
+      : 0
+    : expense.totalInstallments > 0
+      ? (paidCount / expense.totalInstallments) * 100
+      : 0;
 
   const isInstallmentPaid = (num: number) =>
     expense.payments.some((p) => p.installmentNumber === num);
@@ -217,6 +231,32 @@ export function ExpenseDetailDialog({
     }
   }
 
+  function startEditingGoal() {
+    if (!expense) return;
+    setGoalDraft(expense.goalTotal ? String(expense.goalTotal) : '');
+    setEditingGoal(true);
+  }
+
+  async function handleSaveGoal() {
+    if (!expense) return;
+    const trimmed = goalDraft.trim();
+    const parsed = parseFloat(trimmed);
+    const nextGoal = trimmed === '' || isNaN(parsed) || parsed <= 0 ? 0 : parsed;
+    const currentGoal = expense.goalTotal ?? 0;
+    if (nextGoal === currentGoal) {
+      setEditingGoal(false);
+      return;
+    }
+    setSavingGoal(true);
+    try {
+      // 0 = sin objetivo (se trata como "no hay goal" en todas las vistas)
+      await onUpdate(expense.id, { goalTotal: nextGoal });
+      setEditingGoal(false);
+    } finally {
+      setSavingGoal(false);
+    }
+  }
+
   const subtitleText = [
     category ? `${category.emoji} ${category.label}` : null,
     card?.name,
@@ -265,7 +305,7 @@ export function ExpenseDetailDialog({
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-surface-light rounded-xl p-3">
             <p className="text-xs text-text-muted mb-0.5">
-              {isOpenEnded ? 'Total registrado' : 'Precio total'}
+              {isOpenEnded ? (hasGoal ? 'Objetivo' : 'Total registrado') : 'Precio total'}
             </p>
             <p className="text-sm font-bold text-text-primary tabular-nums">
               {formatCurrency(totalPrice, expense.currency)}
@@ -287,7 +327,7 @@ export function ExpenseDetailDialog({
               {formatCurrency(paidAmount, expense.currency)}
             </p>
           </div>
-          {isOpenEnded ? (
+          {isOpenEnded && !hasGoal ? (
             <div className="bg-info-soft rounded-xl p-3">
               <p className="text-xs text-text-muted mb-0.5">Tipo</p>
               <p className="text-sm font-bold text-info">Variable</p>
@@ -391,19 +431,90 @@ export function ExpenseDetailDialog({
         </div>
       </div>
 
-      {/* Progress (oculto en open-ended) */}
-      {!isOpenEnded && (
+      {/* Progress: fijos siempre, variables solo cuando hay objetivo */}
+      {(!isOpenEnded || hasGoal) && (
         <div className="mb-5">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-medium text-text-secondary">Progreso</span>
             <span className="text-xs font-bold text-text-primary tabular-nums">
-              {paidCount}/{expense.totalInstallments} cuotas
+              {isOpenEnded
+                ? `${formatCurrency(paidAmount, expense.currency)} / ${formatCurrency(expense.goalTotal!, expense.currency)}`
+                : `${paidCount}/${expense.totalInstallments} cuotas`}
             </span>
           </div>
           <ProgressBar
             value={progressPercent}
             color={progressPercent >= 100 ? 'accent' : 'primary'}
           />
+        </div>
+      )}
+
+      {/* Objetivo opcional (variables open-ended) */}
+      {isOpenEnded && (
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-text-secondary">
+              <Target size={12} className="text-text-muted" />
+              Objetivo
+            </span>
+            {!editingGoal && hasGoal && (
+              <button
+                type="button"
+                onClick={startEditingGoal}
+                className="inline-flex items-center gap-1 text-2xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-lg px-1 py-0.5"
+              >
+                <Pencil size={10} />
+                Editar
+              </button>
+            )}
+          </div>
+          {editingGoal ? (
+            <div className="flex items-center gap-2">
+              <div className="flex-1 relative">
+                <DollarSign
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
+                />
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={goalDraft}
+                  onChange={(e) => setGoalDraft(e.target.value)}
+                  placeholder="Dejar vacio para quitar"
+                  disabled={savingGoal}
+                  className="w-full h-11 pl-8 pr-3 text-sm rounded-xl bg-surface-light border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary"
+                />
+              </div>
+              <IconButton
+                variant="solid"
+                aria-label="Guardar objetivo"
+                onClick={handleSaveGoal}
+                disabled={savingGoal}
+              >
+                <Check size={18} />
+              </IconButton>
+              <IconButton
+                variant="ghost"
+                aria-label="Cancelar"
+                onClick={() => setEditingGoal(false)}
+                disabled={savingGoal}
+              >
+                <X size={18} />
+              </IconButton>
+            </div>
+          ) : hasGoal ? (
+            <p className="text-sm text-text-secondary bg-surface-light rounded-xl px-3 py-2.5 tabular-nums">
+              {formatCurrency(expense.goalTotal!, expense.currency)}
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={startEditingGoal}
+              className="w-full text-left text-sm text-text-muted bg-surface-light hover:bg-surface-hover rounded-xl px-3 py-2.5 border border-dashed border-border transition-colors"
+            >
+              + Definir un objetivo para ver progreso
+            </button>
+          )}
         </div>
       )}
 
