@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
-import { Trash2, CreditCard, AlertTriangle, User } from 'lucide-react';
+import { Trash2, CreditCard, AlertTriangle, User, Check } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatCurrency } from '../../lib/currency-utils';
 import { hasPaymentMismatch } from '../../lib/expense-utils';
@@ -53,6 +53,15 @@ export const ExpenseItem = memo(function ExpenseItem({
     : (currentInstallment / expense.totalInstallments) * 100;
   const showProgress = !isOpenEnded || hasGoal;
   const mismatch = hasPaymentMismatch(expense);
+
+  const now = new Date();
+  const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const paidThisMonthCount = expense.payments.reduce((acc, p) => {
+    const d = new Date(p.paidAt);
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return ym === currentYearMonth ? acc + 1 : acc;
+  }, 0);
+  const paidThisMonth = paidThisMonthCount > 0 && !isCompleted;
 
   return (
     <motion.div
@@ -119,6 +128,16 @@ export const ExpenseItem = memo(function ExpenseItem({
             {formatCurrency(totalPrice, expense.currency)}
           </p>
         </div>
+
+        {/* Pill "Pagado este mes" */}
+        {paidThisMonth && (
+          <div className={cn('flex items-center gap-1.5 flex-wrap', isCompact ? 'mb-1.5' : 'mb-2')}>
+            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-semibold bg-primary-soft text-primary border border-primary/25">
+              <Check size={11} />
+              {paidThisMonthCount > 1 ? `Pagado este mes (${paidThisMonthCount})` : 'Pagado este mes'}
+            </span>
+          </div>
+        )}
 
         {/* Progress (oculto en variable sin goal porque no hay denominador) */}
         {showProgress && (
